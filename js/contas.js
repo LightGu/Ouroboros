@@ -47,7 +47,7 @@ const Contas = {
     }
 
     /* estado da mesa anterior não pode vazar pra conta nova */
-    Celular.conversa = null; Celular.comoPersona = null; Celular.novas.clear();
+    Celular.conversa = null; Celular.comoPersona = null; Celular.lido.clear();
     Ficha.atual = null;
     await App.aposLogin();
     toast('Agora como ' + (c.nome || c.email) + '.');

@@ -7,18 +7,19 @@ const Celular = {
   membros: [],
   conversa: null,     // { tipo: 'user'|'persona', id, nome, foto }
   comoPersona: null,  // mestre falando por uma persona
-  /* Aviso de mensagem nova é só visual e só desta sessão: nada é gravado
-     no banco. Assim ninguém descobre se o outro leu ou não. */
-  novas: new Set(),
+  /* Até onde eu li cada conversa. Vem do banco, numa tabela que só eu
+     alcanço — persiste entre recarregamentos e o remetente não enxerga. */
+  lido: new Map(),
 
   /* ---------------- carga ---------------- */
 
   async carregar() {
     try {
-      [this.msgs, this.personas, this.membros] = await Promise.all([
+      [this.msgs, this.personas, this.membros, this.lido] = await Promise.all([
         Nuvem.mensagens(App.mesa.id),
         Nuvem.personas(App.mesa.id),
-        Nuvem.membros(App.mesa.id)
+        Nuvem.membros(App.mesa.id),
+        Nuvem.leituras(App.mesa.id)
       ]);
       this.render();
       Mensagens.render();
@@ -88,12 +89,18 @@ const Celular = {
     return lista.map(c => {
       const conv = this.daConversa(c);
       const ultima = conv[conv.length - 1];
-      return Object.assign(c, {
-        ultima,
-        naoLidas: conv.filter(m => this.novas.has(m.id)).length
-      });
+      return Object.assign(c, { ultima, naoLidas: this.novasDe(c) });
     }).sort((a, b) =>
       (b.ultima ? Date.parse(b.ultima.criado_em) : 0) - (a.ultima ? Date.parse(a.ultima.criado_em) : 0));
+  },
+
+  chaveDe(c) { return (c.tipo === 'persona' ? 'p:' : 'u:') + c.id; },
+
+  /* Não lidas = o que chegou pra mim depois da última vez que abri. */
+  novasDe(c) {
+    const corte = this.lido.get(this.chaveDe(c)) || 0;
+    return this.daConversa(c).filter(m =>
+      m.para_user === this.eu() && Date.parse(m.criado_em) > corte).length;
   },
 
   daConversa(c) {
@@ -103,7 +110,7 @@ const Celular = {
     });
   },
 
-  naoLidas() { return this.novas.size; },
+  naoLidas() { return this.contatos().reduce((n, c) => n + c.naoLidas, 0); },
 
   /* ---------------- desenho ---------------- */
 
@@ -186,7 +193,7 @@ const Celular = {
     $$('[data-abrir]', tela).forEach(b => b.addEventListener('click', () => {
       const [tipo, id] = b.dataset.abrir.split(':');
       this.conversa = { tipo, id, nome: this.nomeDe(tipo, id), foto: this.fotoDe(tipo, id) };
-      this.daConversa(this.conversa).forEach(m => this.novas.delete(m.id));
+      this.marcarLido(this.conversa);
       this.render();
       this.rolarFim();
     }));
@@ -289,7 +296,6 @@ const Celular = {
 
   alternar() {
     this.aberto = !this.aberto;
-    if (this.aberto) this.novas.clear();
     this.render();
   },
   fechar()   { if (this.aberto) { this.aberto = false; this.render(); } },
@@ -302,13 +308,23 @@ const Celular = {
     if (m.para_user === this.eu()) {
       const quem = m.de_persona ? this.nomeDe('persona', m.de_persona) : this.nomeDe('user', m.de_user);
       toast('📱 ' + quem + ': ' + m.texto.slice(0, 40));
-      /* só marca como nova se o celular está fechado ou noutra conversa */
+      /* se já estou olhando esta conversa, ela nasce lida */
       const c = this.contatoDe(m);
       const olhando = this.aberto && this.conversa
         && c && c.tipo === this.conversa.tipo && c.id === this.conversa.id;
-      if (!olhando) { this.novas.add(m.id); this.render(); }
+      if (olhando) this.marcarLido(this.conversa);
+      this.render();
       this.vibrar();
     }
+  },
+
+  /* Anota que li esta conversa até agora. Falha de rede aqui não atrapalha
+     a leitura em si: a marca local já vale, e a próxima abertura tenta de novo. */
+  marcarLido(c) {
+    if (!c) return;
+    const agora = Date.now();
+    this.lido.set(this.chaveDe(c), agora);
+    Nuvem.marcarLido(App.mesa.id, this.chaveDe(c), agora).catch(e => console.error('leitura:', e));
   },
 
   /* chacoalhada curta na faixa visível do aparelho */

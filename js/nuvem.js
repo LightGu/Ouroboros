@@ -371,6 +371,24 @@ const Nuvem = {
     return data;
   },
 
+  /* Até onde eu li cada conversa. Ninguém além de mim alcança estas linhas. */
+  async leituras(mesaId) {
+    const { data, error } = await this.cliente.from('leituras')
+      .select('chave, lido_ate').eq('mesa_id', mesaId);
+    if (error) throw error;
+    const m = new Map();
+    (data || []).forEach(l => m.set(l.chave, Date.parse(l.lido_ate)));
+    return m;
+  },
+
+  async marcarLido(mesaId, chave, quando) {
+    const { error } = await this.cliente.from('leituras').upsert({
+      user_id: App.sessao.user.id, mesa_id: mesaId, chave,
+      lido_ate: new Date(quando).toISOString()
+    });
+    if (error) throw error;
+  },
+
   /* ---------------- caderno de campanha ---------------- */
 
   async anotacoes(mesaId) {
