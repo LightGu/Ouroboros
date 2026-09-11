@@ -73,11 +73,25 @@ const Nuvem = {
     return data;
   },
 
+  /* Duas consultas em vez de join: `membros.user_id` aponta pra auth.users e
+     `perfis.id` também, mas não há chave estrangeira ligando as duas tabelas
+     entre si — o PostgREST recusa o join por não conseguir inferir a relação. */
   async membros(mesaId) {
-    const { data, error } = await this.cliente
-      .from('membros').select('user_id, papel, perfis(nome)').eq('mesa_id', mesaId);
+    const { data: ms, error } = await this.cliente
+      .from('membros').select('user_id, papel, entrou_em').eq('mesa_id', mesaId);
     if (error) throw error;
-    return (data || []).map(m => ({ id: m.user_id, papel: m.papel, nome: m.perfis?.nome || 'Agente' }));
+    if (!ms?.length) return [];
+
+    const ids = ms.map(m => m.user_id);
+    const { data: ps } = await this.cliente.from('perfis').select('id, nome').in('id', ids);
+    const nomes = new Map((ps || []).map(p => [p.id, p.nome]));
+
+    return ms.map(m => ({
+      id: m.user_id,
+      papel: m.papel,
+      nome: nomes.get(m.user_id) || 'Agente',
+      entrouEm: m.entrou_em
+    }));
   },
 
   /* ---------------- personagens ---------------- */
@@ -346,7 +360,7 @@ const Nuvem = {
   /* `aoLigar` dispara quando o Postgres confirma a inscrição — inclusive depois
      de uma reconexão. Tudo que mudou enquanto o canal estava fora chega junto,
      então é aí que o app recarrega a mesa pra não ficar desatualizado calado. */
-  assinar(mesaId, { aoMudarPersonagem, aoChegarLog, aoRolar, aoMudarMapa, aoMudarToken, aoMudarMesa, aoArrastar, aoMudarSom, aoMudarAnotacao, aoLigar, aoCair }) {
+  assinar(mesaId, { aoMudarPersonagem, aoChegarLog, aoRolar, aoMudarMapa, aoMudarToken, aoMudarMesa, aoArrastar, aoMudarSom, aoMudarAnotacao, aoMudarPresenca, aoLigar, aoCair }) {
     this.desassinar();
     this.canal = this.cliente.channel('mesa-' + mesaId)
       .on('postgres_changes',
@@ -368,6 +382,11 @@ const Nuvem = {
           { event: 'UPDATE', schema: 'public', table: 'mesas', filter: `id=eq.${mesaId}` },
           payload => aoMudarMesa?.(payload.new))
       .on('broadcast', { event: 'arrastando' }, ({ payload }) => aoArrastar?.(payload))
+      .on('presence', { event: 'sync' }, () => {
+        /* presença é do canal, não do banco: mostra quem está com a aba aberta */
+        const estado = this.canal.presenceState();
+        aoMudarPresenca?.(new Set(Object.values(estado).flat().map(x => x.id)));
+      })
       .on('postgres_changes',
           { event: '*', schema: 'public', table: 'sons', filter: `mesa_id=eq.${mesaId}` },
           payload => aoMudarSom?.(payload))
@@ -378,6 +397,9 @@ const Nuvem = {
         if (p.extension === 'postgres_changes' && p.status === 'ok') aoLigar?.();
       })
       .subscribe(status => {
+        if (status === 'SUBSCRIBED') {
+          this.canal.track({ id: App.sessao.user.id, nome: App.perfil?.nome || 'Agente' });
+        }
         if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED') aoCair?.(status);
       });
   },

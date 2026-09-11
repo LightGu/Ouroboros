@@ -130,6 +130,7 @@ const Telas = {
     pop.className = 'popover popover-conta';
     pop.innerHTML = `
       ${App.ehMestre ? `<button data-op="codigo">Código da mesa: <b>${esc(App.mesa.codigo)}</b></button>` : ''}
+      <button data-op="jogadores">Quem está na mesa</button>
       <button data-op="trocar">Trocar de mesa</button>
       <button data-op="nome">Mudar meu nome</button>
       <button data-op="sair" class="perigo">Sair da conta</button>`;
@@ -143,6 +144,7 @@ const Telas = {
         try { await navigator.clipboard.writeText(App.mesa.codigo); toast('Código copiado.'); }
         catch { toast('Código: ' + App.mesa.codigo); }
       }
+      if (op === 'jogadores') this.modalJogadores();
       if (op === 'trocar') App.trocarMesa();
       if (op === 'nome')   this.modalNome();
       if (op === 'sair')   App.sair();
@@ -153,6 +155,60 @@ const Telas = {
         if (!pop.contains(ev.target)) { pop.remove(); document.removeEventListener('click', fora); }
       });
     }, 0);
+  },
+
+  listaAberta: false,
+
+  /* Quem já entrou na mesa, e quem está com ela aberta agora. */
+  async modalJogadores() {
+    this.listaAberta = true;
+    Modal.abrir({
+      titulo: 'Quem está na mesa',
+      corpo: '<p class="dialogo fraco">carregando...</p>',
+      confirmar: 'Fechar', cancelar: '',
+      onConfirmar: () => { this.listaAberta = false; }
+    });
+    $('[data-modal-cancelar]')?.remove();
+
+    try { this._membros = await Nuvem.membros(App.mesa.id); }
+    catch (e) {
+      $('#modal-body').innerHTML = `<p class="dialogo">Não consegui carregar: ${esc(e.message || e)}</p>`;
+      return;
+    }
+    this.renderJogadores();
+  },
+
+  renderJogadores() {
+    const corpo = $('#modal-body');
+    if (!corpo || !this._membros) return;
+
+    const lista = this._membros.slice().sort((a, b) =>
+      (a.papel === 'mestre' ? -1 : b.papel === 'mestre' ? 1 : 0) || a.nome.localeCompare(b.nome, 'pt-BR'));
+
+    const quando = d => d ? new Date(d).toLocaleDateString('pt-BR',
+      { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }) : '—';
+
+    corpo.innerHTML = `
+      <p class="dialogo">
+        <b>${lista.length}</b> ${lista.length === 1 ? 'pessoa' : 'pessoas'} na mesa.
+        ${App.ehMestre ? `Código de convite: <b class="mesa-codigo">${esc(App.mesa.codigo)}</b>` : ''}
+      </p>
+      <div class="lista-jogadores">
+        ${lista.map(m => {
+          const fichas = Store.estado.personagens.filter(p => p.donoId === m.id && !p.rapido);
+          return `
+          <div class="jogador">
+            <span class="jogador-nome">${esc(m.nome)}</span>
+            <span class="tag ${m.papel === 'mestre' ? 'tag-mestre' : 'tag-jogador'}">${m.papel}</span>
+            <span class="cresce"></span>
+            <span class="jogador-quando">entrou ${esc(quando(m.entrouEm))}</span>
+            <span class="jogador-fichas">${fichas.length
+              ? fichas.map(f => esc(f.nome || 'sem nome')).join(', ')
+              : '<i>sem ficha</i>'}</span>
+          </div>`;
+        }).join('')}
+      </div>
+      <p class="dialogo fraco">Quem está aqui já entrou com o código pelo menos uma vez.</p>`;
   },
 
   modalNome() {

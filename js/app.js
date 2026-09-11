@@ -76,6 +76,7 @@ const App = {
       aoArrastar: d => Mapa.arrastouRemoto(d),
       aoMudarSom: p => Sons.mudou(p),
       aoMudarAnotacao: p => Campanha.mudou(p),
+      aoMudarPresenca: ids => this.presencaMudou(ids),
       aoLigar: () => this.reconectou(),
       aoCair: () => this.marcarConexao(false)
     });
@@ -114,6 +115,17 @@ const App = {
       if (this.telaAtual === 'mesa') Mesa.render();
       if (this.ehMestre) Logs.carregar();
     } catch (e) { console.error(e); }
+  },
+
+  /* quem está com a aba aberta agora */
+  online: new Set(),
+
+  /* A presença do Supabase não dispara 'sync' neste projeto — o canal aceita
+     o track() mas presenceState() fica vazio. Mantido desligado até investigar;
+     a lista de jogadores usa a data de entrada, que é confiável. */
+  presencaMudou(ids) {
+    this.online = ids;
+    if (Telas.listaAberta) Telas.renderJogadores();
   },
 
   marcarConexao(ok) {
