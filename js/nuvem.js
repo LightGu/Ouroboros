@@ -344,6 +344,19 @@ const Nuvem = {
     return data || [];
   },
 
+  async contatosLiberados(mesaId) {
+    const { data, error } = await this.cliente.from('contatos_liberados')
+      .select('persona_id, user_id').eq('mesa_id', mesaId);
+    if (error) throw error;
+    return data || [];
+  },
+
+  async liberarContato(personaId, paraUser) {
+    const { error } = await this.cliente.rpc('liberar_contato',
+      { p_persona: personaId, p_para: paraUser });
+    if (error) throw error;
+  },
+
   async criarPersona(mesaId, nome, foto) {
     const { data, error } = await this.cliente.from('personas')
       .insert({ mesa_id: mesaId, nome, foto }).select().single();
@@ -399,6 +412,7 @@ const Nuvem = {
   },
 
   async criarAnotacao(a) {
+    a = Object.assign({ autor_id: App.sessao.user.id }, a);
     const { data, error } = await this.cliente.from('anotacoes').insert(a).select().single();
     if (error) throw error;
     return data;

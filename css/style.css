@@ -1717,3 +1717,8 @@ body.com-painel .view { padding-right: 352px; }
 }
 .contas-troca button.atual { color: var(--texto); }
 .contas-troca button.atual .conta-bolinha { background: var(--ok); box-shadow: 0 0 7px var(--ok); }
+.nota-selo {
+  font-size: 9px; letter-spacing: .1em; text-transform: uppercase; padding: 1px 6px;
+  border-radius: 4px; background: rgba(63,163,77,.16); border: 1px solid rgba(63,163,77,.35); color: #79c986;
+}
+.nota-autor { font-size: 10.5px; color: var(--texto-3); }

@@ -2,90 +2,94 @@
 
 Ferramenta de mestre para **Ordem Paranormal RPG**. Fichas de agente, cards de mesa com
 controle de vida, mapa com fog of war, rolador de dados, trilha sonora, caderno de campanha
-com grafo e cenas de interlúdio. Mestre e jogadores entram na mesma mesa; o que é do mestre
-o jogador não recebe.
+com grafo, cenas de interlúdio e um celular com mensagens privadas.
 
-> **Este README é para quem vai editar o projeto** (pessoa ou IA). Ele explica a arquitetura,
-> as convenções e — principalmente — as **armadilhas que já custaram tempo aqui**.
-> Leia a seção *Pegadinhas* antes de mexer: quase todo bug difícil deste projeto está lá.
+Mestre e jogadores entram na mesma mesa. O que é do mestre, o jogador não recebe — e isso é
+decidido no banco, não na interface.
+
+> **Para quem vai editar** (pessoa ou IA): leia a seção **5 — Pegadinhas** antes de mexer.
+> Quase todo bug difícil deste projeto está catalogado lá, com a causa. Vários custaram
+> horas porque o sintoma não apontava para a causa.
 
 ---
 
 ## 1. Rodar
 
 ```bash
-python3 dev-server.py 5599
+python3 dev-server.py 5599     # http://localhost:5599
 ```
 
-E abra `http://localhost:5599`.
+**Use o `dev-server.py`, nunca `python -m http.server`.** Ele manda `no-store` e ainda carimba
+`?v=<mtime>` nas tags do `index.html`. Sem isso o Chrome serve `.js` velho sem nem perguntar,
+e você depura um código que não está rodando. Aconteceu duas vezes aqui.
 
-**Use o `dev-server.py`, não o `python -m http.server`.** Ele manda `Cache-Control: no-store`.
-Com o servidor padrão o navegador cacheia os `.js` e suas edições não aparecem — você vai achar
-que o código está quebrado quando só está velho. Isso já aconteceu aqui mais de uma vez.
+**Publicar:** o Cloudflare Pages está ligado ao GitHub e publica a cada push (~40s).
 
-Para os jogadores entrarem de fora, publique a pasta em qualquer host estático
-(Vercel, Netlify, GitHub Pages). É HTML puro, não tem build.
+```bash
+git add -A && git commit -m "o que mudou" && git push
+```
 
-### Configuração inicial (uma vez)
+Produção: https://ouroboros.gustavo952500.workers.dev
 
-1. **Banco**: cole [`sql/schema.sql`](sql/schema.sql) no SQL Editor do Supabase e rode.
-   É idempotente — pode rodar quantas vezes quiser.
-2. **Auth**: Supabase → *Authentication* → *Sign In / Providers* → *Email* → **desmarque
-   "Confirm email"**. Sem isso o SMTP grátis limita a ~2 emails/hora e trava a mesa inteira.
-3. **Chaves**: já estão em [`js/config.js`](js/config.js). Só entra chave **publicável**
-   (`sb_publishable_…` ou `anon`). A `service_role` ignora todas as regras de RLS e este
-   arquivo vai para o navegador de todo mundo — nunca a coloque aqui.
+### Configuração (uma vez)
+
+1. **Banco** — cole [`sql/schema.sql`](sql/schema.sql) no SQL Editor do Supabase. É idempotente.
+2. **Auth** — *Authentication → Sign In / Providers → Email* → desmarque **Confirm email**.
+   O SMTP grátis limita a ~2 emails/hora e trava a mesa inteira no primeiro dia.
+   Depois que os jogadores se cadastrarem, desmarque também **Allow new users to sign up**.
+3. **URL** — *Authentication → URL Configuration* → Site URL = a URL de produção.
+4. **Chaves** — em [`js/config.js`](js/config.js). Só chave **publicável**. A `service_role`
+   ignora todo o RLS e este arquivo vai pro navegador de todo mundo.
 
 ---
 
-## 2. Como o projeto é montado
+## 2. Arquitetura
 
-**Sem build, sem framework, sem npm.** São `<script>` clássicos carregados em ordem no
-`index.html`. Cada arquivo declara um objeto global (`Mesa`, `Ficha`, `Mapa`…) e os outros
-usam direto. Não são módulos ES — `import`/`export` quebram, e um `const` no topo do arquivo
-**não** vira propriedade de `window` (só é acessível pelo nome).
+**Sem build, sem framework, sem npm.** `<script>` clássicos em ordem no `index.html`. Cada
+arquivo declara um objeto global. Não são módulos ES — `import`/`export` quebram, e um `const`
+de topo de arquivo **não** vira propriedade de `window` (só é acessível pelo nome).
 
-Ordem de carga (importa, há dependências):
+Ordem de carga (há dependências):
 
 ```
-config.js → dados.js → ui.js → nuvem.js → store.js → mesa.js → ficha.js
-→ rolagem.js → mapa.js → sons.js → campanha.js → interludio.js → logs.js
-→ telas.js → app.js
+config → dados → ui → nuvem → store → mesa → ficha → rolagem → mapa
+→ sons → campanha → interludio → celular → logs → contas → telas → app
 ```
 
-`app.js` é o último porque ele chama `App.iniciar()` na última linha.
-
-### Mapa dos arquivos
+`app.js` é o último: ele chama `App.iniciar()` na última linha.
 
 | Arquivo | Responsabilidade |
 |---|---|
 | `js/config.js` | URL e chave publicável do Supabase |
-| `js/dados.js` | Constantes do sistema: atributos, 28 perícias, classes, origens, progressão de PV/PE/SAN |
-| `js/ui.js` | `$`/`$$`, `esc`, modal, toast, `get/setPath`, redimensionamento de imagem |
-| `js/nuvem.js` | **Única** camada que fala com o Supabase. Nada mais importa `cliente` direto |
+| `js/dados.js` | Constantes: atributos, 28 perícias, classes, origens, progressão, cores de jogador |
+| `js/ui.js` | `$`/`$$`, `esc`, modal, toast, `get/setPath`, redimensionar imagem |
+| `js/nuvem.js` | **Única** camada que fala com o Supabase. Ninguém mais usa `cliente` direto |
 | `js/store.js` | Modelo da ficha, estado em memória, gravação agrupada, permissões, cache offline |
-| `js/mesa.js` | Cards, barras de status, munição, condições, turnos, personagem rápido, drag & drop |
-| `js/ficha.js` | Ficha de agente completa, binding genérico, subir NEX, calcular status |
-| `js/rolagem.js` | Motor de dados e painel lateral compartilhado |
+| `js/mesa.js` | Cards, barras, munição, condições, turnos, personagem rápido, reivindicar, drag |
+| `js/ficha.js` | Ficha completa, binding genérico, subir NEX, calcular status |
+| `js/rolagem.js` | Motor de dados e painel compartilhado |
 | `js/mapa.js` | Mapa de batalha, fog of war, tokens |
 | `js/sons.js` | Acervo de áudio (só do mestre, toca só na máquina dele) |
-| `js/campanha.js` | Caderno do mestre, links `[[wiki]]`, grafo de força, importar/exportar |
-| `js/interludio.js` | Cena de interlúdio: calcula e aplica a recuperação |
-| `js/logs.js` | Aba de logs e o pop-up de aviso |
-| `js/telas.js` | Login, cadastro, escolha de mesa, menu da conta |
-| `js/app.js` | Sessão, navegação entre telas, assinatura do realtime |
-| `css/style.css` | Tudo. Organizado por seção, com comentários de bloco |
-| `sql/schema.sql` | Fonte da verdade do banco. Roda do zero ou por cima |
+| `js/campanha.js` | Caderno com `[[links]]` e grafo. Serve mestre **e** jogadores |
+| `js/interludio.js` | Cena de interlúdio: calcula e aplica recuperação |
+| `js/celular.js` | Mensagens privadas, personas do mestre, aba de interceptação |
+| `js/logs.js` | Aba de logs e pop-up de aviso |
+| `js/contas.js` | Várias contas logadas, alternando sem deslogar |
+| `js/telas.js` | Login, cadastro, escolha de mesa, menu da conta, lista de quem está na mesa |
+| `js/app.js` | Sessão, navegação, assinatura do realtime |
 
-### Navegação
+### Telas
 
-Cada tela é um `<main id="view-XXX">` no `index.html`. `App.mostrar('xxx')` esconde todas e
-mostra uma, e dispara o `render()` da tela quando precisa. Para adicionar uma tela:
+Cada tela é um `<main id="view-XXX">`. `App.mostrar('xxx')` esconde todas e mostra uma.
+Para adicionar:
 
-1. `<button class="aba" data-aba="nova">` na `<nav class="abas">` do `index.html`
+1. `<button class="aba" data-aba="nova">` na `<nav class="abas">`
 2. `<main id="view-nova" class="view" hidden>`
-3. O nome `'nova'` na lista dentro de `App.mostrar()`
-4. Se for só do mestre: `id="aba-nova" hidden` e libere em `App.entrarNaMesa()`
+3. o nome na lista dentro de `App.mostrar()`
+4. se for só do mestre: `id="aba-nova" hidden` e libere em `App.entrarNaMesa()`
+
+Abas hoje: **Mesa · Mapa · Sons¹ · Campanha/Anotações² · Interlúdio¹ · Mensagens¹ · Logs¹**
+(¹ só mestre · ² todos, com nome diferente por papel)
 
 ---
 
@@ -93,39 +97,32 @@ mostra uma, e dispara o `render()` da tela quando precisa. Para adicionar uma te
 
 ### A ficha
 
-O personagem inteiro é **um objeto JSON** guardado na coluna `personagens.dados`. Isso é
-proposital: adicionar campo na ficha não exige migração de banco.
+O personagem inteiro é **um JSON** na coluna `personagens.dados`. Campo novo na ficha não
+exige migração.
 
 ```js
 {
-  id, nome, jogador, imagem, origem, classe, patente, nex, desl, peRodada,
+  id, nome, jogador, imagem, origem, classe, patente, nex, desl, peRodada, cor,
   atributos: { AGI, FOR, INT, PRE, VIG },
-  pv: {atual, max}, pe: {atual, max}, san: {atual, max},
-  defesa: { equip, outros }, protecao, resistencias,
+  pv/pe/san: {atual, max},
+  defesa: {equip, outros}, protecao, resistencias,
   pericias: { acrobacia: {treino, outros}, … },   // 28, chave em slug sem acento
-  ataques: [{nome, teste, dano, especial}],
-  habilidades: [{nome, custo, pagina, desc}],
-  municoes: [{nome, atual, max}],
-  inventario: { limites:{I,II,III,IV}, credito, cargaMax, itens:[{nome,categoria,espacos}] },
-  descricao: { aparencia, personalidade, historico, objetivo },
-  bonus: { corpo, mente },      // +1d6 acumulados do interlúdio
-  condicoes: [], prestigio, dtRituais,
-  rapido, oculto, donoId, ordem  // espelhados em colunas do banco para RLS e ordenação
+  ataques[], habilidades[], municoes[], inventario{}, descricao{},
+  bonus: {corpo, mente},                          // +1d6 do interlúdio
+  condicoes[], prestigio, dtRituais,
+  rapido, oculto, donoId, ordem                   // espelhados em colunas, para RLS e ordenação
 }
 ```
 
-`Store.normalizar()` preenche o que faltar. **Toda ficha que entra no app passa por ela** —
-inclusive as vindas do banco e de importação. Ao adicionar campo novo, coloque em
-`Store.fichaVazia()` **e** em `Store.normalizar()`, senão fichas antigas quebram.
+`Store.normalizar()` preenche o que faltar, e **toda ficha passa por ela** — do banco e de
+importação. Campo novo vai em `fichaVazia()` **e** em `normalizar()`, senão ficha antiga quebra.
 
-`notas` (anotações do mestre) **não** fica em `dados`: vive na tabela `notas_mestre`.
-Motivo na seção de segurança.
+`notas` (do mestre) **não** fica em `dados`: vive em `notas_mestre`. Motivo na seção 4.
 
 ### Binding da ficha
 
-`ficha.js` usa `data-bind="caminho.aninhado"` e um único listener de `input` que grava com
-`setPath()`. Repetidores usam índice: `data-bind="ataques.0.dano"`. Para adicionar campo,
-basta o `data-bind` — não precisa escrever handler.
+`data-bind="caminho.aninhado"` + um listener de `input` que grava com `setPath()`.
+Repetidores usam índice: `data-bind="ataques.0.dano"`. Campo novo só precisa do atributo.
 
 ---
 
@@ -135,60 +132,74 @@ basta o `data-bind` — não precisa escrever handler.
 
 | Tabela | Para quê |
 |---|---|
-| `perfis` | nome do usuário (criado por trigger no cadastro) |
+| `perfis` | nome de cada usuário (criado por trigger no cadastro) |
 | `mesas` | mesa, mestre, código de convite, estado do combate (`jsonb`) |
-| `membros` | quem está em qual mesa e com qual papel |
-| `personagens` | fichas. `dados jsonb` + colunas espelho para RLS |
-| `notas_mestre` | anotações do mestre, separadas de propósito |
-| `logs` | gerado por trigger, não pelo cliente |
+| `membros` | quem está em qual mesa, com qual papel |
+| `personagens` | fichas: `dados jsonb` + colunas espelho |
+| `notas_mestre` | anotações do mestre sobre um personagem |
+| `logs` | escrito por trigger, nunca pelo cliente |
 | `rolagens` | histórico de dados, com flag `secreta` |
 | `mapas` / `tokens` | mapa de batalha. `fog` é string de `0`/`1`, uma por célula |
 | `sons` | acervo de áudio |
-| `anotacoes` | caderno de campanha |
+| `anotacoes` | caderno — do mestre e dos jogadores, com flag `compartilhada` |
+| `personas` | "outros números" que o mestre usa no celular |
+| `mensagens` | conversas privadas |
+| `contatos_liberados` | quem enxerga qual persona |
+| `leituras` | até onde cada um leu cada conversa |
 
 ### O modelo de permissão
 
-Tudo passa por **RLS no Postgres**. A interface esconde botões por conveniência, mas quem
-manda é o banco: o navegador do jogador simplesmente **não recebe as linhas**. Não adianta
-abrir o DevTools.
+Tudo passa por **RLS no Postgres**. A interface esconde botões por conveniência; quem decide
+é o banco. O navegador do jogador **não recebe as linhas** — não adianta abrir o DevTools.
 
-- `eh_membro(mesa)` / `eh_mestre(mesa)` são `SECURITY DEFINER` **de propósito**. Se a policy
-  de `membros` consultasse `membros` diretamente, o Postgres entraria em recursão infinita.
-- Jogador edita só a ficha onde `dono_id = auth.uid()`. Mestre edita tudo.
-- `personagens` com `oculto = true` não aparecem para jogador. NPC criado pelo mestre nasce oculto.
-- `logs`, `sons`, `anotacoes` e `notas_mestre`: leitura só do mestre.
-- `rolagens` com `secreta = true`: só o mestre lê.
-- Log é escrito por **trigger** (`registrar_log`), não pelo cliente — o jogador não tem como
-  "esquecer" de registrar.
+- `eh_membro(mesa)` / `eh_mestre(mesa)` são `SECURITY DEFINER` **de propósito**: se a policy de
+  `membros` consultasse `membros`, o Postgres entraria em recursão infinita.
+- Jogador edita só a ficha com `dono_id = auth.uid()`. Mestre edita tudo.
+- `oculto = true` some para jogador. NPC criado pelo mestre nasce oculto.
+- `rapido` e `oculto` só o mestre consegue criar.
+- `logs`, `sons` e `notas_mestre`: leitura só do mestre.
+- `rolagens` com `secreta`: só o mestre.
+- `anotacoes`: minhas + as compartilhadas; mestre vê todas.
+- `mensagens`: quem enviou, quem recebeu, e o mestre (inclusive conversa entre dois jogadores —
+  **sem aviso para eles**).
+- `leituras`: só as próprias linhas. **Nem o mestre vê** quem leu o quê.
+- `personas`: todos leem nome e foto (precisam, para ver quem está falando), mas só aparecem no
+  celular de quem tem o contato.
 
-**RLS é por linha, não por coluna.** É por isso que as anotações do mestre estão em outra
-tabela: se fossem uma chave dentro de `personagens.dados`, o jogador receberia o texto no
-mesmo JSON da ficha.
+**RLS é por linha, não por coluna.** É por isso que existem `notas_mestre` e `leituras`
+separadas: se fossem campos dentro da linha principal, quem lê a linha leria o campo junto.
 
-**A exceção é o Storage.** Imagem de retrato, de mapa e áudio ficam em URL pública. O fog of
-war esconde da vista, não do navegador — quem pegar a URL vê o mapa inteiro. Não use fog para
-guardar segredo de campanha.
+**A exceção é o Storage.** Retrato, mapa e áudio ficam em URL pública. O fog of war esconde da
+vista, não do navegador. Não use fog para guardar segredo de campanha.
+
+### Funções
+
+`criar_mesa`, `entrar_na_mesa`, `minhas_mesas`, `reivindicar_personagem`, `liberar_personagem`,
+`liberar_contato`. Existem porque a operação precisa de uma checagem que RLS sozinho não faz —
+tipicamente "só se ainda não tiver dono" ou "só se você mesmo já tiver esse contato".
 
 ### Migração
 
-`sql/schema.sql` é a fonte da verdade e roda por cima de si mesmo. Ao mudar o banco:
+`sql/schema.sql` é a fonte da verdade e roda por cima de si mesmo. Cada mudança também vira um
+arquivo próprio (`v4`…`v9`) — **cole o arquivo pequeno, não as 700 linhas**: paste cortado no
+editor do Supabase gera erro de sintaxe fantasma difícil de diagnosticar.
 
 - `create table if not exists`, `drop policy if exists` antes de `create policy`
-- **`drop function` antes de `create or replace` se a assinatura mudou** — o Postgres recusa
+- **`drop function` antes de `create or replace` se a assinatura mudou.** O Postgres recusa
   trocar o tipo de retorno. Já quebrou aqui com `minhas_mesas()`
-- Para mudanças grandes, gere também um arquivo só com o bloco novo (ex.: `sql/v4-campanha.sql`).
-  Colar 600 linhas no editor do Supabase dá paste cortado e erro de sintaxe fantasma
+- tabela nova que precisa de realtime: `alter publication supabase_realtime add table …`
 
 ### Realtime
 
-Um canal por mesa, aberto em `Nuvem.assinar()`. Escuta `postgres_changes` de `personagens`,
-`logs`, `rolagens`, `mapas`, `tokens`, `sons`, `anotacoes`, `mesas`, e um `broadcast` para
-arrastar token (posição ao vivo sem tocar no banco).
+Um canal por mesa (`mesa-<id>`), aberto em `Nuvem.assinar()`. Escuta `postgres_changes` de
+`personagens`, `logs`, `rolagens`, `mapas`, `tokens`, `mesas`, `anotacoes`, `mensagens`, mais um
+`broadcast` para arrastar token.
 
-**Espere a confirmação antes de confiar no canal.** O `subscribe()` retorna antes de o
-Postgres instalar o filtro de replicação; mudanças nessa janela somem caladas. Por isso existe
-`aoLigar`, que dispara no evento `system` com `status: 'ok'` e recarrega a mesa — inclusive
-depois de reconexão. A bolinha na topbar mostra o estado (verde = ao vivo, âmbar = reconectando).
+**Espere a confirmação.** `subscribe()` retorna antes de o Postgres instalar o filtro; mudanças
+nessa janela somem caladas. Por isso existe `aoLigar`, que dispara no evento `system` com
+`status: 'ok'` e recarrega a mesa — inclusive depois de reconexão. A bolinha na topbar mostra o
+estado (verde = ao vivo, âmbar = reconectando). **Se ela ficar âmbar, a inscrição falhou** —
+veja a pegadinha do canal único na seção 5.
 
 ---
 
@@ -196,106 +207,126 @@ depois de reconexão. A bolinha na topbar mostra o estado (verde = ao vivo, âmb
 
 Cada item aqui custou pelo menos uma rodada de depuração.
 
-**`[hidden]` perde para `display` de classe.** `.modal{display:flex}` vence o `display:none`
-que o navegador dá ao atributo `hidden` — o elemento fica visível e o botão de fechar parece
-quebrado. Existe `[hidden]{display:none!important}` no topo do CSS. Não remova.
+**Uma tabela sem permissão derruba o canal inteiro.** Todas as tabelas dividem um canal. Se o
+Realtime recusar UMA inscrição, **todas as outras morrem junto** e a pessoa fica sem nada ao
+vivo. Foi o que aconteceu quando `sons` virou exclusiva do mestre: os jogadores perderam PV ao
+vivo, mapa e mensagens de uma vez. Passou despercebido porque eu testava realtime logado como
+mestre. Hoje `sons` está fora do canal. **Ao tornar uma tabela restrita, tire-a do canal de quem
+não a lê.**
 
-**Listener em elemento que você re-renderiza.** `Ficha.abrir()` troca o `innerHTML` de
-`#view-ficha`, mas o listener delegado fica no container. Sem a trava `_ligado`, cada abertura
-empilha mais um — e um clique em "+ Ataque" adiciona 2, 3, 4 linhas. Mesmo padrão em
-`Rolagem.ligar()` e `Sons.ligar()`.
+**Trocar de canal precisa de `await`.** O canal usa sempre o mesmo nome (o broadcast exige
+tópico comum). Se o novo entrar antes de o antigo sair, o servidor ignora o segundo: ele fica
+`joined` mas nunca confirma, e nada chega. `assinar()` é `async` e dá `await desassinar()`.
+O `desassinar()` zera `this.canal` **antes** do await, senão um `assinar()` concorrente já
+colocou o canal novo ali e ele é apagado.
 
-**Cache do dev server.** Descrito na seção 1. Se uma edição "não fez efeito", confirme que o
-servidor é o `dev-server.py`.
+**`signOut` mata as outras contas.** Mesmo com `scope: 'local'`, ele invalida os refresh tokens
+guardados em `Contas` — voltar para outra conta passa a dar "Auth session missing". Por isso
+`Contas.novaConta()` **não** desloga: o `signInWithPassword` seguinte já substitui a sessão.
+
+**`[hidden]` perde para `display` de classe.** `.modal{display:flex}` vence o `display:none` do
+atributo. Existe `[hidden]{display:none!important}` no topo do CSS. Não remova.
+
+**Listener em container que você re-renderiza.** `Ficha.abrir()` troca o `innerHTML`, mas o
+listener delegado fica no container. Sem a trava `_ligado`, cada abertura empilha mais um e um
+clique vira dois. Mesmo padrão em `Rolagem`, `Sons` e `Celular`.
+
+**PostgREST não inventa relação.** `membros.user_id` e `perfis.id` apontam para `auth.users`,
+mas não há FK entre as duas — `select('…, perfis(nome)')` falha com "Could not find a
+relationship". São duas consultas e junção no cliente.
+
+**Estado de interface que precisa sobreviver ao F5 tem que ir pro banco.** A bolinha de mensagem
+nova vivia num `Set` em memória: sumia ao recarregar e não existia para quem abrisse o app
+depois. Virou a tabela `leituras`.
 
 **SVG em `data:` URI precisa de `%3C`/`%3E`.** Com `<` e `>` crus o Chrome tolera e o Firefox
-recusa — a máscara simplesmente não aplica e você não vê erro nenhum.
+recusa — a máscara não aplica e não há erro nenhum.
 
-**Não use `var()` dentro de `@keyframes`.** Resolve de forma imprevisível. Pior: `--h` já é o
-matiz em `.nota` e `.retrato-vazio`; reusar esse nome para outra coisa fez um
-`translateY(calc(var(--h) * -1))` virar `translateY(12px)`. Use frações da própria caixa
-(`translateY(-33.333%)` com `background-size: … 33.333%`) e keyframes com nome próprio.
+**Nada de `var()` dentro de `@keyframes`.** Resolve de forma imprevisível. Pior: `--h` já é o
+matiz em `.nota` e `.retrato-vazio`; reusar o nome fez um `translateY(calc(var(--h) * -1))`
+virar `translateY(12px)`. Use frações da própria caixa e keyframes com nome próprio.
 
-**Camada transparente por cima come o clique.** `.mapa-tokens` tem `inset:0` e cobria o mapa
-inteiro, então nenhum clique chegava ao canvas do fog. Hoje ela é `pointer-events:none` e só
-os tokens são clicáveis. Ao adicionar camada sobreposta, pense em quem precisa receber o ponteiro.
+**Camada transparente por cima come o clique.** `.mapa-tokens` tem `inset:0` e cobria o mapa,
+então nenhum clique chegava ao canvas do fog. Hoje é `pointer-events:none` e só os tokens são
+clicáveis.
 
-**Coordenada de SVG: use a matriz dele.** Calcular à mão com `getBoundingClientRect` erra
-sempre que a proporção do elemento difere da do `viewBox` (o SVG cria faixas vazias). Dava 36px
-de erro no meio do grafo e 219px na borda. Use
-`pt.matrixTransform(el.getScreenCTM().inverse())`.
+**Coordenada de SVG: use a matriz dele.** Calcular com `getBoundingClientRect` erra sempre que a
+proporção do elemento difere da do `viewBox`. Dava 36px de erro no meio do grafo e 219px na
+borda. Use `pt.matrixTransform(el.getScreenCTM().inverse())`.
 
 **Clique vira arrasto com 1px de tremida.** Marcar "arrastou" no primeiro `pointermove` faz o
-clique falhar quase sempre. Só conte como arrasto acima de ~4px de deslocamento.
+clique falhar quase sempre. Conte como arrasto só acima de ~4px.
 
-**Barra cheia corta o efeito da ponta.** Decoração posicionada em `left:100%` do preenchimento
-cai fora quando ele chega a 100%, e o `overflow:hidden` da barra a elimina — o efeito some
-justamente quando o personagem está com a vida cheia, que é o estado que você mais olha.
-Ancore pela direita e encavale para dentro. A barra atual resolve isso com o fio aceso em
-`.barrao-fill::after { right: 0 }`, que fica sempre dentro do preenchimento.
+**IDs duplicados entre modal e painel.** `#an-titulo` existia nos dois; com ambos abertos,
+`$('#an-titulo')` pegava o errado. Modais usam prefixo próprio (`nn-`, `pers-`).
 
-**IDs duplicados entre modal e painel.** `#an-titulo` existia no painel da anotação e no modal
-de criar; com os dois abertos, `$('#an-titulo')` pegava o errado e criava a anotação com o
-título errado. Modais usam prefixo próprio (`nn-`).
+**Presença do Supabase não funciona neste projeto.** `track()` retorna "ok" e `presenceState()`
+fica vazio; o evento `sync` nunca dispara. Está desligado — a lista de jogadores usa a data de
+entrada. Não é regressão: nunca funcionou aqui.
 
 ---
 
 ## 6. Testar
 
-Não há suíte automatizada. O que funciona bem aqui é dirigir o app pelo console do navegador
-(via a ferramenta de preview), montando estado falso e conferindo o DOM:
+Não há suíte. O que funciona é dirigir o app pelo console do navegador, montando estado falso:
 
 ```js
 App.sessao = {user:{id:'u1'}}; App.ehMestre = true;
 Store.mesaId = 'm1'; Store.ehMestre = true;
-Store.salvar = function(){};            // não grava no banco durante o teste
+Store.salvar = function(){};            // não grava durante o teste
 Store.estado.personagens = [Store.normalizar({id:'c1', nome:'Teste'})];
 Mesa.render();
 ```
 
-Duas lições sobre isso:
+Para regras de acesso, crie clientes Supabase paralelos e teste de verdade:
+
+```js
+const mk = k => window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY,
+  { auth: { storageKey: k, persistSession: false } });
+```
+
+Quatro lições que valeram:
 
 **Meça visibilidade, não só geometria.** `getBoundingClientRect()` devolve caixa para elemento
-escondido por CSS. Confira `getComputedStyle(el).display !== 'none'` — foi o que deixou passar
-o bug do `[hidden]`.
+escondido por CSS. Confira `getComputedStyle(el).display !== 'none'`.
 
-**Dispare o evento em quem está no ponto, não no elemento que você quer.** `el.dispatchEvent()`
-pula a detecção de quem está por cima; o mouse de verdade não pula. Use
-`document.elementFromPoint(x, y).dispatchEvent(...)` — foi assim que o clique engolido pelo
-`.mapa-tokens` apareceu.
+**Dispare o evento em quem está no ponto.** `el.dispatchEvent()` pula a detecção de quem está
+por cima; o mouse não pula. Use `document.elementFromPoint(x,y).dispatchEvent(...)`.
 
-Para conferir desenho (SVG, ícone) sem screenshot: renderize num `<canvas>` e devolva uma
-grade de caracteres lendo o alfa dos pixels. Foi assim que o ouroboros foi ajustado.
+**Teste as regras com a conta de menor privilégio.** Vários furos só apareceram logado como
+jogador. Como mestre, tudo passa — e não é isso que você quer provar.
+
+**Transições e animações não avançam em aba oculta.** Se o ambiente de teste não estiver
+renderizando, `getBoundingClientRect` devolve sempre o quadro inicial e parece que a animação
+não existe. Para verificar, force `transition: none` ou mexa em `animation.currentTime`.
+Dois "bugs" foram alarme falso por isso.
+
+Para conferir desenho (SVG, ícone) sem screenshot: renderize num `<canvas>` e devolva uma grade
+de caracteres lendo o alfa dos pixels. Foi assim que o ouroboros foi ajustado.
 
 ---
 
 ## 7. Catálogo de itens
 
-`catalogo/itens.json` tem **178 itens** (45 armas com dano/crítico/alcance/tipo) extraídos dos
-PDFs. O extrator (`extrai2.py`, no diretório de trabalho temporário) lida com dois formatos:
+`catalogo/itens.json` (fora do git) tem **178 itens**, 45 armas com dano/crítico/alcance/tipo,
+extraídos dos PDFs com um script de duas passadas: página inteira (tabelas largas, como a de
+armas) e coluna por coluna (tabelas estreitas encostadas em texto corrido).
 
-- **Ficha em caixa** (Arquivos Secretos): âncora `CATEGORIA X | N ESPAÇOS`
-- **Tabela alinhada** (Livro Básico, Sobrevivendo ao Horror): colunas por espaço
+**Pendências:** a tela de *Equipar* não existe ainda; 8 nomes saíram com texto colado; colete e
+mochila não apareceram; `AS_07` é quadrinho sem camada de texto.
 
-Ele faz **duas passadas** — página inteira (tabelas largas, como a de armas) e coluna por
-coluna (tabelas estreitas encostadas em texto corrido) — e junta. Uma passada só perde metade.
-
-**Pendências conhecidas:**
-
-- A interface de *Equipar* na ficha **ainda não existe**. O JSON está pronto, falta a tela
-- 8 nomes saíram com texto colado (`"dano mental. Paçoca"`) — corrigir à mão
-- Colete e mochila não apareceram; devem estar em tabela de proteções com outro formato
-- `AS_07_hq_vampyre.pdf` é quadrinho, sem camada de texto — não há item a extrair
+Quando a tela existir, o catálogo **não** pode virar arquivo público do site — é conteúdo dos
+livros. Ele vai pro Supabase, atrás do login.
 
 ---
 
 ## 8. Convenções
 
-- **Código e comentários em português.** Nomes de variável também (`personagem`, `rolagem`)
-- Comentário explica **por quê**, não o quê. Se o porquê é uma armadilho, documente na seção 5
-- CSS organizado por seção com cabeçalho de bloco. Variáveis de cor no `:root`
-- `--roxo` é a cor da marca; `--perigo` é o vermelho e só aparece onde significa dano, risco
-  ou falha (excluir, dano, dado 1 natural, munição zerada, barra de PV). Não troque um pelo outro
-- Animação só com `transform` e `opacity` (a GPU compõe sozinha). Respeite
-  `prefers-reduced-motion`
-- Todo texto que vem do usuário passa por `esc()` antes de entrar em `innerHTML`
+- **Código e comentários em português**, nomes de variável inclusive
+- Comentário explica **por quê**. Se o porquê é uma armadilha, documente na seção 5
+- CSS por seção, com cabeçalho de bloco. Cores no `:root`
+- `--roxo` é a marca; `--perigo` é o vermelho e só aparece onde significa dano, risco ou falha
+  (excluir, dano, dado 1 natural, munição zerada, barra de PV). Não troque um pelo outro
+- Animação só com `transform` e `opacity`. Respeite `prefers-reduced-motion`
+- Todo texto de usuário passa por `esc()` antes de entrar em `innerHTML`
+- `.gitignore` barra os PDFs dos livros e o `catalogo/`. **Confira antes de publicar**

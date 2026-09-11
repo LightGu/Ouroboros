@@ -12,12 +12,12 @@ const TIPOS = [
 const Campanha = {
   lista: [],
   aberta: null,
+  soMinhas: false,
   vista: 'lista',        // 'lista' | 'grafo'
   busca: '',
   filtroTipo: '',
 
   async carregar() {
-    if (!App.ehMestre) return;
     try { this.lista = await Nuvem.anotacoes(App.mesa.id); this.render(); }
     catch (e) { $('#campanha-corpo').innerHTML = `<p class="vazio-linha">Erro: ${esc(e.message || e)}</p>`; }
   },
@@ -41,6 +41,10 @@ const Campanha = {
       this.linksDe(n).some(l => l.trim().toLowerCase() === meu));
   },
 
+  nomeAutor(n) {
+    return (Celular.membros || []).find(m => m.id === n.autor_id)?.nome || 'alguém';
+  },
+
   corDoTipo(tipo) {
     return (TIPOS.find(t => t.nome === tipo) || TIPOS[TIPOS.length - 1]).h;
   },
@@ -57,6 +61,7 @@ const Campanha = {
     const tipos = [...new Set(this.lista.map(n => n.tipo))].sort();
     $('#campanha-barra').innerHTML = `
       <button class="btn btn-primary btn-peq" id="btn-nova-nota">+ Anotação</button>
+      ${this.temDeOutros() ? `<button class="chip-filtro ${this.soMinhas ? 'ativo' : ''}" id="btn-so-minhas">só as minhas</button>` : ''}
       <button class="btn btn-ghost btn-peq" id="btn-importar-notas" title="Markdown ou JSON">↥ Importar</button>
       <button class="btn btn-ghost btn-peq" id="btn-exportar-notas" title="Backup em JSON">↧ Exportar</button>
       <div class="sep"></div>
@@ -74,6 +79,7 @@ const Campanha = {
       <span class="dica-som">${this.lista.length} anotações · só você vê</span>`;
 
     $('#btn-nova-nota').addEventListener('click', () => this.nova());
+    $('#btn-so-minhas')?.addEventListener('click', () => { this.soMinhas = !this.soMinhas; this.render(); });
     $('#btn-importar-notas').addEventListener('click', () => this.modalImportar());
     $('#btn-exportar-notas').addEventListener('click', () => this.exportar());
     $$('#campanha-barra [data-vista]').forEach(b => b.addEventListener('click', () => {
@@ -88,9 +94,13 @@ const Campanha = {
     }));
   },
 
+  minhaEh(n) { return n.autor_id === App.sessao?.user?.id; },
+  temDeOutros() { return this.lista.some(n => !this.minhaEh(n)); },
+
   filtradas() {
     const b = this.busca.trim().toLowerCase();
     return this.lista.filter(n =>
+      (!this.soMinhas || this.minhaEh(n)) &&
       (!this.filtroTipo || n.tipo === this.filtroTipo) &&
       (!b || (n.titulo + ' ' + n.texto + ' ' + (n.etiquetas || []).join(' ')).toLowerCase().includes(b)));
   },
@@ -116,6 +126,8 @@ const Campanha = {
       <article class="nota" data-nota="${n.id}" style="--h:${this.corDoTipo(n.tipo)}">
         <header class="nota-cab">
           <span class="nota-tipo">${esc(n.tipo)}</span>
+          ${n.compartilhada ? '<span class="nota-selo" title="Todo mundo da mesa vê">compartilhada</span>' : ''}
+          ${!this.minhaEh(n) ? `<span class="nota-autor">de ${esc(this.nomeAutor(n))}</span>` : ''}
           ${n.fixada ? '<span class="nota-fixada" title="Fixada">★</span>' : ''}
         </header>
         <h3 class="nota-titulo">${esc(n.titulo)}</h3>
@@ -196,6 +208,8 @@ const Campanha = {
           <select id="an-tipo">${TIPOS.map(t => `<option ${t.nome === n.tipo ? 'selected' : ''}>${t.nome}</option>`).join('')}</select>
           <input id="an-tags" value="${esc((n.etiquetas || []).join(', '))}" placeholder="etiquetas, separadas, por vírgula">
           <button class="btn-mini ${n.fixada ? 'ativo' : ''}" id="an-fixar" title="Fixar">★</button>
+          <button class="btn-mini ${n.compartilhada ? 'ativo' : ''}" id="an-partilhar"
+                  title="${n.compartilhada ? 'Todo mundo da mesa vê' : 'Só você vê'}">${n.compartilhada ? '👁' : '🔒'}</button>
           <button class="btn-mini perigo" id="an-apagar" title="Apagar">✕</button>
         </div>
         <textarea id="an-texto" class="nota-texto" placeholder="Escreva aqui.&#10;&#10;Use [[Nome de outra anotação]] pra ligar as duas — digite [[ que eu sugiro os títulos.">${esc(n.texto || '')}</textarea>
@@ -215,6 +229,19 @@ const Campanha = {
     $('#an-fixar').addEventListener('click', () => {
       n.fixada = !n.fixada; this.gravar(n, { fixada: n.fixada }); this.renderNota(); this.render();
     });
+    $('#an-partilhar').addEventListener('click', () => {
+      n.compartilhada = !n.compartilhada;
+      this.gravar(n, { compartilhada: n.compartilhada });
+      toast(n.compartilhada ? 'Agora todo mundo da mesa vê.' : 'Voltou a ser só sua.');
+      this.renderNota(); this.render();
+    });
+
+    /* anotação de outra pessoa: dá pra ler, não pra mexer */
+    if (!this.minhaEh(n)) {
+      $$('#painel-nota input, #painel-nota textarea, #painel-nota select').forEach(el => el.disabled = true);
+      $$('#an-fixar, #an-partilhar, #an-apagar').forEach(el => el.remove());
+      $('#nota-salvo').textContent = 'de ' + this.nomeAutor(n) + ' — somente leitura';
+    }
 
     const campos = { titulo: '#an-titulo', tipo: '#an-tipo', texto: '#an-texto' };
     Object.entries(campos).forEach(([chave, sel]) => {

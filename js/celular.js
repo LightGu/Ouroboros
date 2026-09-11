@@ -10,16 +10,18 @@ const Celular = {
   /* Até onde eu li cada conversa. Vem do banco, numa tabela que só eu
      alcanço — persiste entre recarregamentos e o remetente não enxerga. */
   lido: new Map(),
+  liberados: [],      // quem enxerga qual persona, além de quem trocou mensagem
 
   /* ---------------- carga ---------------- */
 
   async carregar() {
     try {
-      [this.msgs, this.personas, this.membros, this.lido] = await Promise.all([
+      [this.msgs, this.personas, this.membros, this.lido, this.liberados] = await Promise.all([
         Nuvem.mensagens(App.mesa.id),
         Nuvem.personas(App.mesa.id),
         Nuvem.membros(App.mesa.id),
-        Nuvem.leituras(App.mesa.id)
+        Nuvem.leituras(App.mesa.id),
+        Nuvem.contatosLiberados(App.mesa.id)
       ]);
       this.render();
       Mensagens.render();
@@ -78,11 +80,7 @@ const Celular = {
     if (this.souEu()) {
       /* o jogador só enxerga a persona depois que ela falou com ele:
          é o mestre quem decide quando aquele número passa a existir */
-      const permitidas = App.ehMestre
-        ? this.personas
-        : this.personas.filter(p => this.msgs.some(m =>
-            (m.de_persona === p.id && m.para_user === this.eu()) ||
-            (m.para_persona === p.id && m.de_user === this.eu())));
+      const permitidas = App.ehMestre ? this.personas : this.personas.filter(p => this.tenhoContato(p.id));
       permitidas.forEach(p => lista.push({ tipo: 'persona', id: p.id, nome: p.nome, foto: p.foto, persona: true }));
     }
 
@@ -92,6 +90,14 @@ const Celular = {
       return Object.assign(c, { ultima, naoLidas: this.novasDe(c) });
     }).sort((a, b) =>
       (b.ultima ? Date.parse(b.ultima.criado_em) : 0) - (a.ultima ? Date.parse(a.ultima.criado_em) : 0));
+  },
+
+  /* Tenho o número se ele já falou comigo, ou se alguém me passou. */
+  tenhoContato(personaId) {
+    return this.msgs.some(m =>
+             (m.de_persona === personaId && m.para_user === this.eu()) ||
+             (m.para_persona === personaId && m.de_user === this.eu()))
+        || this.liberados.some(l => l.persona_id === personaId && l.user_id === this.eu());
   },
 
   chaveDe(c) { return (c.tipo === 'persona' ? 'p:' : 'u:') + c.id; },
@@ -167,6 +173,8 @@ const Celular = {
         <button class="cel-voltar" data-voltar>‹</button>
         <span class="cel-foto pequena">${c.foto ? `<img src="${esc(c.foto)}" alt="">` : esc(iniciais(c.nome))}</span>
         <span class="cel-titulo">${esc(c.nome)}</span>
+        ${c.tipo === 'persona' && this.souEu()
+          ? '<button class="cel-acao" data-passar title="Dar este contato a outra pessoa">passar número</button>' : ''}
       </header>
       <div class="cel-conversa" id="cel-conversa">
         ${conv.length ? conv.map(m => {
@@ -200,6 +208,7 @@ const Celular = {
 
     $('[data-voltar]', tela)?.addEventListener('click', () => { this.conversa = null; this.render(); });
     $('[data-nova-persona]', tela)?.addEventListener('click', () => this.modalPersona());
+    $('[data-passar]', tela)?.addEventListener('click', () => this.modalPassar(this.conversa));
     $('#cel-identidade', tela)?.addEventListener('change', e => {
       this.comoPersona = e.target.value || null;
       this.conversa = null;          /* caixa de entrada nova, começa da lista */
@@ -245,6 +254,40 @@ const Celular = {
     }
   },
 
+  /* Passar o número adiante. O jogador só passa o que já tem — a checagem
+     de verdade está na função do banco, esta tela é só conveniência. */
+  modalPassar(c) {
+    const outros = this.membros.filter(m => m.id !== this.eu());
+    const jaTem = id => this.liberados.some(l => l.persona_id === c.id && l.user_id === id)
+      || this.msgs.some(m => (m.de_persona === c.id && m.para_user === id)
+                          || (m.para_persona === c.id && m.de_user === id));
+    Modal.abrir({
+      titulo: 'Passar o número',
+      corpo: `
+        <p class="dialogo">Quem mais passa a ter <b>${esc(c.nome)}</b> na lista de contatos.</p>
+        <div class="lista-jogadores">
+          ${outros.map(m => `
+            <label class="jogador">
+              <input type="checkbox" value="${esc(m.id)}" ${jaTem(m.id) ? 'checked disabled' : ''}>
+              <span class="jogador-nome">${esc(m.nome)}</span>
+              <span class="tag ${m.papel === 'mestre' ? 'tag-mestre' : 'tag-jogador'}">${m.papel}</span>
+              <span class="cresce"></span>
+              ${jaTem(m.id) ? '<span class="jogador-quando">já tem</span>' : ''}
+            </label>`).join('')}
+        </div>`,
+      confirmar: 'Passar',
+      onConfirmar: async () => {
+        const ids = [...document.querySelectorAll('#modal-body input:checked:not(:disabled)')].map(i => i.value);
+        if (!ids.length) { toast('Marque pelo menos uma pessoa.', 'erro'); return false; }
+        try {
+          for (const id of ids) await Nuvem.liberarContato(c.id, id);
+          this.liberados = await Nuvem.contatosLiberados(App.mesa.id);
+          toast(`Número passado para ${ids.length} pessoa(s).`);
+        } catch (e) { toast(String(e.message || e), 'erro'); return false; }
+      }
+    });
+  },
+
   modalPersona() {
     Modal.abrir({
       titulo: 'Novo número',
@@ -255,6 +298,11 @@ const Celular = {
           <input id="pers-nome" placeholder="Ex.: Desconhecido, Dr. Aldo, (11) 9****-1234"></label>
         <label class="campo"><span>Foto (opcional)</span><input type="file" id="pers-foto" accept="image/*"></label>
         <div class="previa" id="pers-previa"><span class="fraco">sem foto</span></div>
+        <div class="nota-links"><h4>Quem já pode ver este número</h4>
+          <p class="ajuda">Deixe vazio pra ninguém ver até você mandar a primeira mensagem.</p>
+          ${this.membros.filter(m => m.id !== this.eu()).map(m => `
+            <label class="link-nota"><input type="checkbox" class="pers-quem" value="${esc(m.id)}"> ${esc(m.nome)}</label>`).join('')}
+        </div>
         ${this.personas.length ? `<div class="nota-links"><h4>Números já criados</h4>
           ${this.personas.map(p => `<button class="link-nota" data-apagar-persona="${p.id}">${esc(p.nome)} ✕</button>`).join('')}
         </div>` : ''}`,
@@ -267,8 +315,11 @@ const Celular = {
           if (Modal._fotoPersona) foto = await Nuvem.enviarRetrato(Modal._fotoPersona, App.mesa.id, 'persona');
           const p = await Nuvem.criarPersona(App.mesa.id, nome, foto || null);
           this.personas.push(p);
+          const quem = [...document.querySelectorAll('.pers-quem:checked')].map(i => i.value);
+          for (const id of quem) await Nuvem.liberarContato(p.id, id);
+          if (quem.length) this.liberados = await Nuvem.contatosLiberados(App.mesa.id);
           this.render();
-          toast('Número criado.');
+          toast('Número criado' + (quem.length ? ` e liberado pra ${quem.length}.` : '.'));
         } catch (e) { toast('Erro: ' + (e.message || e), 'erro'); return false; }
         finally { delete Modal._fotoPersona; }
       }

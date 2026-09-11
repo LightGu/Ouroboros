@@ -57,7 +57,9 @@ const App = {
     $('#mesa-nome').textContent = mesa.nome;
     $('#aba-logs').hidden = !this.ehMestre;
     $('#aba-sons').hidden = !this.ehMestre;
-    $('#aba-campanha').hidden = !this.ehMestre;
+    /* jogador também tem caderno — o dele chama Anotações */
+    $('#aba-campanha').hidden = false;
+    $('#aba-campanha').textContent = this.ehMestre ? 'Campanha' : 'Anotações';
     $('#aba-interludio').hidden = !this.ehMestre;
     $('#aba-mensagens').hidden = !this.ehMestre;
     $('#celular').hidden = false;
