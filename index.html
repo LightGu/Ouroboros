@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ouroboros</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="icon" type="image/svg+xml" href="img/favicon.svg">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="ouroboros" viewBox="0 0 100 100" fill="none"><g stroke="currentColor" stroke-linecap="round" fill="none">
+    <path d="M42.9 16.7 A34 34 0 0 1 83.5 44.1" stroke-width="10.5"/>
+    <path d="M83.5 44.1 A34 34 0 0 1 55.9 83.5" stroke-width="8.8"/>
+    <path d="M55.9 83.5 A34 34 0 0 1 20.6 67.0" stroke-width="6.4"/>
+    <path d="M20.6 67.0 A34 34 0 0 1 26.0 26.0" stroke-width="3.6"/>
+  </g>
+  <g fill="currentColor">
+    <!-- mandíbula de cima e de baixo, abrindo 52° a partir da dobra -->
+    <path d="M40.2 11.9 L19.9 21.4 L35.5 20.0 Z"/>
+    <path d="M45.6 21.5 L26.7 33.7 L36.8 22.8 Z"/>
+    <!-- presas: uma saindo da ponta de cima, outra da ponta de baixo,
+         viradas pra dentro da boca -->
+    <path d="M19.9 21.4 L24.6 28.2 L24.2 21.9 Z"/>
+    <path d="M26.7 33.7 L26.4 26.6 L30.6 29.8 Z"/>
+  </g>
+  <circle cx="41.2" cy="18.2" r="2" fill="#0c0d10"/></symbol>
+</svg>
+
+<header class="topbar" id="topbar" hidden>
+  <div class="brand">
+    <svg class="brand-mark" aria-hidden="true"><use href="#ouroboros"/></svg>
+    <div>
+      <h1>OUROBOROS</h1>
+      <p id="mesa-nome"></p>
+    </div>
+  </div>
+
+  <nav class="abas" id="abas">
+    <button class="aba ativa" data-aba="mesa">Mesa</button>
+    <button class="aba" data-aba="mapa">Mapa</button>
+    <button class="aba" data-aba="sons" id="aba-sons" hidden>Sons</button>
+    <button class="aba" data-aba="campanha" id="aba-campanha" hidden>Campanha</button>
+    <button class="aba" data-aba="interludio" id="aba-interludio" hidden>Interlúdio</button>
+    <button class="aba" data-aba="logs" id="aba-logs" hidden>Logs <span class="badge" id="badge-logs" hidden></span></button>
+  </nav>
+
+  <div class="topbar-actions">
+    <button class="btn btn-primary" id="btn-novo">+ Personagem</button>
+    <button class="btn" id="btn-rapido">+ Rápido</button>
+    <div class="sep"></div>
+    <button class="btn btn-ghost" id="btn-exportar" title="Baixar backup .json">Exportar</button>
+    <button class="btn btn-ghost" id="btn-importar" title="Carregar backup .json">Importar</button>
+    <input type="file" id="file-importar" accept="application/json" hidden>
+    <div class="sep"></div>
+    <button class="btn btn-ghost btn-icon" id="btn-rolagens" title="Rolagens da mesa">🎲</button>
+    <span class="conexao off" id="conexao" title="Conectando..."></span>
+    <button class="btn btn-ghost" id="btn-conta"><span id="conta-nome">…</span> ▾</button>
+  </div>
+</header>
+
+<!-- ============ LOGIN ============ -->
+<main id="view-auth" class="view view-centro" hidden>
+  <div class="cartao-auth">
+    <div class="auth-marca"><svg class="brand-mark" aria-hidden="true"><use href="#ouroboros"/></svg><h1>OUROBOROS</h1></div>
+
+    <div class="alternador">
+      <button class="alt ativa" data-modo="entrar">Entrar</button>
+      <button class="alt" data-modo="cadastrar">Criar conta</button>
+    </div>
+
+    <form id="form-auth" autocomplete="on">
+      <label class="campo" id="campo-nome" hidden><span>Como te chamam na mesa</span>
+        <input id="auth-nome" autocomplete="nickname" placeholder="Gustavo"></label>
+      <label class="campo"><span>Email</span>
+        <input id="auth-email" type="email" autocomplete="email" required placeholder="voce@email.com"></label>
+      <label class="campo"><span>Senha</span>
+        <input id="auth-senha" type="password" autocomplete="current-password" required minlength="6" placeholder="mínimo 6 caracteres"></label>
+      <button class="btn btn-primary btn-largo" id="btn-auth" type="submit">Entrar</button>
+      <p class="auth-erro" id="auth-erro" hidden></p>
+    </form>
+  </div>
+</main>
+
+<!-- ============ ESCOLHA DE MESA ============ -->
+<main id="view-mesas" class="view view-centro" hidden>
+  <div class="cartao-auth cartao-largo">
+    <h2 class="titulo-tela">Suas mesas</h2>
+    <div id="lista-mesas" class="lista-mesas"></div>
+
+    <div class="grade-2 espaco-topo">
+      <div class="caixa-acao">
+        <h3>Criar uma mesa</h3>
+        <p>Você vira o mestre e recebe um código pra passar pros jogadores.</p>
+        <label class="campo"><span>Nome da mesa</span><input id="nova-mesa" placeholder="Ex.: Mesa de Segunda"></label>
+        <button class="btn btn-primary btn-largo" id="btn-criar-mesa">Criar mesa</button>
+      </div>
+      <div class="caixa-acao">
+        <h3>Entrar numa mesa</h3>
+        <p>Cole o código de 6 caracteres que o mestre te passou.</p>
+        <label class="campo"><span>Código</span><input id="codigo-mesa" maxlength="6" placeholder="A1B2C3" style="text-transform:uppercase"></label>
+        <button class="btn btn-largo" id="btn-entrar-mesa">Entrar</button>
+      </div>
+    </div>
+
+    <button class="btn btn-ghost espaco-topo" id="btn-sair-mesas">Sair da conta</button>
+  </div>
+</main>
+
+<!-- ============ MESA ============ -->
+<main id="view-mesa" class="view" hidden>
+
+  <section class="turnbar" id="turnbar">
+    <div class="turnbar-left">
+      <button class="btn btn-primary" id="btn-turnos">▶ Iniciar turnos</button>
+      <button class="btn btn-ghost" id="btn-iniciativa" title="Rola 1d20 + Iniciativa de cada um e reordena">🎲 Rolar iniciativa</button>
+    </div>
+    <div class="turnbar-right" id="turno-info" hidden>
+      <button class="btn btn-icon" id="btn-anterior" title="Anterior">‹</button>
+      <div class="rodada">
+        <span class="rodada-label">RODADA</span>
+        <span class="rodada-num" id="rodada-num">1</span>
+      </div>
+      <div class="turno-atual">
+        <span class="turno-label">NA VEZ</span>
+        <span class="turno-nome" id="turno-nome">—</span>
+      </div>
+      <button class="btn btn-primary" id="btn-proximo" title="Próximo">Próximo ›</button>
+      <button class="btn btn-ghost btn-icon" id="btn-parar" title="Encerrar combate">✕</button>
+    </div>
+  </section>
+
+  <div id="log-iniciativa" class="log-iniciativa" hidden></div>
+
+  <div id="grid" class="grid"></div>
+
+  <div id="vazio" class="vazio" hidden>
+    <svg class="vazio-mark" aria-hidden="true"><use href="#ouroboros"/></svg>
+    <h2>Nenhum agente na mesa</h2>
+    <p>Crie um personagem completo com a ficha de agente, ou um personagem rápido pra usar como NPC / inimigo nos turnos.</p>
+    <div class="vazio-btns">
+      <button class="btn btn-primary" onclick="document.getElementById('btn-novo').click()">+ Personagem</button>
+      <button class="btn" onclick="document.getElementById('btn-rapido').click()">+ Personagem rápido</button>
+    </div>
+  </div>
+</main>
+
+<!-- ============ FICHA ============ -->
+<main id="view-ficha" class="view" hidden></main>
+
+<!-- ============ MAPA ============ -->
+<main id="view-mapa" class="view" hidden>
+  <div class="mapa-barra" id="mapa-barra"></div>
+  <div class="mapa-palco" id="mapa-palco"></div>
+</main>
+
+<!-- ============ SONS ============ -->
+<main id="view-sons" class="view" hidden>
+  <div class="sons-barra" id="sons-barra"></div>
+  <div class="sons-tocando" id="sons-tocando" hidden></div>
+  <div class="sons-lista" id="sons-lista"></div>
+</main>
+
+<!-- ============ CAMPANHA ============ -->
+<main id="view-campanha" class="view" hidden>
+  <div class="campanha-barra" id="campanha-barra"></div>
+  <div class="campanha-corpo" id="campanha-corpo"></div>
+</main>
+<aside id="painel-nota" class="painel-nota" hidden></aside>
+
+<!-- ============ INTERLÚDIO ============ -->
+<main id="view-interludio" class="view" hidden>
+  <div class="interludio-barra" id="interludio-barra"></div>
+  <div class="interludio-corpo" id="interludio-corpo"></div>
+</main>
+
+<!-- ============ LOGS ============ -->
+<main id="view-logs" class="view" hidden>
+  <div class="logs-topo">
+    <h2 class="titulo-tela">Logs da mesa</h2>
+    <input id="logs-busca" class="busca" placeholder="Filtrar por personagem, jogador ou ação...">
+    <button class="btn btn-ghost" id="btn-logs-atualizar">Atualizar</button>
+  </div>
+  <div id="logs-lista" class="logs-lista"></div>
+</main>
+
+<!-- ============ MODAL / AVISOS ============ -->
+<div id="modal" class="modal-backdrop" hidden>
+  <div class="modal" role="dialog" aria-modal="true">
+    <header class="modal-head">
+      <h2 id="modal-titulo">Título</h2>
+      <button class="btn btn-icon btn-ghost" id="modal-fechar">✕</button>
+    </header>
+    <div class="modal-body" id="modal-body"></div>
+    <footer class="modal-foot" id="modal-foot"></footer>
+  </div>
+</div>
+
+<aside id="painel-rolagens" class="painel-rolagens" hidden>
+  <header class="painel-cab">
+    <h2>Rolagens</h2>
+    <button class="btn btn-icon btn-ghost" id="rolagens-fechar">✕</button>
+  </header>
+  <div id="rolagens-lista" class="rolagens-lista"></div>
+  <footer class="painel-rodape">
+    <div class="linha-rolar">
+      <input id="rolagem-livre" placeholder="2d6+3, 1d20, 4d6-1...">
+      <button class="btn btn-primary" id="btn-rolar-livre">Rolar</button>
+    </div>
+    <label class="radio" id="linha-secreta" hidden><input type="checkbox" id="rolagem-secreta"> rolagem secreta (só você vê)</label>
+  </footer>
+</aside>
+
+<button id="aviso-audio" class="aviso-audio" hidden>🔊 Clique para liberar o áudio da mesa</button>
+
+<div id="toast" class="toast" hidden></div>
+<div id="avisos" class="avisos"></div>
+
+<div id="carregando" class="carregando"><svg class="brand-mark" aria-hidden="true"><use href="#ouroboros"/></svg></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script src="js/config.js"></script>
+<script src="js/dados.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/nuvem.js"></script>
+<script src="js/store.js"></script>
+<script src="js/mesa.js"></script>
+<script src="js/ficha.js"></script>
+<script src="js/rolagem.js"></script>
+<script src="js/mapa.js"></script>
+<script src="js/sons.js"></script>
+<script src="js/campanha.js"></script>
+<script src="js/interludio.js"></script>
+<script src="js/logs.js"></script>
+<script src="js/telas.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>

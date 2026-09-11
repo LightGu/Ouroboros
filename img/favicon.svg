@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" fill="none"><g stroke="#a78bfa" stroke-linecap="round" fill="none">
+    <path d="M42.9 16.7 A34 34 0 0 1 83.5 44.1" stroke-width="10.5"/>
+    <path d="M83.5 44.1 A34 34 0 0 1 55.9 83.5" stroke-width="8.8"/>
+    <path d="M55.9 83.5 A34 34 0 0 1 20.6 67.0" stroke-width="6.4"/>
+    <path d="M20.6 67.0 A34 34 0 0 1 26.0 26.0" stroke-width="3.6"/>
+  </g>
+  <g fill="#a78bfa">
+    <!-- mandíbula de cima e de baixo, abrindo 52° a partir da dobra -->
+    <path d="M40.2 11.9 L19.9 21.4 L35.5 20.0 Z"/>
+    <path d="M45.6 21.5 L26.7 33.7 L36.8 22.8 Z"/>
+    <!-- presas: uma saindo da ponta de cima, outra da ponta de baixo,
+         viradas pra dentro da boca -->
+    <path d="M19.9 21.4 L24.6 28.2 L24.2 21.9 Z"/>
+    <path d="M26.7 33.7 L26.4 26.6 L30.6 29.8 Z"/>
+  </g>
+  <circle cx="41.2" cy="18.2" r="2" fill="#0c0d10"/></svg>
