@@ -1639,3 +1639,46 @@ body.com-painel .view { padding-right: 352px; }
 }
 .cel-disfarce { justify-content: center; color: var(--texto-3); }
 .cel-disfarce b { color: #b39bff; text-transform: none; letter-spacing: 0; font-size: 12px; }
+
+/* ===========================================================
+   DONO DO PERSONAGEM
+   =========================================================== */
+
+/* a borda colorida diz de quem é a ficha num relance */
+.card.tem-dono {
+  border-color: var(--dono);
+  box-shadow: inset 3px 0 0 var(--dono);
+}
+.card.tem-dono:hover { box-shadow: inset 3px 0 0 var(--dono), 0 0 18px -6px var(--dono); }
+/* quem está na vez continua tendo prioridade visual */
+.card.na-vez.tem-dono {
+  border-color: var(--roxo);
+  box-shadow: inset 3px 0 0 var(--dono), 0 0 0 1px var(--roxo), 0 0 30px rgba(124,58,237,.34);
+}
+
+.btn-assumir {
+  width: 100%; padding: 7px; cursor: pointer;
+  background: rgba(124,58,237,.14); border: 1px dashed rgba(124,58,237,.5);
+  border-radius: var(--raio); color: #b39bff;
+  font-size: 12px; font-weight: 600; font-family: inherit;
+  transition: .15s;
+}
+.btn-assumir:hover { background: rgba(124,58,237,.28); border-style: solid; color: #fff; }
+
+.paleta { display: grid; grid-template-columns: repeat(8, 1fr); gap: 8px; }
+.cor { cursor: pointer; }
+.cor input { position: absolute; opacity: 0; pointer-events: none; }
+.cor span {
+  display: block; aspect-ratio: 1; border-radius: 50%;
+  background: var(--c); border: 2px solid transparent;
+  box-shadow: 0 0 0 1px rgba(0,0,0,.5) inset;
+  transition: transform .12s, border-color .12s;
+}
+.cor:hover span { transform: scale(1.12); }
+.cor input:checked + span {
+  border-color: #fff;
+  box-shadow: 0 0 0 1px rgba(0,0,0,.5) inset, 0 0 12px -2px var(--c);
+  transform: scale(1.14);
+}
+
+@media (max-width: 620px) { .paleta { grid-template-columns: repeat(4, 1fr); } }

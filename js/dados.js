@@ -62,6 +62,20 @@ const PATENTES = ['Recruta', 'Operador', 'Agente Especial', 'Oficial de Operaç�
 
 const CATEGORIAS_ITEM = ['I', 'II', 'III', 'IV'];
 
+/* Cores que o jogador escolhe ao assumir um personagem. Todas legíveis
+   sobre o fundo escuro e distinguíveis entre si. */
+const CORES = [
+  { id: 'vermelho', nome: 'Vermelho', hex: '#e0483a' },
+  { id: 'laranja',  nome: 'Laranja',  hex: '#e0872a' },
+  { id: 'amarelo',  nome: 'Amarelo',  hex: '#dfc12f' },
+  { id: 'verde',    nome: 'Verde',    hex: '#46b364' },
+  { id: 'ciano',    nome: 'Ciano',    hex: '#2fb8c9' },
+  { id: 'azul',     nome: 'Azul',     hex: '#4a7fe0' },
+  { id: 'roxo',     nome: 'Roxo',     hex: '#9b6ef0' },
+  { id: 'rosa',     nome: 'Rosa',     hex: '#e055a0' }
+];
+const hexDaCor = id => (CORES.find(c => c.id === id) || {}).hex || '';
+
 /* PV / PE / SAN por classe: [inicial, por NEX] — inicial soma o atributo indicado */
 const PROGRESSAO = {
   'Combatente':   { pv: [20, 4], pvAttr: 'VIG', pe: [2, 2], peAttr: 'PRE', san: [12, 3] },

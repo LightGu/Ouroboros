@@ -325,6 +325,16 @@ const Nuvem = {
     if (falha) throw falha.error;
   },
 
+  async reivindicar(id, cor) {
+    const { error } = await this.cliente.rpc('reivindicar_personagem', { p_id: id, p_cor: cor || null });
+    if (error) throw error;
+  },
+
+  async liberar(id) {
+    const { error } = await this.cliente.rpc('liberar_personagem', { p_id: id });
+    if (error) throw error;
+  },
+
   /* ---------------- celular ---------------- */
 
   async personas(mesaId) {

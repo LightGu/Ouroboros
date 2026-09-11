@@ -41,9 +41,10 @@ const Mesa = {
            <span title="Deslocamento"><b>DESL</b> ${esc(p.desl || 0)}m</span>
          </div>`;
 
+    const cor = hexDaCor(p.cor);
     return `
-    <article class="card ${naVez ? 'na-vez' : ''} ${morto ? 'abatido' : ''} ${p.rapido ? 'e-rapido' : ''} ${pode ? '' : 'so-leitura'}"
-             data-id="${p.id}" data-i="${i}">
+    <article class="card ${naVez ? 'na-vez' : ''} ${morto ? 'abatido' : ''} ${p.rapido ? 'e-rapido' : ''} ${pode ? '' : 'so-leitura'} ${cor ? 'tem-dono' : ''}"
+             data-id="${p.id}" data-i="${i}" ${cor ? `style="--dono:${cor}"` : ''}>
       <div class="card-barra-topo">
         <span class="alca" title="Arraste para mudar a ordem" data-alca role="button" tabindex="-1">⠿</span>
         <span class="pos">${i + 1}</span>
@@ -63,6 +64,9 @@ const Mesa = {
       <div class="card-corpo">
         <h3 class="card-nome" data-abrir title="Abrir ficha">${esc(p.nome || 'Sem nome')}</h3>
         <p class="card-sub">${sub}</p>
+        ${!p.rapido && !p.donoId
+          ? '<button class="btn-assumir" data-assumir>Tornar meu personagem</button>'
+          : ''}
 
         ${this.atributos(p)}
         ${this.bonusInterludio(p)}
@@ -222,6 +226,8 @@ const Mesa = {
       <button data-op="topo">Mandar pro topo</button>
       ${Store.ehMestre ? `<button data-op="oculto">${p.oculto ? 'Mostrar pros jogadores' : 'Esconder dos jogadores'}</button>` : ''}
       ${Store.ehMestre ? '<button data-op="dono">Definir dono</button>' : ''}
+      ${pode && !p.rapido ? '<button data-op="cor">Minha cor</button>' : ''}
+      ${Store.ehMestre && !p.rapido && p.donoId ? '<button data-op="liberar">Liberar pros jogadores</button>' : ''}
       ${pode ? '<button data-op="duplicar">Duplicar</button>' : ''}
       ${pode ? '<button data-op="remover" class="perigo">Remover da mesa</button>' : ''}`;
     botao.closest('.card').appendChild(pop);
@@ -233,6 +239,8 @@ const Mesa = {
       if (op === 'abrir')     p.rapido ? Mesa.modalRapido(p) : Ficha.abrir(p.id);
       if (op === 'imagem')    Mesa.trocarImagem(p.id);
       if (op === 'dono')      Mesa.definirDono(p);
+      if (op === 'cor')       Mesa.escolherCor(p);
+      if (op === 'liberar')   Mesa.liberar(p);
       if (op === 'duplicar')  { await Store.duplicar(p.id); Mesa.render(); }
       if (op === 'oculto')    { p.oculto = !p.oculto; Store.salvar(p); Mesa.render();
                                 toast(p.oculto ? 'Escondido dos jogadores.' : 'Visível pros jogadores.'); }
@@ -258,6 +266,73 @@ const Mesa = {
       onConfirmar: async () => {
         try { await Store.remover(p.id); Mesa.render(); toast('Removido da mesa.'); }
         catch (e) { toast('Não consegui remover: ' + (e.message || e), 'erro'); }
+      }
+    });
+  },
+
+  /* O jogador assume uma ficha livre e escolhe a cor dele. */
+  assumir(p) {
+    Modal.abrir({
+      titulo: 'Tornar meu personagem',
+      corpo: `
+        <p class="dialogo">Você vira o dono de <b>${esc(p.nome || 'esta ficha')}</b>.
+           A partir daí só você e o mestre podem editar.</p>
+        <p class="dialogo fraco">Escolha uma cor — ela marca a borda do card pra mesa
+           saber de relance quem é quem.</p>
+        ${Mesa.paleta('')}`,
+      confirmar: 'Assumir',
+      onConfirmar: async () => {
+        const cor = $('input[name="cor"]:checked')?.value;
+        if (!cor) { toast('Escolhe uma cor.', 'erro'); return false; }
+        try {
+          await Nuvem.reivindicar(p.id, cor);
+          p.donoId = App.sessao.user.id;
+          p.cor = cor;
+          Mesa.render();
+          toast('Agora é seu.');
+        } catch (e) { toast(String(e.message || e), 'erro'); return false; }
+      }
+    });
+  },
+
+  escolherCor(p) {
+    Modal.abrir({
+      titulo: 'Minha cor',
+      corpo: `<p class="dialogo fraco">Marca a borda do card de <b>${esc(p.nome || 'sua ficha')}</b>.</p>
+              ${Mesa.paleta(p.cor)}`,
+      confirmar: 'Salvar',
+      onConfirmar: () => {
+        const cor = $('input[name="cor"]:checked')?.value || '';
+        p.cor = cor;
+        Store.salvar(p);
+        Mesa.render();
+      }
+    });
+  },
+
+  paleta(atual) {
+    return `<div class="paleta">
+      ${CORES.map(c => `
+        <label class="cor" style="--c:${c.hex}" title="${c.nome}">
+          <input type="radio" name="cor" value="${c.id}" ${atual === c.id ? 'checked' : ''}>
+          <span></span>
+        </label>`).join('')}
+    </div>`;
+  },
+
+  liberar(p) {
+    Modal.abrir({
+      titulo: 'Liberar ficha',
+      corpo: `<p class="dialogo">Tirar o dono de <b>${esc(p.nome || 'esta ficha')}</b>?
+              Ela volta a aparecer com o botão <i>Tornar meu personagem</i> pra quem quiser assumir.</p>`,
+      confirmar: 'Liberar',
+      onConfirmar: async () => {
+        try {
+          await Nuvem.liberar(p.id);
+          p.donoId = null;
+          Mesa.render();
+          toast('Ficha liberada.');
+        } catch (e) { toast(String(e.message || e), 'erro'); }
       }
     });
   },
@@ -535,6 +610,7 @@ document.addEventListener('click', e => {
   if (e.target.closest('[data-mover]'))       return Mesa.mover(id, Number(e.target.dataset.mover));
   if (e.target.closest('[data-menu]'))        return Mesa.menu(id, e.target);
   if (e.target.closest('[data-addcond]'))     return Mesa.addCondicao(id);
+  if (e.target.closest('[data-assumir]'))     return Mesa.assumir(Store.obter(id));
 
   const bon = e.target.closest('[data-bonus]');
   if (bon) {

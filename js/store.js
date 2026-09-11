@@ -200,6 +200,7 @@ const Store = {
       inventario: { limites: { I: '', II: '', III: '', IV: '' }, credito: '', cargaMax: '', itens: [] },
       prestigio: '',
       municoes: [],
+      cor: '',
       bonus: { corpo: 0, mente: 0 },
       descricao: { aparencia: '', personalidade: '', historico: '', objetivo: '' },
       notas: '',
