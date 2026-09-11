@@ -406,8 +406,18 @@ const Nuvem = {
   /* `aoLigar` dispara quando o Postgres confirma a inscrição — inclusive depois
      de uma reconexão. Tudo que mudou enquanto o canal estava fora chega junto,
      então é aí que o app recarrega a mesa pra não ficar desatualizado calado. */
-  assinar(mesaId, { aoMudarPersonagem, aoChegarLog, aoRolar, aoMudarMapa, aoMudarToken, aoMudarMesa, aoArrastar, aoMudarSom, aoMudarAnotacao, aoMudarPresenca, aoChegarMensagem, aoLigar, aoCair }) {
-    this.desassinar();
+  /* async e com await no desassinar: o canal usa sempre o mesmo nome
+     ('mesa-<id>', porque o broadcast do arrasto exige que todos estejam no
+     mesmo tópico). Se o novo entrar antes de o antigo sair, o servidor
+     ignora o segundo — ele fica 'joined' mas nunca confirma a inscrição no
+     Postgres, e nada chega. */
+  async assinar(mesaId, { aoMudarPersonagem, aoChegarLog, aoRolar, aoMudarMapa, aoMudarToken, aoMudarMesa, aoArrastar, aoMudarAnotacao, aoMudarPresenca, aoChegarMensagem, aoLigar, aoCair }) {
+    await this.desassinar();
+    /* `sons` NÃO entra aqui de propósito.
+       O Realtime recusava a inscrição nessa tabela e, como todas as tabelas
+       compartilham o mesmo canal, UMA recusa derrubava todas as outras —
+       ninguém recebia nada ao vivo. A aba de sons é de um usuário só e
+       recarrega ao abrir, então sincronizar ela não fazia falta nenhuma. */
     this.canal = this.cliente.channel('mesa-' + mesaId)
       .on('postgres_changes',
           { event: '*', schema: 'public', table: 'personagens', filter: `mesa_id=eq.${mesaId}` },
@@ -433,9 +443,7 @@ const Nuvem = {
         const estado = this.canal.presenceState();
         aoMudarPresenca?.(new Set(Object.values(estado).flat().map(x => x.id)));
       })
-      .on('postgres_changes',
-          { event: '*', schema: 'public', table: 'sons', filter: `mesa_id=eq.${mesaId}` },
-          payload => aoMudarSom?.(payload))
+
       .on('postgres_changes',
           { event: '*', schema: 'public', table: 'anotacoes', filter: `mesa_id=eq.${mesaId}` },
           payload => aoMudarAnotacao?.(payload))
@@ -453,7 +461,14 @@ const Nuvem = {
       });
   },
 
+  /* Zera a referência ANTES de esperar a remoção.
+     Se zerar depois, um assinar() disparado no meio já colocou o canal novo
+     em this.canal e este método o apaga — o canal novo fica órfão, ninguém
+     recebe nada e a bolinha de conexão fica âmbar pra sempre. */
   async desassinar() {
-    if (this.canal) { await this.cliente.removeChannel(this.canal); this.canal = null; }
+    const velho = this.canal;
+    if (!velho) return;
+    this.canal = null;
+    await this.cliente.removeChannel(velho);
   }
 };

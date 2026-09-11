@@ -144,7 +144,9 @@ const Celular = {
               <span class="cel-nome">${esc(c.nome)}${c.persona ? '<i class="cel-tag">número</i>' : ''}</span>
               <span class="cel-previa">${c.ultima ? esc(c.ultima.texto.slice(0, 38)) : '<i>sem conversa</i>'}</span>
             </span>
-            ${c.naoLidas ? `<span class="cel-bolha">${c.naoLidas}</span>` : ''}
+            ${c.naoLidas ? (App.ehMestre
+                ? `<span class="cel-bolha">${c.naoLidas}</span>`
+                : '<span class="cel-novo" title="mensagem nova"></span>') : ''}
           </button>`).join('')
           : '<p class="cel-vazio">Ninguém pra conversar ainda.</p>'}
       </div>`;
@@ -305,7 +307,18 @@ const Celular = {
       const olhando = this.aberto && this.conversa
         && c && c.tipo === this.conversa.tipo && c.id === this.conversa.id;
       if (!olhando) { this.novas.add(m.id); this.render(); }
+      this.vibrar();
     }
+  },
+
+  /* chacoalhada curta na faixa visível do aparelho */
+  vibrar() {
+    const alvo = $('#celular-puxador');
+    if (!alvo) return;
+    alvo.classList.remove('vibrando');
+    void alvo.offsetWidth;                 /* reinicia a animação se já estava rodando */
+    alvo.classList.add('vibrando');
+    setTimeout(() => alvo.classList.remove('vibrando'), 700);
   },
 
   ligar() {

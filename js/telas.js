@@ -133,10 +133,14 @@ const Telas = {
       <button data-op="jogadores">Quem está na mesa</button>
       <button data-op="trocar">Trocar de mesa</button>
       <button data-op="nome">Mudar meu nome</button>
+      <button data-op="outra">Entrar com outra conta</button>
+      ${Contas.html()}
       <button data-op="sair" class="perigo">Sair da conta</button>`;
     botao.parentElement.appendChild(pop);
 
     pop.addEventListener('click', async e => {
+      const troca = e.target.closest('[data-conta]');
+      if (troca) { pop.remove(); return Contas.trocar(troca.dataset.conta); }
       const op = e.target.closest('button')?.dataset.op;
       if (!op) return;
       pop.remove();
@@ -147,6 +151,7 @@ const Telas = {
       if (op === 'jogadores') this.modalJogadores();
       if (op === 'trocar') App.trocarMesa();
       if (op === 'nome')   this.modalNome();
+      if (op === 'outra')  Contas.novaConta();
       if (op === 'sair')   App.sair();
     });
 

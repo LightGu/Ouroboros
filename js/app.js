@@ -42,6 +42,8 @@ const App = {
     this.perfil = await Nuvem.perfil(sessao.user.id);
     $('#conta-nome').textContent = this.perfil?.nome || sessao.user.email;
 
+    await Contas.lembrar();
+
     const mesas = await Nuvem.mesas();
     if (mesas.length === 1) return this.entrarNaMesa(mesas[0]);
 
@@ -68,7 +70,7 @@ const App = {
       return this.mostrar('mesas');
     }
 
-    Nuvem.assinar(mesa.id, {
+    await Nuvem.assinar(mesa.id, {
       aoMudarPersonagem: p => this.mudancaRemota(p),
       aoChegarLog: l => Logs.receber(l),
       aoRolar: r => Rolagem.receber(r),
@@ -76,7 +78,6 @@ const App = {
       aoMudarToken: p => Mapa.mudouToken(p),
       aoMudarMesa: m => this.mesaMudou(m),
       aoArrastar: d => Mapa.arrastouRemoto(d),
-      aoMudarSom: p => Sons.mudou(p),
       aoMudarAnotacao: p => Campanha.mudou(p),
       aoMudarPresenca: ids => this.presencaMudou(ids),
       aoChegarMensagem: m => Celular.recebeu(m),
@@ -181,6 +182,8 @@ const App = {
   },
 
   async sair() {
+    /* signOut invalida os tokens guardados, então a lista tem que ir junto */
+    try { localStorage.removeItem(Contas.CHAVE); } catch {}
     await Nuvem.sair();
     location.reload();
   },
