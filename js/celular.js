@@ -14,18 +14,31 @@ const Celular = {
 
   /* ---------------- carga ---------------- */
 
+  /* allSettled, não all: se uma tabela faltar (migração não rodada), só o
+     recurso dela para. Com Promise.all, uma peça quebrada apagava a lista de
+     contatos inteira e parecia que as mensagens tinham sumido. */
   async carregar() {
-    try {
-      [this.msgs, this.personas, this.membros, this.lido, this.liberados] = await Promise.all([
-        Nuvem.mensagens(App.mesa.id),
-        Nuvem.personas(App.mesa.id),
-        Nuvem.membros(App.mesa.id),
-        Nuvem.leituras(App.mesa.id),
-        Nuvem.contatosLiberados(App.mesa.id)
-      ]);
-      this.render();
-      Mensagens.render();
-    } catch (e) { console.error('celular:', e); }
+    const partes = await Promise.allSettled([
+      Nuvem.mensagens(App.mesa.id),
+      Nuvem.personas(App.mesa.id),
+      Nuvem.membros(App.mesa.id),
+      Nuvem.leituras(App.mesa.id),
+      Nuvem.contatosLiberados(App.mesa.id)
+    ]);
+    const [msgs, personas, membros, lido, liberados] = partes;
+    const ok = (r, padrao) => r.status === 'fulfilled' ? r.value : padrao;
+
+    this.msgs      = ok(msgs, []);
+    this.personas  = ok(personas, []);
+    this.membros   = ok(membros, []);
+    this.lido      = ok(lido, new Map());
+    this.liberados = ok(liberados, []);
+
+    partes.filter(r => r.status === 'rejected')
+          .forEach(r => App.faltaMigracao(r.reason));
+
+    this.render();
+    Mensagens.render();
   },
 
   eu() { return App.sessao.user.id; },

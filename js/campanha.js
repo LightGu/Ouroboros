@@ -18,8 +18,9 @@ const Campanha = {
   filtroTipo: '',
 
   async carregar() {
-    try { this.lista = await Nuvem.anotacoes(App.mesa.id); this.render(); }
-    catch (e) { $('#campanha-corpo').innerHTML = `<p class="vazio-linha">Erro: ${esc(e.message || e)}</p>`; }
+    try { this.lista = await Nuvem.anotacoes(App.mesa.id); }
+    catch (e) { this.lista = []; App.faltaMigracao(e); }
+    this.render();
   },
 
   /* ---------------- links ---------------- */

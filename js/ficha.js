@@ -3,12 +3,34 @@
 const Ficha = {
   atual: null,
 
+  /* `abrir` serve para dois casos diferentes: entrar na ficha (deve ir pro
+     topo) e redesenhar a que já está aberta depois de adicionar ou remover
+     uma linha (tem que ficar exatamente onde estava). Só rola pro topo
+     quando a ficha muda. Também devolve o foco e a posição do cursor ao
+     campo que estava sendo digitado, senão uma gravação no meio da digitação
+     joga o cursor pra fora. */
   abrir(id) {
+    const mesma = this.atual && this.atual.id === id;
+    const y = window.scrollY;
+    const ativo = document.activeElement;
+    const foco = mesma && ativo ? ativo.dataset?.bind : null;
+    const pos = foco && typeof ativo.selectionStart === 'number' ? ativo.selectionStart : null;
+
     this.atual = Store.obter(id);
     if (!this.atual) return;
     App.mostrar('ficha');
     $('#view-ficha').innerHTML = this.html(this.atual);
-    window.scrollTo(0, 0);
+
+    if (mesma) {
+      window.scrollTo(0, y);
+      if (foco) {
+        const el = $(`[data-bind="${foco}"]`);
+        if (el) { el.focus(); if (pos !== null && el.setSelectionRange) el.setSelectionRange(pos, pos); }
+      }
+    } else {
+      window.scrollTo(0, 0);
+    }
+
     this.ligar();
     if (!Store.podeEditar(this.atual)) this.travar();
   },
@@ -392,6 +414,18 @@ const Ficha = {
     return this.atual[nome];
   },
 
+  /* Depois de adicionar, o cursor vai pro primeiro campo da linha NOVA.
+     Endereça pelo índice em vez de contar colunas de trás pra frente: cada
+     tabela tem um número diferente de campos, e errar a conta foca uma linha
+     acima — o que rola a página até lá. `preventScroll` garante que focar
+     nunca mexa na rolagem, nem por engano. */
+  focarUltimo(nome) {
+    const prefixo = nome === 'itens' ? 'inventario.itens' : nome;
+    const i = this.listaDe(nome).length - 1;
+    if (i < 0) return;
+    $(`[data-bind^="${prefixo}.${i}."]`)?.focus({ preventScroll: true });
+  },
+
   adicionarLinha(nome) {
     const modelos = {
       ataques:     { nome: '', teste: '', dano: '', especial: '' },
@@ -403,6 +437,7 @@ const Ficha = {
     this.listaDe(nome).push(Object.assign({}, modelos[nome]));
     Store.salvar(this.atual);
     this.abrir(this.atual.id);
+    this.focarUltimo(nome);
   },
 
   /* atualiza só os valores calculados, sem redesenhar (não perde o foco) */

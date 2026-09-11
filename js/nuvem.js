@@ -413,6 +413,14 @@ const Nuvem = {
 
   async criarAnotacao(a) {
     a = Object.assign({ autor_id: App.sessao.user.id }, a);
+    /* banco ainda sem a migração v9: grava sem o autor em vez de falhar */
+    {
+      const r = await this.cliente.from('anotacoes').insert(a).select().single();
+      if (!r.error) return r.data;
+      if (!/autor_id|compartilhada/.test(r.error.message)) throw r.error;
+      App.faltaMigracao(r.error);
+      delete a.autor_id; delete a.compartilhada;
+    }
     const { data, error } = await this.cliente.from('anotacoes').insert(a).select().single();
     if (error) throw error;
     return data;

@@ -137,6 +137,28 @@ const App = {
     if (Telas.listaAberta) Telas.renderJogadores();
   },
 
+  _avisados: new Set(),
+
+  /* Erro de tabela/coluna que não existe quase sempre é migração não rodada.
+     Diz qual arquivo falta em vez de deixar a tela vazia sem explicação. */
+  faltaMigracao(erro) {
+    const msg = String(erro?.message || erro || '');
+    const m = msg.match(/'public\.([a-z_]+)'|column ([a-z_.]+) does not exist/);
+    const alvo = m ? (m[1] || m[2]) : null;
+    if (!alvo || this._avisados.has(alvo)) { if (!alvo) console.error(erro); return; }
+    this._avisados.add(alvo);
+    const arquivos = {
+      contatos_liberados: 'sql/v9-contatos-anotacoes.sql',
+      'anotacoes.autor_id': 'sql/v9-contatos-anotacoes.sql',
+      leituras: 'sql/v8-leituras.sql',
+      personas: 'sql/v6-celular.sql',
+      mensagens: 'sql/v6-celular.sql'
+    };
+    const arq = arquivos[alvo] || 'sql/schema.sql';
+    console.error('falta migração:', alvo, '→', arq, erro);
+    if (this.ehMestre) toast(`Falta rodar ${arq} no Supabase (${alvo}).`, 'erro');
+  },
+
   marcarConexao(ok) {
     const el = $('#conexao');
     if (!el) return;
