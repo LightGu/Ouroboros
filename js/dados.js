@@ -103,3 +103,24 @@ function slug(s) {
   return s.normalize('NFD').replace(/[\u0300-\u036f]/g, '')
           .toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '');
 }
+
+/* Aliados prontos, transcritos dos livros. Aliado é o mecanismo que o sistema
+   usa para bicho de estimação: fica preso ao personagem e dá bônus de perícia
+   mais uma habilidade — não é uma ficha separada. */
+const ALIADOS_PRONTOS = [
+  {
+    nome: 'Cão adestrado', tipo: 'Animal',
+    descricao: 'Um cão corajoso e grande, treinado para ajudar em investigação e combate.',
+    fonte: 'Sobrevivendo ao Horror, p. 42',
+    bonus: [{ pericia: 'investigacao', valor: 2 }, { pericia: 'percepcao', valor: 2 }],
+    habilidades: [{ nome: 'Ladrar e Morder', custo: '1 PE',
+                    efeito: 'O cão assume postura defensiva ao seu redor. Você recebe +2 na Defesa por 1 rodada.' }]
+  },
+  {
+    nome: 'Companheiro animal', tipo: 'Animal',
+    descricao: 'Um bicho que cresceu com você. Escolha a perícia em que ele ajuda — o mestre aprova.',
+    fonte: 'origem Amigo dos Animais',
+    bonus: [{ pericia: '', valor: 2 }],
+    habilidades: []
+  }
+];

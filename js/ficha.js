@@ -147,6 +147,53 @@ const Ficha = {
         </div>
       </section>
 
+      <!-- ALIADOS -->
+      <section class="bloco">
+        <h2 class="titulo-bloco">Aliados
+          <button class="btn btn-ghost btn-peq" data-add="aliados">+ Aliado</button>
+          <button class="btn btn-ghost btn-peq" data-aliado-pronto>Usar um pronto</button>
+          <span class="legenda">bicho de estimação, cão adestrado, contato — o bônus entra na rolagem sozinho</span>
+        </h2>
+        ${p.aliados.length ? p.aliados.map((a, i) => `
+          <article class="aliado">
+            <div class="aliado-cab">
+              <button class="aliado-foto" data-foto-aliado="${i}" title="Trocar foto">
+                ${a.foto ? `<img src="${esc(a.foto)}" alt="">` : esc(iniciais(a.nome || '?'))}
+              </button>
+              <label class="campo"><span>Nome</span>
+                <input data-bind="aliados.${i}.nome" value="${esc(a.nome)}" placeholder="Ex.: Tobias, o macaco"></label>
+              <label class="campo"><span>Tipo</span>
+                <input data-bind="aliados.${i}.tipo" value="${esc(a.tipo)}" placeholder="Animal"></label>
+              <button class="btn-mini perigo" data-del="aliados:${i}" title="Remover">✕</button>
+            </div>
+            <label class="campo"><span>Descrição</span>
+              <textarea data-bind="aliados.${i}.descricao" rows="2">${esc(a.descricao)}</textarea></label>
+
+            <h4 class="aliado-sub">Bônus de perícia
+              <button class="btn-mini" data-add-bonus="${i}" title="Adicionar">+</button></h4>
+            ${(a.bonus || []).length ? a.bonus.map((b, j) => `
+              <div class="aliado-linha">
+                <select data-bind="aliados.${i}.bonus.${j}.pericia">
+                  <option value="">— escolha a perícia —</option>
+                  ${PERICIAS.map(x => `<option value="${x.key}" ${b.pericia === x.key ? 'selected' : ''}>${esc(x.nome)}</option>`).join('')}
+                </select>
+                <input type="number" data-bind="aliados.${i}.bonus.${j}.valor" value="${num(b.valor)}" title="Valor do bônus">
+                <button class="btn-mini perigo" data-del="aliados.${i}.bonus:${j}" title="Remover">✕</button>
+              </div>`).join('') : '<p class="vazio-linha">Sem bônus.</p>'}
+
+            <h4 class="aliado-sub">Habilidades
+              <button class="btn-mini" data-add-hab="${i}" title="Adicionar">+</button></h4>
+            ${(a.habilidades || []).length ? a.habilidades.map((h, j) => `
+              <div class="aliado-linha hab">
+                <input data-bind="aliados.${i}.habilidades.${j}.nome" value="${esc(h.nome)}" placeholder="Nome">
+                <input data-bind="aliados.${i}.habilidades.${j}.custo" value="${esc(h.custo)}" placeholder="1 PE">
+                <input data-bind="aliados.${i}.habilidades.${j}.efeito" value="${esc(h.efeito)}" placeholder="O que faz">
+                <button class="btn-mini perigo" data-del="aliados.${i}.habilidades:${j}" title="Remover">✕</button>
+              </div>`).join('') : '<p class="vazio-linha">Sem habilidades.</p>'}
+          </article>`).join('')
+          : '<p class="vazio-linha">Nenhum aliado. Um bicho de estimação treinado entra aqui, e o bônus dele passa a valer nos testes.</p>'}
+      </section>
+
       <!-- MUNIÇÃO -->
       <section class="bloco">
         <h2 class="titulo-bloco">Munição
@@ -250,7 +297,9 @@ const Ficha = {
           ${TREINO.map(t => `<option value="${t.v}" ${num(dado.treino) === t.v ? 'selected' : ''}>${t.label}</option>`).join('')}
         </select>
         <input class="pericia-outros" type="number" data-bind="pericias.${per.key}.outros" data-per="${per.key}" value="${num(dado.outros)}" title="Outros bônus">
-        <span class="pericia-formula" data-formula="${per.key}">${formulaPericia(p, per.key)}</span>
+        <span class="pericia-formula ${bonusAliados(p, per.key) ? 'com-aliado' : ''}"
+              data-formula="${per.key}"
+              title="${bonusAliados(p, per.key) ? '+' + bonusAliados(p, per.key) + ' de aliado' : ''}">${formulaPericia(p, per.key)}</span>
       </div>`;
   },
 
@@ -313,6 +362,20 @@ const Ficha = {
       const add = e.target.closest('[data-add]');
       if (add) return this.adicionarLinha(add.dataset.add);
 
+      const bon = e.target.closest('[data-add-bonus]');
+      if (bon) {
+        this.atual.aliados[Number(bon.dataset.addBonus)].bonus.push({ pericia: '', valor: 2 });
+        Store.salvar(this.atual); return this.abrir(this.atual.id);
+      }
+      const hab = e.target.closest('[data-add-hab]');
+      if (hab) {
+        this.atual.aliados[Number(hab.dataset.addHab)].habilidades.push({ nome: '', custo: '', efeito: '' });
+        Store.salvar(this.atual); return this.abrir(this.atual.id);
+      }
+      const foto = e.target.closest('[data-foto-aliado]');
+      if (foto) return this.fotoAliado(Number(foto.dataset.fotoAliado));
+      if (e.target.closest('[data-aliado-pronto]')) return this.aliadoPronto();
+
       const del = e.target.closest('[data-del]');
       if (del) {
         const [lista, i] = del.dataset.del.split(':');
@@ -325,6 +388,7 @@ const Ficha = {
 
   listaDe(nome) {
     if (nome === 'itens') return this.atual.inventario.itens;
+    if (nome.includes('.')) return getPath(this.atual, nome);   // aliados.0.bonus
     return this.atual[nome];
   },
 
@@ -333,7 +397,8 @@ const Ficha = {
       ataques:     { nome: '', teste: '', dano: '', especial: '' },
       habilidades: { nome: '', custo: '', pagina: '', desc: '' },
       itens:       { nome: '', categoria: '', espacos: '' },
-      municoes:    { nome: '', atual: 0, max: 0 }
+      municoes:    { nome: '', atual: 0, max: 0 },
+      aliados:     { nome: '', tipo: '', foto: '', descricao: '', bonus: [], habilidades: [] }
     };
     this.listaDe(nome).push(Object.assign({}, modelos[nome]));
     Store.salvar(this.atual);
@@ -387,6 +452,55 @@ const Ficha = {
         this.abrir(p.id);
         toast('Status calculados.');
       }
+    });
+  },
+
+  aliadoPronto() {
+    Modal.abrir({
+      titulo: 'Aliado pronto',
+      corpo: `<p class="dialogo fraco">Transcritos dos livros. Depois de adicionar dá pra mudar tudo.</p>
+        ${ALIADOS_PRONTOS.map((a, i) => `
+          <label class="radio aliado-opcao">
+            <input type="radio" name="pronto" value="${i}" ${i === 0 ? 'checked' : ''}>
+            <span><b>${esc(a.nome)}</b> — ${esc(a.descricao)}
+              <i class="fonte">${esc(a.fonte)}</i></span>
+          </label>`).join('')}`,
+      confirmar: 'Adicionar',
+      onConfirmar: () => {
+        const i = Number($('input[name="pronto"]:checked').value);
+        const base = JSON.parse(JSON.stringify(ALIADOS_PRONTOS[i]));
+        delete base.fonte;
+        this.atual.aliados.push(Object.assign({ foto: '' }, base));
+        Store.salvar(this.atual);
+        this.abrir(this.atual.id);
+      }
+    });
+  },
+
+  fotoAliado(i) {
+    const p = this.atual;
+    Modal.abrir({
+      titulo: 'Foto do aliado',
+      corpo: `<label class="campo"><span>Arquivo</span><input type="file" id="al-foto" accept="image/*"></label>
+              <div class="previa" id="al-previa">${p.aliados[i].foto ? `<img src="${esc(p.aliados[i].foto)}">` : '<span class="fraco">sem foto</span>'}</div>`,
+      confirmar: 'Salvar',
+      onConfirmar: async () => {
+        if (Modal._fotoAliado === undefined) return;
+        try {
+          p.aliados[i].foto = Modal._fotoAliado
+            ? await Nuvem.enviarRetrato(Modal._fotoAliado, App.mesa.id, 'aliado') : '';
+          Store.salvar(p);
+          this.abrir(p.id);
+        } catch (e) { toast('Erro: ' + (e.message || e), 'erro'); return false; }
+        finally { delete Modal._fotoAliado; }
+      }
+    });
+    $('#al-foto').addEventListener('change', async e => {
+      try {
+        const d = await lerImagem(e.target.files[0]);
+        Modal._fotoAliado = d;
+        $('#al-previa').innerHTML = `<img src="${d}">`;
+      } catch { toast('Não consegui ler a imagem.', 'erro'); }
     });
   },
 

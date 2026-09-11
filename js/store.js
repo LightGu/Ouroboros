@@ -200,6 +200,7 @@ const Store = {
       inventario: { limites: { I: '', II: '', III: '', IV: '' }, credito: '', cargaMax: '', itens: [] },
       prestigio: '',
       municoes: [],
+      aliados: [],
       cor: '',
       bonus: { corpo: 0, mente: 0 },
       descricao: { aparencia: '', personalidade: '', historico: '', objetivo: '' },
@@ -224,6 +225,8 @@ const Store = {
     out.habilidades = p?.habilidades || [];
     out.condicoes   = p?.condicoes   || [];
     out.municoes    = p?.municoes    || [];
+    out.aliados     = (p?.aliados || []).map(a => Object.assign(
+      { nome: '', tipo: '', foto: '', descricao: '', bonus: [], habilidades: [] }, a));
     out.bonus       = Object.assign({ corpo: 0, mente: 0 }, p?.bonus);
     out.pericias    = p?.pericias    || {};
     PERICIAS.forEach(per => {
@@ -262,11 +265,25 @@ const Store = {
 
 /* ---------------- derivados ---------------- */
 
+/* Aliado dá bônus em perícia (o cão adestrado dá +2 em Investigação e
+   Percepção, por exemplo). Soma aqui pra entrar na rolagem sozinho. */
+function bonusAliados(p, periciaKey) {
+  return (p.aliados || []).reduce((total, a) =>
+    total + (a.bonus || []).reduce((s, b) =>
+      s + (b.pericia === periciaKey ? Number(b.valor || 0) : 0), 0), 0);
+}
+
 function bonusPericia(p, periciaKey) {
   const per = PERICIAS.find(x => x.key === periciaKey);
   const dados = Number(p.pericias?.[periciaKey]?.treino || 0);
   const outros = Number(p.pericias?.[periciaKey]?.outros || 0);
-  return { attr: per.attr, dados: Number(p.atributos?.[per.attr] || 0), bonus: dados + outros };
+  const aliado = bonusAliados(p, periciaKey);
+  return {
+    attr: per.attr,
+    dados: Number(p.atributos?.[per.attr] || 0),
+    bonus: dados + outros + aliado,
+    aliado
+  };
 }
 
 function formulaPericia(p, periciaKey) {

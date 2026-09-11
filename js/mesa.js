@@ -68,6 +68,7 @@ const Mesa = {
           ? '<button class="btn-assumir" data-assumir>Tornar meu personagem</button>'
           : ''}
 
+        ${this.aliados(p)}
         ${this.atributos(p)}
         ${this.bonusInterludio(p)}
         ${this.municoes(p)}
@@ -116,6 +117,22 @@ const Mesa = {
           ${zona('dir', 1, 'Pôr 1 (Shift = 5)', '+')}
         </div>
       </div>`;
+  },
+
+  /* Aliados no card: a mesa precisa saber que o macaco existe. */
+  aliados(p) {
+    if (!p.aliados?.length) return '';
+    return `<div class="aliados-card">
+      ${p.aliados.map(a => {
+        const b = (a.bonus || []).filter(x => x.pericia)
+          .map(x => '+' + num(x.valor) + ' ' + (PERICIAS.find(y => y.key === x.pericia)?.nome || ''))
+          .join(', ');
+        return `<span class="aliado-chip" title="${esc(a.descricao || '')}${b ? ' — ' + esc(b) : ''}">
+          <span class="aliado-mini">${a.foto ? `<img src="${esc(a.foto)}" alt="">` : esc(iniciais(a.nome || '?'))}</span>
+          ${esc(a.nome || 'Aliado')}${b ? `<i>${esc(b)}</i>` : ''}
+        </span>`;
+      }).join('')}
+    </div>`;
   },
 
   /* Atributos no card: o mestre precisa deles pra pedir teste sem abrir a ficha.
