@@ -57,6 +57,8 @@ const App = {
     $('#aba-sons').hidden = !this.ehMestre;
     $('#aba-campanha').hidden = !this.ehMestre;
     $('#aba-interludio').hidden = !this.ehMestre;
+    $('#aba-mensagens').hidden = !this.ehMestre;
+    $('#celular').hidden = false;
     $('#btn-rapido').hidden = !this.ehMestre;   /* NPC é coisa de mestre */
 
     try {
@@ -77,6 +79,7 @@ const App = {
       aoMudarSom: p => Sons.mudou(p),
       aoMudarAnotacao: p => Campanha.mudou(p),
       aoMudarPresenca: ids => this.presencaMudou(ids),
+      aoChegarMensagem: m => Celular.recebeu(m),
       aoLigar: () => this.reconectou(),
       aoCair: () => this.marcarConexao(false)
     });
@@ -88,6 +91,8 @@ const App = {
     Sons.ligar();
     Sons.carregar();
     Campanha.carregar();
+    Celular.ligar();
+    Celular.carregar();
     Mesa.render();
     this.mostrar('mesa');
   },
@@ -112,6 +117,7 @@ const App = {
       await Mapa.carregar();
       await Sons.carregar();
       await Campanha.carregar();
+      await Celular.carregar();
       if (this.telaAtual === 'mesa') Mesa.render();
       if (this.ehMestre) Logs.carregar();
     } catch (e) { console.error(e); }
@@ -151,7 +157,7 @@ const App = {
 
   mostrar(tela) {
     this.telaAtual = tela;
-    ['auth', 'mesas', 'mesa', 'ficha', 'mapa', 'sons', 'campanha', 'interludio', 'logs'].forEach(t => {
+    ['auth', 'mesas', 'mesa', 'ficha', 'mapa', 'sons', 'campanha', 'interludio', 'mensagens', 'logs'].forEach(t => {
       $('#view-' + t).hidden = t !== tela;
     });
     $('#topbar').hidden = tela === 'auth' || tela === 'mesas';
@@ -161,6 +167,7 @@ const App = {
     if (tela === 'sons') Sons.render();
     if (tela === 'campanha') Campanha.render();
     if (tela === 'interludio') Interludio.render();
+    if (tela === 'mensagens') Mensagens.render();
     if (tela !== 'campanha') $('#painel-nota').hidden = true;
   },
 

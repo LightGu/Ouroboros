@@ -325,6 +325,42 @@ const Nuvem = {
     if (falha) throw falha.error;
   },
 
+  /* ---------------- celular ---------------- */
+
+  async personas(mesaId) {
+    const { data, error } = await this.cliente.from('personas').select('*')
+      .eq('mesa_id', mesaId).order('criado_em');
+    if (error) throw error;
+    return data || [];
+  },
+
+  async criarPersona(mesaId, nome, foto) {
+    const { data, error } = await this.cliente.from('personas')
+      .insert({ mesa_id: mesaId, nome, foto }).select().single();
+    if (error) throw error;
+    return data;
+  },
+
+  async apagarPersona(id) {
+    const { error } = await this.cliente.from('personas').delete().eq('id', id);
+    if (error) throw error;
+  },
+
+  /* O RLS decide o que volta: jogador recebe só o que mandou ou recebeu,
+     mestre recebe a mesa inteira. A consulta é a mesma para os dois. */
+  async mensagens(mesaId, limite = 500) {
+    const { data, error } = await this.cliente.from('mensagens').select('*')
+      .eq('mesa_id', mesaId).order('criado_em').limit(limite);
+    if (error) throw error;
+    return data || [];
+  },
+
+  async enviarMensagem(msg) {
+    const { data, error } = await this.cliente.from('mensagens').insert(msg).select().single();
+    if (error) throw error;
+    return data;
+  },
+
   /* ---------------- caderno de campanha ---------------- */
 
   async anotacoes(mesaId) {
@@ -360,7 +396,7 @@ const Nuvem = {
   /* `aoLigar` dispara quando o Postgres confirma a inscrição — inclusive depois
      de uma reconexão. Tudo que mudou enquanto o canal estava fora chega junto,
      então é aí que o app recarrega a mesa pra não ficar desatualizado calado. */
-  assinar(mesaId, { aoMudarPersonagem, aoChegarLog, aoRolar, aoMudarMapa, aoMudarToken, aoMudarMesa, aoArrastar, aoMudarSom, aoMudarAnotacao, aoMudarPresenca, aoLigar, aoCair }) {
+  assinar(mesaId, { aoMudarPersonagem, aoChegarLog, aoRolar, aoMudarMapa, aoMudarToken, aoMudarMesa, aoArrastar, aoMudarSom, aoMudarAnotacao, aoMudarPresenca, aoChegarMensagem, aoLigar, aoCair }) {
     this.desassinar();
     this.canal = this.cliente.channel('mesa-' + mesaId)
       .on('postgres_changes',
@@ -393,6 +429,9 @@ const Nuvem = {
       .on('postgres_changes',
           { event: '*', schema: 'public', table: 'anotacoes', filter: `mesa_id=eq.${mesaId}` },
           payload => aoMudarAnotacao?.(payload))
+      .on('postgres_changes',
+          { event: 'INSERT', schema: 'public', table: 'mensagens', filter: `mesa_id=eq.${mesaId}` },
+          payload => aoChegarMensagem?.(payload.new))
       .on('system', {}, p => {
         if (p.extension === 'postgres_changes' && p.status === 'ok') aoLigar?.();
       })

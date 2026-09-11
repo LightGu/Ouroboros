@@ -46,6 +46,7 @@
     <button class="aba" data-aba="sons" id="aba-sons" hidden>Sons</button>
     <button class="aba" data-aba="campanha" id="aba-campanha" hidden>Campanha</button>
     <button class="aba" data-aba="interludio" id="aba-interludio" hidden>Interlúdio</button>
+    <button class="aba" data-aba="mensagens" id="aba-mensagens" hidden>Mensagens</button>
     <button class="aba" data-aba="logs" id="aba-logs" hidden>Logs <span class="badge" id="badge-logs" hidden></span></button>
   </nav>
 
@@ -178,6 +179,12 @@
   <div class="interludio-corpo" id="interludio-corpo"></div>
 </main>
 
+<!-- ============ MENSAGENS (só o mestre) ============ -->
+<main id="view-mensagens" class="view" hidden>
+  <h2 class="titulo-tela">Mensagens da mesa</h2>
+  <div class="mensagens-corpo" id="mensagens-corpo"></div>
+</main>
+
 <!-- ============ LOGS ============ -->
 <main id="view-logs" class="view" hidden>
   <div class="logs-topo">
@@ -217,6 +224,18 @@
 
 <button id="aviso-audio" class="aviso-audio" hidden>🔊 Clique para liberar o áudio da mesa</button>
 
+<!-- celular: só a parte de cima aparece; clicar levanta ele inteiro -->
+<aside id="celular" class="celular" hidden>
+  <button class="celular-puxador" id="celular-puxador" title="Mensagens">
+    <span class="celular-alca"></span>
+    <span class="celular-rotulo">Mensagens</span>
+    <span class="celular-badge" id="celular-badge" hidden></span>
+  </button>
+  <div class="celular-corpo">
+    <div class="celular-tela" id="celular-tela"></div>
+  </div>
+</aside>
+
 <div id="toast" class="toast" hidden></div>
 <div id="avisos" class="avisos"></div>
 
@@ -235,6 +254,7 @@
 <script src="js/sons.js"></script>
 <script src="js/campanha.js"></script>
 <script src="js/interludio.js"></script>
+<script src="js/celular.js"></script>
 <script src="js/logs.js"></script>
 <script src="js/telas.js"></script>
 <script src="js/app.js"></script>
