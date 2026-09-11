@@ -354,6 +354,7 @@ const Mesa = {
   /* ---------------- personagem rápido ---------------- */
 
   modalRapido(existente) {
+    if (!Store.ehMestre) return toast('Só o mestre cria personagem rápido.', 'erro');
     const p = existente || null;
     Modal.abrir({
       titulo: p ? 'Editar personagem rápido' : 'Personagem rápido',

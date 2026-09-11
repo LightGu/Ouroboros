@@ -57,6 +57,7 @@ const App = {
     $('#aba-sons').hidden = !this.ehMestre;
     $('#aba-campanha').hidden = !this.ehMestre;
     $('#aba-interludio').hidden = !this.ehMestre;
+    $('#btn-rapido').hidden = !this.ehMestre;   /* NPC é coisa de mestre */
 
     try {
       await Store.carregar(mesa.id, this.ehMestre);
