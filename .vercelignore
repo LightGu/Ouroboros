@@ -8,6 +8,7 @@ arquivos secretos*/
 catalogo/
 
 # Só para desenvolvimento
+.claude/
 preview-barras.html
 exemplos/
 __pycache__/
