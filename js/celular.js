@@ -191,7 +191,10 @@ const Celular = {
       </header>
       <div class="cel-conversa" id="cel-conversa">
         ${conv.length ? conv.map(m => {
-          const meu = m.de_user === this.eu();
+          /* "minha" é do ponto de vista da IDENTIDADE ativa, não do usuário.
+             Falando por uma persona, quem assina é ela e de_user fica nulo —
+             olhar só de_user jogava a própria mensagem no lado de quem recebe. */
+          const meu = this.meuLado(m) === 'de';
           const hora = new Date(m.criado_em).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
           return `<div class="balao ${meu ? 'meu' : 'dele'}">
                     ${esc(m.texto)}<time>${hora}</time>
