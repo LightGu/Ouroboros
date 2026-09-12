@@ -186,6 +186,8 @@ const Telas = {
   renderJogadores() {
     const corpo = $('#modal-body');
     if (!corpo || !this._membros) return;
+    setTimeout(() => $$('[data-tirar]', corpo).forEach(b =>
+      b.addEventListener('click', () => this.tirarDaMesa(b.dataset.tirar))), 0);
 
     const lista = this._membros.slice().sort((a, b) =>
       (a.papel === 'mestre' ? -1 : b.papel === 'mestre' ? 1 : 0) || a.nome.localeCompare(b.nome, 'pt-BR'));
@@ -210,10 +212,50 @@ const Telas = {
             <span class="jogador-fichas">${fichas.length
               ? fichas.map(f => esc(f.nome || 'sem nome')).join(', ')
               : '<i>sem ficha</i>'}</span>
+            ${App.ehMestre && m.papel !== 'mestre'
+              ? `<button class="btn-mini perigo" data-tirar="${esc(m.id)}" title="Tirar da mesa">✕</button>` : ''}
           </div>`;
         }).join('')}
       </div>
       <p class="dialogo fraco">Quem está aqui já entrou com o código pelo menos uma vez.</p>`;
+  },
+
+  /* Tirar alguém da mesa. O vínculo some; a ficha fica, porque ela é parte
+     da campanha — quem saiu é que perde o acesso, já que deixa de ser membro. */
+  tirarDaMesa(id) {
+    const m = this._membros.find(x => x.id === id);
+    if (!m) return;
+    const fichas = Store.estado.personagens.filter(p => p.donoId === id && !p.rapido);
+
+    Modal.abrir({
+      titulo: 'Tirar da mesa',
+      corpo: `
+        <p class="dialogo">Tirar <b>${esc(m.nome)}</b> da mesa? Ele perde o acesso a tudo:
+           fichas, mapa, celular e anotações.</p>
+        ${fichas.length ? `
+          <p class="dialogo fraco">${fichas.length === 1 ? 'A ficha' : 'As fichas'}
+             <b>${fichas.map(f => esc(f.nome || 'sem nome')).join(', ')}</b> continua${fichas.length === 1 ? '' : 'm'}
+             na mesa — ela é parte da campanha.</p>
+          <label class="radio"><input type="checkbox" id="tirar-liberar" checked>
+            liberar ${fichas.length === 1 ? 'essa ficha' : 'essas fichas'} pra outra pessoa assumir</label>`
+          : '<p class="dialogo fraco">Ele não tem ficha nesta mesa.</p>'}
+        <p class="dialogo fraco">As mensagens dele continuam na aba Mensagens.
+           Se você passar o código de novo, ele consegue voltar.</p>`,
+      confirmar: 'Tirar da mesa', perigo: true,
+      onConfirmar: async () => {
+        const liberar = $('#tirar-liberar')?.checked;
+        try {
+          if (liberar) {
+            for (const f of fichas) { await Nuvem.liberar(f.id); f.donoId = null; }
+          }
+          await Nuvem.removerMembro(App.mesa.id, id);
+          this._membros = this._membros.filter(x => x.id !== id);
+          Celular.membros = this._membros;
+          Mesa.render();
+          toast(`${m.nome} saiu da mesa.`);
+        } catch (e) { toast('Não consegui: ' + (e.message || e), 'erro'); return false; }
+      }
+    });
   },
 
   modalNome() {

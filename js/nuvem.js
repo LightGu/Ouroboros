@@ -94,6 +94,13 @@ const Nuvem = {
     }));
   },
 
+  /* A policy membros_sair já autoriza o mestre a apagar o vínculo. */
+  async removerMembro(mesaId, userId) {
+    const { error } = await this.cliente.from('membros')
+      .delete().eq('mesa_id', mesaId).eq('user_id', userId);
+    if (error) throw error;
+  },
+
   /* ---------------- personagens ---------------- */
 
   /* linha do banco -> objeto usado pela interface */
