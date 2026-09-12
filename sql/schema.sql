@@ -817,3 +817,40 @@ do $$
 begin
   begin alter publication supabase_realtime add table public.contatos_liberados; exception when duplicate_object then null; end;
 end $$;
+
+-- ============================================================
+-- v12 — catálogo de itens (popup "Do catálogo" no inventário)
+--
+-- Tabela global: o catálogo é o mesmo para todas as mesas e ninguém edita
+-- pelo site. Quem escreve é o dono do projeto, rodando o catalogo/seed-itens.sql
+-- que o sql/gerar-catalogo.py gera. Por isso não existe policy de escrita.
+--
+-- São as estatísticas dos livros da Jambô: atrás do login é a mesa consultando
+-- o material que comprou; como arquivo público do site, seria distribuição.
+-- ============================================================
+
+create table if not exists public.itens_catalogo (
+  id         bigint generated always as identity primary key,
+  nome       text not null,
+  grupo      text not null default 'Equipamento',   -- Arma, Munição, Explosivo, Proteção...
+  categoria  smallint not null default 0,           -- 0 a IV, como no livro
+  espacos    numeric(5,1) not null default 1,
+  dano       text not null default '',
+  critico    text not null default '',
+  alcance    text not null default '',
+  tipo_dano  text not null default '',
+  descricao  text not null default '',
+  livro      text not null default '',
+  pagina     text not null default '',
+  unique (nome, livro)
+);
+
+create index if not exists idx_catalogo_grupo on public.itens_catalogo (grupo, nome);
+
+alter table public.itens_catalogo enable row level security;
+
+drop policy if exists catalogo_ler on public.itens_catalogo;
+
+-- só leitura, e só para quem está logado
+create policy catalogo_ler on public.itens_catalogo
+  for select to authenticated using (true);

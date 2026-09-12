@@ -2,6 +2,7 @@
 
 const Ficha = {
   atual: null,
+  filtroItem: '',   // categoria escolhida no inventário; só de tela, não salva
 
   /* `abrir` serve para dois casos diferentes: entrar na ficha (deve ir pro
      topo) e redesenhar a que já está aberta depois de adicionar ou remover
@@ -18,6 +19,7 @@ const Ficha = {
 
     this.atual = Store.obter(id);
     if (!this.atual) return;
+    if (!mesma) this.filtroItem = '';
     App.mostrar('ficha');
     $('#view-ficha').innerHTML = this.html(this.atual);
 
@@ -39,7 +41,7 @@ const Ficha = {
   travar() {
     const raiz = $('#view-ficha');
     $$('input, select, textarea', raiz).forEach(el => { el.disabled = true; });
-    $$('[data-add], [data-del], [data-attr], [data-excluir], [data-calcular]', raiz)
+    $$('[data-add], [data-del], [data-attr], [data-excluir], [data-calcular], [data-catalogo]', raiz)
       .forEach(el => el.remove());
     $('[data-trocar-img]', raiz)?.removeAttribute('data-trocar-img');
     const ind = $('#indicador-salvo', raiz);
@@ -269,30 +271,7 @@ const Ficha = {
       </section>
 
       <!-- INVENTÁRIO -->
-      <section class="bloco">
-        <h2 class="titulo-bloco">Inventário <button class="btn btn-ghost btn-peq" data-add="itens">+ Item</button></h2>
-        <div class="grade-limites">
-          ${CATEGORIAS_ITEM.map(c => `
-            <label class="campo campo-mini"${dica(AJUDA.campos.limiteItem)}><span>Limite ${c}</span>
-              <input data-bind="inventario.limites.${c}" value="${esc(p.inventario.limites[c])}"></label>`).join('')}
-          <label class="campo campo-mini"${dica(AJUDA.campos.credito)}><span>Limite de crédito</span><input data-bind="inventario.credito" value="${esc(p.inventario.credito)}"></label>
-          <label class="campo campo-mini"${dica(AJUDA.campos.cargaMax)}><span>Carga máx.</span><input data-bind="inventario.cargaMax" value="${esc(p.inventario.cargaMax)}"></label>
-          <label class="campo campo-mini"${dica(AJUDA.campos.prestigio)}><span>Prestígio</span><input data-bind="prestigio" value="${esc(p.prestigio)}"></label>
-        </div>
-        <div class="tabela tabela-itens">
-          <div class="tabela-cab"><span>Item</span><span>Categoria</span><span>Espaços</span><span></span></div>
-          ${p.inventario.itens.length ? p.inventario.itens.map((it, i) => `
-            <div class="tabela-linha">
-              <input data-bind="inventario.itens.${i}.nome" value="${esc(it.nome)}" placeholder="Nome do item">
-              <select data-bind="inventario.itens.${i}.categoria">
-                <option value="">—</option>
-                ${CATEGORIAS_ITEM.map(c => `<option value="${c}" ${it.categoria === c ? 'selected' : ''}>${c}</option>`).join('')}
-              </select>
-              <input data-bind="inventario.itens.${i}.espacos" value="${esc(it.espacos)}" placeholder="1">
-              <button class="btn-mini perigo" data-del="itens:${i}" title="Remover">✕</button>
-            </div>`).join('') : '<p class="vazio-linha">Mochila vazia.</p>'}
-        </div>
-      </section>
+      ${this.blocoInventario(p)}
 
       <!-- DESCRIÇÃO -->
       <section class="bloco">
@@ -310,6 +289,63 @@ const Ficha = {
         </label>` : ''}
       </section>
     </div>`;
+  },
+
+  /* O inventário fica com filtro por categoria porque a mochila de um agente
+     de NEX alto passa fácil de vinte linhas e quase toda pergunta em mesa é
+     por categoria ("o que eu tenho de III?"). O filtro é só de tela: não vai
+     pro banco, e a linha continua editando o item pelo índice real da lista,
+     por isso o `map` guarda o `i` ANTES de filtrar. */
+  blocoInventario(p) {
+    const itens = p.inventario.itens;
+    const f = this.filtroItem;
+    const conta = c => itens.filter(it => (c === 'sem' ? !it.categoria : it.categoria === c)).length;
+    const semCat = conta('sem');
+    const visiveis = itens
+      .map((it, i) => ({ it, i }))
+      .filter(({ it }) => !f || (f === 'sem' ? !it.categoria : it.categoria === f));
+    const espacos = visiveis.reduce((t, { it }) => t + num(it.espacos), 0);
+    const carga = num(p.inventario.cargaMax);
+
+    const chip = (valor, rotulo, n) => `
+      <button class="chip-filtro ${f === valor ? 'ativo' : ''}" data-filtro-item="${valor}">
+        ${rotulo} <i>${n}</i></button>`;
+
+    return `
+      <section class="bloco">
+        <h2 class="titulo-bloco">Inventário
+          <span class="legenda">${visiveis.length ? `${espacos} espaço${espacos === 1 ? '' : 's'}${!f && carga ? ' de ' + carga : ''}` : ''}</span>
+          <button class="btn btn-ghost btn-peq" data-catalogo>Do catálogo</button>
+          <button class="btn btn-ghost btn-peq" data-add="itens">+ Item</button></h2>
+        <div class="grade-limites">
+          ${CATEGORIAS_ITEM.map(c => `
+            <label class="campo campo-mini"${dica(AJUDA.campos.limiteItem)}><span>Limite ${c}</span>
+              <input data-bind="inventario.limites.${c}" value="${esc(p.inventario.limites[c])}"></label>`).join('')}
+          <label class="campo campo-mini"${dica(AJUDA.campos.credito)}><span>Limite de crédito</span><input data-bind="inventario.credito" value="${esc(p.inventario.credito)}"></label>
+          <label class="campo campo-mini"${dica(AJUDA.campos.cargaMax)}><span>Carga máx.</span><input data-bind="inventario.cargaMax" value="${esc(p.inventario.cargaMax)}"></label>
+          <label class="campo campo-mini"${dica(AJUDA.campos.prestigio)}><span>Prestígio</span><input data-bind="prestigio" value="${esc(p.prestigio)}"></label>
+        </div>
+        ${itens.length ? `
+        <div class="filtros filtros-itens">
+          ${chip('', 'todos', itens.length)}
+          ${CATEGORIAS_ITEM.map(c => chip(c, 'Cat. ' + c, conta(c))).join('')}
+          ${semCat ? chip('sem', 'sem categoria', semCat) : ''}
+        </div>` : ''}
+        <div class="tabela tabela-itens">
+          <div class="tabela-cab"><span>Item</span><span>Categoria</span><span>Espaços</span><span></span></div>
+          ${visiveis.length ? visiveis.map(({ it, i }) => `
+            <div class="tabela-linha">
+              <input data-bind="inventario.itens.${i}.nome" value="${esc(it.nome)}" placeholder="Nome do item">
+              <select data-bind="inventario.itens.${i}.categoria">
+                <option value="">—</option>
+                ${CATEGORIAS_ITEM.map(c => `<option value="${c}" ${it.categoria === c ? 'selected' : ''}>${c}</option>`).join('')}
+              </select>
+              <input data-bind="inventario.itens.${i}.espacos" value="${esc(it.espacos)}" placeholder="1">
+              <button class="btn-mini perigo" data-del="itens:${i}" title="Remover">✕</button>
+            </div>`).join('')
+            : `<p class="vazio-linha">${itens.length ? 'Nenhum item nessa categoria.' : 'Mochila vazia.'}</p>`}
+        </div>
+      </section>`;
   },
 
   caixaStatus(chave, rotulo, p) {
@@ -486,6 +522,10 @@ const Ficha = {
         setPath(this.atual, e.target.dataset.bind, v);
         this.salvarDepois();
         this.atualizarDerivados(e.target);
+        /* Trocar a categoria de um item muda a contagem dos chips e pode tirar
+           a linha da vista: com filtro ligado, redesenha pra não mentir. */
+        if (this.filtroItem && /^inventario\.itens\.\d+\.categoria$/.test(e.target.dataset.bind))
+          this.abrir(this.atual.id);
       }
     });
 
@@ -516,6 +556,14 @@ const Ficha = {
         this.salvarDepois();
         this.atualizarDerivados();
         return;
+      }
+
+      if (e.target.closest('[data-catalogo]')) return this.abrirCatalogo();
+
+      const fil = e.target.closest('[data-filtro-item]');
+      if (fil) {
+        this.filtroItem = fil.dataset.filtroItem;
+        return this.abrir(this.atual.id);
       }
 
       const add = e.target.closest('[data-add]');
@@ -568,6 +616,149 @@ const Ficha = {
     });
   },
 
+  /* ---------------- popup do catálogo ---------------- */
+
+  /* Escolher de uma lista pronta em vez de digitar "Fuzil de assalto / III /
+     2" na mão. O estado do popup (busca, filtros, escolhidos) fica aqui e
+     não na ficha: nada disso é do personagem. */
+  catalogo: { busca: '', grupo: '', categoria: '', escolhidos: [] },
+
+  async abrirCatalogo() {
+    this.catalogo = { busca: '', grupo: '', categoria: '', escolhidos: [] };
+    Modal.abrir({
+      titulo: 'Catálogo de itens',
+      corpo: '<p class="dialogo">Carregando o catálogo…</p>',
+      confirmar: 'Adicionar',
+      largo: true,
+      onConfirmar: () => this.adicionarDoCatalogo()
+    });
+    await Catalogo.carregar();
+    if ($('#modal').hidden) return;          /* fechou antes de chegar */
+    $('#modal-body').innerHTML = this.htmlCatalogo();
+    this.ligarCatalogo();
+  },
+
+  htmlCatalogo() {
+    if (!Catalogo.itens.length) {
+      return `<p class="dialogo">O catálogo não carregou. Ele vive na tabela
+        <b>itens_catalogo</b> do Supabase — se ela ainda não existe, rode
+        <b>sql/v12-catalogo-itens.sql</b> e depois o <b>catalogo/seed-itens.sql</b>.</p>`;
+    }
+    return `
+      <input id="cat-busca" class="busca" placeholder="Buscar item..." value="${esc(this.catalogo.busca)}">
+      <div class="filtros" id="cat-grupos">
+        <button type="button" class="chip-filtro ativo" data-cat-grupo="">todos</button>
+        ${Catalogo.grupos().map(g =>
+          `<button type="button" class="chip-filtro" data-cat-grupo="${esc(g)}">${esc(g)}</button>`).join('')}
+      </div>
+      <div class="filtros" id="cat-cats">
+        <button type="button" class="chip-filtro ativo" data-cat-cat="">todas</button>
+        ${[0, 1, 2, 3, 4].map(n => `<button type="button" class="chip-filtro" data-cat-cat="${n}">${
+          n ? 'Cat. ' + Catalogo.categoriaTexto(n) : 'comum'}</button>`).join('')}
+      </div>
+      <div class="cat-lista" id="cat-lista">${this.linhasCatalogo()}</div>
+      <p class="cat-rodape">${Catalogo.itens.length} itens dos livros${
+        Catalogo.origem === 'local' ? ' · lendo o arquivo local (só no seu computador)' : ''}</p>`;
+  },
+
+  linhasCatalogo() {
+    const f = this.catalogo;
+    /* marca o que o agente já carrega: evita a segunda pistola sem querer */
+    const jaTem = new Set(this.atual.inventario.itens
+      .map(i => Catalogo.normal(i.nome).trim()).filter(Boolean));
+    const lista = Catalogo.filtrar(f);
+    if (!lista.length) return '<p class="vazio-linha">Nada bate com essa busca.</p>';
+
+    return lista.map(i => {
+      const idx = Catalogo.itens.indexOf(i);
+      const marcado = f.escolhidos.includes(idx);
+      const cat = Catalogo.categoriaTexto(i.categoria);
+      const esp = Catalogo.espacosTexto(i.espacos);
+      const fonte = [i.livro, i.pagina ? 'p. ' + i.pagina : ''].filter(Boolean).join(', ');
+      const texto = i.descricao ? (i.descricao.length > 260 ? i.descricao.slice(0, 260) + '…' : i.descricao) : '';
+      return `
+        <button type="button" class="cat-item ${marcado ? 'ativo' : ''}" data-cat="${idx}"${dica(texto)}>
+          <span class="cat-marca">${marcado ? '✓' : '+'}</span>
+          <span class="cat-nome">${esc(i.nome)}${
+            jaTem.has(Catalogo.normal(i.nome)) ? '<i class="cat-ja">no inventário</i>' : ''}</span>
+          <span class="cat-meta">
+            <span class="chip-cat">${cat ? 'Cat. ' + cat : 'comum'}</span>
+            ${esp ? `<span>${esp} esp.</span>` : ''}
+            ${i.dano ? `<span class="cat-dano">${esc(i.dano)}</span>${
+              i.critico ? `<span>crít. ${esc(i.critico)}</span>` : ''}` : ''}
+            ${fonte ? `<span class="cat-livro">${esc(fonte)}</span>` : ''}
+          </span>
+        </button>`;
+    }).join('');
+  },
+
+  /* Só a lista é redesenhada a cada tecla; o campo de busca fica de pé, senão
+     o foco (e o cursor) some na primeira letra. Por isso os três ouvintes
+     moram em elementos que o redesenho não toca. */
+  ligarCatalogo() {
+    const busca = $('#cat-busca');
+    if (!busca) return;
+
+    busca.addEventListener('input', e => {
+      this.catalogo.busca = e.target.value;
+      this.redesenharCatalogo();
+    });
+
+    const grupo = (caixa, chave, attr) => caixa?.addEventListener('click', e => {
+      const b = e.target.closest('[' + attr + ']');
+      if (!b) return;
+      this.catalogo[chave] = b.getAttribute(attr);
+      $$('[' + attr + ']', caixa).forEach(x => x.classList.toggle('ativo', x === b));
+      this.redesenharCatalogo();
+    });
+    grupo($('#cat-grupos'), 'grupo', 'data-cat-grupo');
+    grupo($('#cat-cats'), 'categoria', 'data-cat-cat');
+
+    $('#cat-lista').addEventListener('click', e => {
+      const linha = e.target.closest('[data-cat]');
+      if (!linha) return;
+      const idx = Number(linha.dataset.cat);
+      const escolhidos = this.catalogo.escolhidos;
+      const i = escolhidos.indexOf(idx);
+      if (i >= 0) escolhidos.splice(i, 1); else escolhidos.push(idx);
+      /* mexe só na linha clicada: redesenhar a lista inteira faria o item
+         saltar de lugar debaixo do dedo de quem está escolhendo vários */
+      linha.classList.toggle('ativo', i < 0);
+      $('.cat-marca', linha).textContent = i < 0 ? '✓' : '+';
+      this.atualizarBotaoCatalogo();
+    });
+
+    busca.focus();
+    this.atualizarBotaoCatalogo();
+  },
+
+  redesenharCatalogo() {
+    $('#cat-lista').innerHTML = this.linhasCatalogo();
+  },
+
+  atualizarBotaoCatalogo() {
+    const n = this.catalogo.escolhidos.length;
+    const b = $('[data-modal-ok]');
+    if (b) b.textContent = n ? `Adicionar ${n} ${n === 1 ? 'item' : 'itens'}` : 'Adicionar';
+  },
+
+  adicionarDoCatalogo() {
+    const escolhidos = this.catalogo.escolhidos;
+    if (!escolhidos.length) { toast('Escolha pelo menos um item da lista.', 'erro'); return false; }
+
+    const novos = escolhidos.map(i => Catalogo.paraItemDaFicha(Catalogo.itens[i]));
+    this.atual.inventario.itens.push(...novos);
+
+    /* Um filtro de categoria ligado esconderia justamente o que acabou de
+       entrar. Se algum item novo cair fora dele, volta pra "todos". */
+    const escondido = it => this.filtroItem === 'sem' ? Boolean(it.categoria) : it.categoria !== this.filtroItem;
+    if (this.filtroItem && novos.some(escondido)) this.filtroItem = '';
+
+    Store.salvar(this.atual);
+    this.abrir(this.atual.id);
+    toast(novos.length === 1 ? 'Item adicionado ao inventário.' : novos.length + ' itens adicionados ao inventário.');
+  },
+
   listaDe(nome) {
     if (nome === 'itens') return this.atual.inventario.itens;
     if (nome.includes('.')) return getPath(this.atual, nome);   // aliados.0.bonus
@@ -596,7 +787,11 @@ const Ficha = {
       municoes:    { nome: '', atual: 0, max: 0 },
       aliados:     { nome: '', tipo: '', foto: '', descricao: '', bonus: [], habilidades: [] }
     };
-    this.listaDe(nome).push(Object.assign({}, modelos[nome]));
+    const novo = Object.assign({}, modelos[nome]);
+    /* Com um filtro de categoria ligado, um item novo em branco sumiria na
+       hora de ser criado. Ele já nasce na categoria que está sendo vista. */
+    if (nome === 'itens' && this.filtroItem && this.filtroItem !== 'sem') novo.categoria = this.filtroItem;
+    this.listaDe(nome).push(novo);
     Store.salvar(this.atual);
     this.abrir(this.atual.id);
     this.focarUltimo(nome);

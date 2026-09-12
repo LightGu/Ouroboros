@@ -52,8 +52,8 @@ de topo de arquivo **não** vira propriedade de `window` (só é acessível pelo
 Ordem de carga (há dependências):
 
 ```
-config → dados → ui → ajuda → nuvem → store → mesa → ficha → criacao → rolagem → mapa
-→ sons → campanha → interludio → celular → logs → contas → telas → app
+config → dados → ui → ajuda → nuvem → store → mesa → catalogo → ficha → criacao → rolagem
+→ mapa → sons → campanha → interludio → celular → logs → contas → telas → app
 ```
 
 `app.js` é o último: ele chama `App.iniciar()` na última linha.
@@ -67,7 +67,8 @@ config → dados → ui → ajuda → nuvem → store → mesa → ficha → cri
 | `js/nuvem.js` | **Única** camada que fala com o Supabase. Ninguém mais usa `cliente` direto |
 | `js/store.js` | Modelo da ficha, estado em memória, gravação agrupada, permissões, cache offline |
 | `js/mesa.js` | Cards, barras, munição, condições, turnos, personagem rápido, reivindicar, drag |
-| `js/ficha.js` | Ficha completa, binding genérico, subir NEX, calcular status |
+| `js/catalogo.js` | Catálogo de itens dos livros: carrega do Supabase, cai no arquivo local no dev |
+| `js/ficha.js` | Ficha completa, binding genérico, subir NEX, calcular status, popup do catálogo |
 | `js/criacao.js` | Criação de personagem: escolha guiado/livre e o passo a passo em 7 telas |
 | `js/rolagem.js` | Motor de dados e painel compartilhado |
 | `js/mapa.js` | Mapa de batalha, fog of war, tokens |
@@ -148,6 +149,7 @@ Repetidores usam índice: `data-bind="ataques.0.dano"`. Campo novo só precisa d
 | `mensagens` | conversas privadas |
 | `contatos_liberados` | quem enxerga qual persona |
 | `leituras` | até onde cada um leu cada conversa |
+| `itens_catalogo` | catálogo dos livros. Global, sem `mesa_id`, só leitura e só logado |
 
 ### O modelo de permissão
 
@@ -183,7 +185,7 @@ tipicamente "só se ainda não tiver dono" ou "só se você mesmo já tiver esse
 ### Migração
 
 `sql/schema.sql` é a fonte da verdade e roda por cima de si mesmo. Cada mudança também vira um
-arquivo próprio (`v4`…`v9`) — **cole o arquivo pequeno, não as 700 linhas**: paste cortado no
+arquivo próprio (`v4`…`v12`) — **cole o arquivo pequeno, não as 700 linhas**: paste cortado no
 editor do Supabase gera erro de sintaxe fantasma difícil de diagnosticar.
 
 - `create table if not exists`, `drop policy if exists` antes de `create policy`
@@ -319,11 +321,37 @@ de caracteres lendo o alfa dos pixels. Foi assim que o ouroboros foi ajustado.
 extraídos dos PDFs com um script de duas passadas: página inteira (tabelas largas, como a de
 armas) e coluna por coluna (tabelas estreitas encostadas em texto corrido).
 
-**Pendências:** a tela de *Equipar* não existe ainda; 8 nomes saíram com texto colado; colete e
-mochila não apareceram; `AS_07` é quadrinho sem camada de texto.
+Quem consome é o botão **Do catálogo**, no inventário da ficha: um popup com busca, filtro por
+grupo e por categoria, que escreve nome, categoria e espaços na lista do agente.
 
-Quando a tela existir, o catálogo **não** pode virar arquivo público do site — é conteúdo dos
-livros. Ele vai pro Supabase, atrás do login.
+### Da extração até o popup
+
+```
+catalogo/itens.json          extração crua dos PDFs (178 linhas, com lixo)
+   ↓ sql/gerar-catalogo.py
+catalogo/catalogo-limpo.json 159 itens — fonte no desenvolvimento
+catalogo/seed-itens.sql      os mesmos 159 como INSERT
+   ↓ editor SQL do Supabase (depois de sql/v12-catalogo-itens.sql)
+public.itens_catalogo        fonte em produção, select só pra `authenticated`
+```
+
+O `js/catalogo.js` tenta o Supabase e, se a tabela não responde, cai no arquivo local — que o
+`.vercelignore` barra, então essa queda só acontece na máquina de quem está desenvolvendo. Em
+produção, sem a tabela, o popup não inventa: diz qual SQL falta rodar.
+
+**O catálogo não pode virar arquivo público do site** — é conteúdo dos livros. Atrás do login é a
+mesa consultando o material que comprou; como arquivo do Vercel, é distribuição.
+
+**O que o `gerar-catalogo.py` conserta** (19 linhas descartadas): tabela de crédito, patente,
+tamanho e alcance que viraram "itens" de 1200 espaços; 5 nomes colados no parágrafo anterior
+("dano mental. Paçoca"); e o campo `tipo`, que é o cabeçalho da tabela mais próxima e vazou por
+cima das seguintes — daí "Granada de fragmentação" ter saído como `DAS ARMAS` e "Paraquedas"
+como `Medicamentos`. O grupo é recalculado por subtipo, dano e listas de nome; as listas estão
+no topo do script e é lá que se corrige um item que caiu no balde errado.
+
+**Pendências:** colete e mochila não apareceram na extração; `AS_07` é quadrinho sem camada de
+texto; algumas descrições de *Arquivos Secretos* vieram com as colunas embaralhadas (aparecem só
+na dica de mouse, não atrapalham a escolha).
 
 ---
 

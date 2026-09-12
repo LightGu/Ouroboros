@@ -292,6 +292,18 @@ const Nuvem = {
 
   /* ---------------- sons ---------------- */
 
+  /* ---------------- catálogo de itens ---------------- */
+
+  /* Tabela global, só leitura e só para quem está logado (v12). Traz tudo de
+     uma vez: são ~160 linhas curtas e o popup filtra na mão. */
+  async catalogoItens() {
+    const { data, error } = await this.cliente.from('itens_catalogo')
+      .select('nome, grupo, categoria, espacos, dano, critico, alcance, tipo_dano, descricao, livro, pagina')
+      .order('nome');
+    if (error) throw error;
+    return data || [];
+  },
+
   async sons(mesaId) {
     const { data, error } = await this.cliente.from('sons').select('*')
       .eq('mesa_id', mesaId).order('ordem');
