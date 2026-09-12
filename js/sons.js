@@ -170,7 +170,9 @@ const Sons = {
           this.render();
           toast('Som adicionado.');
         } catch (e) {
-          toast('Falhou o envio: ' + (e.message || e), 'erro');
+          App.faltaMigracao(e);
+          if (!/bucket not found/i.test(String(e.message || e)))
+            toast('Falhou o envio: ' + (e.message || e), 'erro');
           return false;
         }
       }

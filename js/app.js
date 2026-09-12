@@ -147,6 +147,13 @@ const App = {
     const alvo = m ? (m[1] || m[2]) : null;
     if (!alvo || this._avisados.has(alvo)) { if (!alvo) console.error(erro); return; }
     this._avisados.add(alvo);
+    if (/bucket not found/i.test(msg)) {
+      if (this._avisados.has('bucket')) return;
+      this._avisados.add('bucket');
+      console.error('bucket ausente:', erro);
+      return toast('Falta criar o bucket de áudio: rode sql/v10-bucket-sons.sql no Supabase.', 'erro');
+    }
+
     const arquivos = {
       contatos_liberados: 'sql/v9-contatos-anotacoes.sql',
       'anotacoes.autor_id': 'sql/v9-contatos-anotacoes.sql',
