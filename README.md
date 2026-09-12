@@ -68,8 +68,10 @@ config → dados → ui → ajuda → nuvem → store → mesa → catalogo → 
 | `js/store.js` | Modelo da ficha, estado em memória, gravação agrupada, permissões, cache offline |
 | `js/mesa.js` | Cards, barras, munição, condições, turnos, personagem rápido, reivindicar, drag |
 | `js/catalogo.js` | Catálogo de itens dos livros: carrega do Supabase, cai no arquivo local no dev |
+| `js/paineis.js` | Organização local dos blocos, cascata, recolher/ocultar e navegação acessível |
+| `js/regras.js` | Regras conferidas, guia, origem, equipamento e estágios de Sobrevivente |
 | `js/ficha.js` | Ficha completa, binding genérico, subir NEX, calcular status, popup do catálogo |
-| `js/criacao.js` | Criação de personagem: escolha guiado/livre e o passo a passo em 7 telas |
+| `js/criacao.js` | Criação de personagem: escolha guiado/livre e o passo a passo em 9 telas |
 | `js/rolagem.js` | Motor de dados e painel compartilhado |
 | `js/mapa.js` | Mapa de batalha, fog of war, tokens |
 | `js/sons.js` | Acervo de áudio (só do mestre, toca só na máquina dele) |
@@ -403,7 +405,7 @@ do bloco impresso no livro: elemento, círculo, custo, execução, alcance, alvo
 duração, resistência, página e descrição. O vocabulário fechado dessas colunas
 (`ELEMENTOS`, `CIRCULOS`, `EXECUCOES`, `ALCANCES`, `DURACOES`) está em
 `js/dados.js`; `CIRCULOS` também carrega o custo em PE e o NEX mínimo de cada
-círculo (1º→5%, 2º→45%, 3º→75%, 4º→99%), conferidos nos Arquivos Secretos.
+círculo para Ocultistas (1º→5%, 2º→25%, 3º→55%, 4º→85%), conferidos no básico v1.1, p. 32. O poder paranormal Aprender Ritual tem regras próprias.
 
 Ficha gravada antes dessa mudança não tem a chave `rituais`; `Store.normalizar`
 cria a lista vazia, então nada quebra e nada precisa de migração no banco. O
@@ -418,14 +420,27 @@ especificidade com a do componente, quem vence é a que vier depois no arquivo.
 Blocos novos entram **antes** dela, nunca depois.
 
 
-### `ORIGEM_INFO` ainda não veio do livro
+### Origens, regras e organização da ficha
 
-`js/dados.js` tem um resumo das 33 origens — perícias treinadas, nome do poder
-e efeito. Ele foi escrito **antes** do livro básico entrar na pasta, então os
-efeitos estão descritos de forma qualitativa, sem números. O básico agora está
-em `arquivos secretos/Ordem-Paranormal-v1-1.pdf`: vale substituir pelos textos
-oficiais. O que já está verificado é que todo nome de perícia citado ali existe
-em `PERICIAS`.
+`ORIGEM_INFO` contém resumos das 46 origens dos dois livros, com perícias,
+poder e página impressa. As aproximações antigas foram substituídas a partir
+dos PDFs locais. `js/regras.js` reúne cálculos de origem, equipamento,
+habilidades iniciais, guia de conferência e evolução do Sobrevivente.
+
+O assistente cria personagens iniciais: agentes em NEX 5%; Mundano e
+Sobrevivente em NEX 0%. A evolução posterior fica na ficha. Escolhas avançadas
+aparecem no guia e continuam editáveis. Não há validação completa de todos os
+poderes, pré-requisitos e variantes. Veja [a revisão detalhada](docs/revisao-criacao.md).
+
+`js/paineis.js` permite arrastar, mover por botões, recolher, ocultar e restaurar
+os blocos. O modo cascata os apresenta em sequência com recuo no desktop.
+Preferências ficam em `localStorage`, por usuário e personagem, sem alterar
+os dados compartilhados. Os botões também funcionam por teclado e toque.
+
+Testes de regras: `node tests/regras.test.cjs`. Testes da interface:
+`PLAYWRIGHT_PATH=/caminho/do/playwright node tests/interface.cjs`.
+O segundo usa Chrome, fichas fictícias, página em memória e rede bloqueada;
+não precisa de servidor nem de credenciais Supabase.
 
 ### Os PDFs digitalizados não têm camada de texto
 

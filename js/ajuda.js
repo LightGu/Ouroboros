@@ -57,11 +57,11 @@ const AJUDA = {
     pesoIdade:  'Regra opcional do livro básico (p. 172). Adulto escolhe 1 desvantagem, Maduro 2 e Idoso 3. Frágil e Melancólico entram sozinhas na conta de PV e PE.',
     nex:        'Nível de Exposição: o "nível" do agente, de 5% a 99%. Sobe de 5 em 5 e é o que aumenta PV, PE e Sanidade.',
     desl:       'Quantos metros você percorre com uma ação de movimento. O padrão de uma pessoa é 9m.',
-    peRodada:   'Teto de PE que dá pra gastar em uma única rodada. Sobe conforme o NEX.',
-    patente:    'Seu cargo dentro da Ordem. É ela que define o limite de itens de cada categoria e o seu crédito.',
+    peRodada:   'Limite de PE por turno (não por rodada). Sobe com NEX; você sempre pode usar ao menos uma habilidade no custo mínimo.',
+    patente:    'Sua posição dentro da Ordem. É ela que define o limite de itens de cada categoria e o seu crédito.',
     pv:         'Pontos de Vida. Na metade você fica machucado; em 0, está morrendo.',
     pe:         'Pontos de Esforço: o combustível das habilidades e dos rituais. Recupera no interlúdio.',
-    san:        'Sanidade. Cai no contato com o paranormal. Zerada, o personagem enlouquece de vez e sai do controle do jogador.',
+    san:        'Sanidade. Cai no contato com o paranormal. Em 0, fica enlouquecendo e ainda pode receber ajuda. Se a condição não for removida a tempo, enlouquece permanentemente.',
     defesa:     'O número que o inimigo precisa alcançar no teste de ataque pra te acertar.',
     defEquip:   'O bônus da sua proteção (colete, capacete). Some aqui o que a vestimenta dá de Defesa.',
     defOutros:  'Bônus avulsos de Defesa: poder, ritual, cobertura fixa, condição.',
@@ -75,7 +75,7 @@ const AJUDA = {
     limiteItem: 'Quantos itens dessa categoria a sua patente deixa você carregar.',
     credito:    'O quanto a Ordem libera você requisitar sem precisar justificar. Vem da patente.',
     cargaMax:   'Total de espaços que você aguenta carregar. Passando disso, você fica sobrecarregado.',
-    prestigio:  'Pontos ganhos por missão bem resolvida. Gasta entre missões por favor, equipamento e apoio.',
+    prestigio:  'Pontos ganhos por missão bem resolvida. Determinam sua patente; não são dinheiro para gastar.',
 
     dtRituais:  'A DT dos rituais que você conjura: quanto o alvo precisa tirar pra resistir.',
     ataqueNome: 'O nome da arma ou do golpe, do jeito que você quer ver no card da mesa.',
@@ -85,7 +85,7 @@ const AJUDA = {
     municao:    'Controle de balas: o card da mesa mostra o que ainda resta no pente.',
     aliado:     'Bicho, contato ou parceiro preso ao personagem. O bônus dele entra sozinho na rolagem da perícia.',
     habilidade: 'Poderes de classe, de origem e de trilha. Ritual tem bloco próprio, logo abaixo.',
-    ritual:     'O que você conjura gastando PE. O círculo define o custo base e o NEX mínimo: 1º a partir de 5%, 2º de 45%, 3º de 75%, 4º de 99%.',
+    ritual:     'O que você conjura gastando PE. O círculo define o custo base e o NEX mínimo: 1º a partir de 5%, Ocultistas: 2º em 25%, 3º em 55%, 4º em 85%. Aprender Ritual por poder paranormal usa requisitos diferentes.',
     ritualElemento: 'A qual dos Elementos o ritual pertence. É ele que decide contra o que o alvo resiste e o que conta como afinidade.',
     ritualCirculo:  'Quanto mais fundo, mais caro: 1º custa 1 PE, 2º custa 3, 3º custa 6 e 4º custa 10.',
     ritualAlvo:     'Quem ou o que o ritual pega: "1 ser", "esfera de 6m de raio", "1 superfície".',
@@ -114,6 +114,7 @@ const Dica = {
       this.el = document.createElement('div');
       this.el.className = 'dica-flutuante';
       this.el.setAttribute('role', 'tooltip');
+      this.el.id = 'ajuda-tooltip';
       this.el.hidden = true;
       document.body.appendChild(this.el);
     }
@@ -128,9 +129,12 @@ const Dica = {
   mostrar(alvo) {
     const texto = alvo?.dataset?.ajuda;
     if (!texto) return this.esconder();
-    if (this.alvo === alvo) return;
+    if (this.alvo === alvo && (!alvo.contains(document.activeElement) || this.foco === document.activeElement)) return;
 
+    this.esconder();
     this.alvo = alvo;
+    this.foco = alvo.contains(document.activeElement) ? document.activeElement : alvo.matches("input,select,textarea,button,[tabindex]") ? alvo : alvo.querySelector("input,select,textarea,button,[tabindex]");
+    if (this.foco) { this.descricaoAnterior = this.foco.getAttribute("aria-describedby"); this.foco.setAttribute("aria-describedby", [this.descricaoAnterior, "ajuda-tooltip"].filter(Boolean).join(" ")); }
     const cx = this.caixa();
     const sub = alvo.dataset.ajudaSub;
     const tit = alvo.dataset.ajudaTitulo;
@@ -173,6 +177,8 @@ const Dica = {
   },
 
   esconder() {
+    if (this.foco) { if (this.descricaoAnterior) this.foco.setAttribute("aria-describedby", this.descricaoAnterior); else this.foco.removeAttribute("aria-describedby"); }
+    this.foco = null;
     this.alvo = null;
     if (this.el) this.el.hidden = true;
   }

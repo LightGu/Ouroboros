@@ -49,91 +49,286 @@ const TREINO = [
 
 const CLASSES = ['Combatente', 'Especialista', 'Ocultista', 'Sobrevivente', 'Mundano'];
 
-const ORIGENS = [
-  'Acadêmico', 'Agente de Saúde', 'Amnésico', 'Artista', 'Atleta', 'Chef', 'Criminoso',
-  'Cultista Arrependido', 'Desgarrado', 'Engenheiro', 'Executivo', 'Explorador', 'Fanático',
-  'Ginasta', 'Investigador', 'Inventor', 'Lutador', 'Magnata', 'Máquina', 'Mercenário',
-  'Militar', 'Operário', 'Policial', 'Político', 'Profetizado', 'Religioso',
-  'Servidor Público', 'T.I.', 'Teórico da Conspiração', 'Trabalhador Rural',
-  'Trombadinha', 'Universitário', 'Vítima'
-].sort((a, b) => a.localeCompare(b, 'pt-BR'));
-
-/* Resumo de cada origem: as duas perícias que ela treina e o poder que ela
-   entrega. Aparece na dica ao passar o mouse no passo "De onde ele veio" da
-   criação guiada.
-
-   ATENÇÃO A QUEM FOR EDITAR: o livro básico NÃO está na pasta de PDFs — lá só
-   existem os Arquivos Secretos e o Sobrevivendo ao Horror. Estes textos foram
-   escritos de fora, então trate os números como aproximação até conferir no
-   livro. Corrigir é só mexer aqui; nada mais depende dessa tabela. */
+/* Resumos conferidos nos PDFs locais; páginas impressas, não índice do PDF. */
 const ORIGEM_INFO = {
-  'Acadêmico': { pericias: 'Ciências e Investigação', poder: 'Saber é Poder',
-    efeito: 'Gastando PE você soma um bônus grande num teste de perícia baseada em Intelecto. A origem dos que resolvem no raciocínio.' },
-  'Agente de Saúde': { pericias: 'Intuição e Medicina', poder: 'Técnica Medicinal',
-    efeito: 'Seus usos de Medicina rendem mais: cura acima do normal e mais chance de tirar alguém de Morrendo. O médico de campo do grupo.' },
-  'Amnésico': { pericias: 'duas à escolha do mestre', poder: 'Lampejo do Passado',
-    efeito: 'Uma vez por sessão uma memória volta e você fica treinado numa perícia qualquer até o fim da cena. Coringa, e um prato cheio de história.' },
-  'Artista': { pericias: 'Artes e Enganação', poder: 'Musa Inspiradora',
-    efeito: 'Gastando PE você inspira quem te vê ou ouve, dando bônus em testes ao grupo. Suporte que trabalha na base do carisma.' },
-  'Atleta': { pericias: 'Acrobacia e Atletismo', poder: 'Impulso Atlético',
-    efeito: 'Gasta PE pra aumentar o deslocamento no turno. Quem chega primeiro, foge melhor e alcança o que ninguém alcança.' },
-  'Chef': { pericias: 'Fortitude e Profissão', poder: 'Ingrediente Secreto',
-    efeito: 'A refeição que você prepara no interlúdio devolve mais PE e PV ao grupo. Vale muito mais do que parece numa campanha longa.' },
-  'Criminoso': { pericias: 'Crime e Furtividade', poder: 'Dedos Leves',
-    efeito: 'Arromba, furta e abre fechadura mais rápido e sem chamar atenção. Resolve por fora o que o grupo não consegue por dentro.' },
-  'Cultista Arrependido': { pericias: 'Ocultismo e Religião', poder: 'Conhecimento Proibido',
-    efeito: 'Você já conhece um ritual de 1º círculo, mesmo sem ser Ocultista. Traz o Outro Lado pra qualquer classe.' },
-  'Desgarrado': { pericias: 'Fortitude e Sobrevivência', poder: 'Sem Raízes',
-    efeito: 'Viveu sem casa e sem rede de apoio: aguenta fome, frio e noite mal dormida sem penalidade. Difícil de quebrar pelo desgaste.' },
-  'Engenheiro': { pericias: 'Profissão e Tecnologia', poder: 'Projetista',
-    efeito: 'Improvisa reparo e melhora equipamento com o que tiver à mão. Mantém o material do grupo funcionando no meio do nada.' },
-  'Executivo': { pericias: 'Diplomacia e Profissão', poder: 'Patrocínio',
-    efeito: 'Seu crédito junto à Ordem é maior: consegue requisitar mais coisa sem justificar. Equipa o time.' },
-  'Explorador': { pericias: 'Percepção e Sobrevivência', poder: 'Desbravador',
-    efeito: 'Se vira em qualquer terreno: rastreia, acha caminho e não se perde. A origem das missões longe da cidade.' },
-  'Fanático': { pericias: 'Religião e Vontade', poder: 'Fé Inabalável',
-    efeito: 'Sua convicção segura o baque mental: resiste melhor a medo e a efeito que mexa com a cabeça. Sanidade é o recurso mais frágil do jogo.' },
-  'Ginasta': { pericias: 'Acrobacia e Reflexos', poder: 'Equilibrista',
-    efeito: 'Cai, escala e passa por lugar apertado sem se machucar. Mobilidade pura, útil em perseguição e em armadilha.' },
-  'Investigador': { pericias: 'Investigação e Percepção', poder: 'Faro para Pistas',
-    efeito: 'Acha pista que passaria batido e junta as peças mais rápido. A origem que mais empurra a história pra frente.' },
-  'Inventor': { pericias: 'Profissão e Tecnologia', poder: 'Engenhoca',
-    efeito: 'Monta um dispositivo improvisado que resolve um problema específico da cena. Criativo, depende de combinar com o mestre.' },
-  'Lutador': { pericias: 'Luta e Fortitude', poder: 'Golpe de Mestre',
-    efeito: 'Briga treinada: acerta mais e bate mais forte no corpo a corpo. Direto ao ponto.' },
-  'Magnata': { pericias: 'Diplomacia e Pilotagem', poder: 'Dinheiro é Poder',
-    efeito: 'Dinheiro abre portas que a Ordem não abre: contato, transporte, acesso. Resolve fora do combate.' },
-  'Máquina': { pericias: 'Fortitude e Luta', poder: 'Extensão do Corpo',
-    efeito: 'Corpo modificado ou prótese que conta como parte de você. Aguenta pancada e bate com o que tem.' },
-  'Mercenário': { pericias: 'Iniciativa e Intimidação', poder: 'Matador de Aluguel',
-    efeito: 'Age antes dos outros e impõe medo. Quem controla o primeiro turno controla a luta.' },
-  'Militar': { pericias: 'Pontaria e Tática', poder: 'Treinamento de Combate',
-    efeito: 'Formação de caserna: arma de fogo, disciplina sob fogo e leitura de campo. A origem mais direta pro Combatente.' },
-  'Operário': { pericias: 'Fortitude e Profissão', poder: 'Ferramenta de Trabalho',
-    efeito: 'Ferramenta pesada vira arma na sua mão e trabalho braçal não te cansa. Prático e barato.' },
-  'Policial': { pericias: 'Percepção e Pontaria', poder: 'Patrulheiro',
-    efeito: 'Treino de rua: arma, abordagem e reconhecer quem está mentindo. Investiga e atira.' },
-  'Político': { pericias: 'Diplomacia e Enganação', poder: 'Discurso Caloroso',
-    efeito: 'Convence, desarma e vira uma sala a seu favor. Resolve cena social sem tirar a arma.' },
-  'Profetizado': { pericias: 'Religião e Vontade', poder: 'Sina',
-    efeito: 'Uma profecia te cerca: de vez em quando o destino mexe um resultado a seu favor. Rende muita história.' },
-  'Religioso': { pericias: 'Religião e Vontade', poder: 'Palavra de Conforto',
-    efeito: 'Acalma quem está perdendo a cabeça e ajuda o grupo a segurar a Sanidade. Suporte mental.' },
-  'Servidor Público': { pericias: 'Intuição e Vontade', poder: 'Espírito Cívico',
-    efeito: 'Conhece a máquina por dentro: consegue informação, documento e acesso oficial. Abre porta na burocracia.' },
-  'T.I.': { pericias: 'Investigação e Tecnologia', poder: 'Hacker',
-    efeito: 'Invade sistema, rastreia registro e tira da rede o que não deveria estar lá. Investigação moderna.' },
-  'Teórico da Conspiração': { pericias: 'Investigação e Ocultismo', poder: 'Eu Já Sabia!',
-    efeito: 'Passou a vida juntando peças que ninguém levava a sério — e estava certo. Reconhece o paranormal antes dos outros.' },
-  'Trabalhador Rural': { pericias: 'Adestramento e Sobrevivência', poder: 'Vida na Fazenda',
-    efeito: 'Lida com bicho e com terra: monta, doma e sabe ler o mato. Combina com quem quer um animal de estimação.' },
-  'Trombadinha': { pericias: 'Crime e Reflexos', poder: 'Mãos Rápidas',
-    efeito: 'Furta, escapa e some no meio da multidão. Rápido e escorregadio.' },
-  'Universitário': { pericias: 'Atualidades e Investigação', poder: 'Dedicação',
-    efeito: 'Ainda está aprendendo, mas aprende rápido: pode se virar em perícia que não treinou. Versátil e barato de montar.' },
-  'Vítima': { pericias: 'Reflexos e Vontade', poder: 'Sobrevivente',
-    efeito: 'Já encontrou o paranormal e escapou. Reage melhor ao susto e resiste onde os outros congelam.' }
+  "Acadêmico": {
+    "pericias": "Ciências e Investigação",
+    "poder": "Saber é Poder",
+    "efeito": "Em teste usando INT, 2 PE concedem +5.",
+    "fonte": "Ordem Paranormal v1.1, p. 16"
+  },
+  "Agente de Saúde": {
+    "pericias": "Intuição e Medicina",
+    "poder": "Técnica Medicinal",
+    "efeito": "Some seu INT aos PV que você cura em um personagem.",
+    "fonte": "Ordem Paranormal v1.1, p. 16"
+  },
+  "Amnésico": {
+    "pericias": "duas à escolha do mestre",
+    "poder": "Vislumbres do Passado",
+    "efeito": "Uma vez por sessão, teste INT DT 10 para reconhecer algo do passado. Sucesso concede 1d4 PE temporários e pode revelar informação do mestre.",
+    "fonte": "Ordem Paranormal v1.1, p. 16"
+  },
+  "Artista": {
+    "pericias": "Artes e Enganação",
+    "poder": "Magnum Opus",
+    "efeito": "Uma vez por missão, determine que alguém em uma interação reconhece sua obra: +5 em testes de PRE e perícias de PRE contra essa pessoa.",
+    "fonte": "Ordem Paranormal v1.1, p. 17"
+  },
+  "Atleta": {
+    "pericias": "Acrobacia e Atletismo",
+    "poder": "110%",
+    "efeito": "Em perícia usando FOR ou AGI, exceto Luta e Pontaria, gaste 2 PE para receber +5.",
+    "fonte": "Ordem Paranormal v1.1, p. 17"
+  },
+  "Chef": {
+    "pericias": "Fortitude e Profissão (cozinheiro)",
+    "poder": "Ingrediente Secreto",
+    "efeito": "Ao cozinhar na ação alimentar-se do interlúdio, você e aliados que comem recebem benefícios de dois pratos; benefícios repetidos acumulam.",
+    "fonte": "Ordem Paranormal v1.1, p. 17"
+  },
+  "Criminoso": {
+    "pericias": "Crime e Furtividade",
+    "poder": "O Crime Compensa",
+    "efeito": "Escolha um item encontrado na missão; na próxima missão ele não conta no limite de itens por patente.",
+    "fonte": "Ordem Paranormal v1.1, p. 18"
+  },
+  "Cultista Arrependido": {
+    "pericias": "Ocultismo e Religião",
+    "poder": "Traços do Outro Lado",
+    "efeito": "Escolha um poder paranormal. Sua Sanidade inicial é metade da normal da classe; os ganhos posteriores não são reduzidos.",
+    "fonte": "Ordem Paranormal v1.1, p. 18"
+  },
+  "Desgarrado": {
+    "pericias": "Fortitude e Sobrevivência",
+    "poder": "Calejado",
+    "efeito": "Receba +1 PV por patamar de 5% de NEX.",
+    "fonte": "Ordem Paranormal v1.1, p. 18"
+  },
+  "Engenheiro": {
+    "pericias": "Profissão e Tecnologia",
+    "poder": "Ferramentas Favoritas",
+    "efeito": "Escolha um item que não seja arma: ele conta como uma categoria abaixo para você.",
+    "fonte": "Ordem Paranormal v1.1, p. 18"
+  },
+  "Executivo": {
+    "pericias": "Diplomacia e Profissão",
+    "poder": "Processo Otimizado",
+    "efeito": "Gaste 2 PE para +5 em teste de perícia de um teste estendido ou na ação de revisar documentos.",
+    "fonte": "Ordem Paranormal v1.1, p. 18"
+  },
+  "Investigador": {
+    "pericias": "Investigação e Percepção",
+    "poder": "Faro para Pistas",
+    "efeito": "Uma vez por cena, gaste 1 PE para +5 em um teste de procurar pistas.",
+    "fonte": "Ordem Paranormal v1.1, p. 19"
+  },
+  "Lutador": {
+    "pericias": "Luta e Reflexos",
+    "poder": "Mão Pesada",
+    "efeito": "Some +2 ao dano de ataques corpo a corpo.",
+    "fonte": "Ordem Paranormal v1.1, p. 19"
+  },
+  "Magnata": {
+    "pericias": "Diplomacia e Pilotagem",
+    "poder": "Patrocinador da Ordem",
+    "efeito": "Seu limite de crédito é uma categoria acima do atual.",
+    "fonte": "Ordem Paranormal v1.1, p. 20"
+  },
+  "Mercenário": {
+    "pericias": "Iniciativa e Intimidação",
+    "poder": "Posição de Combate",
+    "efeito": "No primeiro turno de uma cena de ação, 2 PE concedem uma ação de movimento extra.",
+    "fonte": "Ordem Paranormal v1.1, p. 20"
+  },
+  "Militar": {
+    "pericias": "Pontaria e Tática",
+    "poder": "Para Bellum",
+    "efeito": "Some +2 ao dano de armas de fogo.",
+    "fonte": "Ordem Paranormal v1.1, p. 20"
+  },
+  "Operário": {
+    "pericias": "Fortitude e Profissão",
+    "poder": "Ferramenta de Trabalho",
+    "efeito": "Com o mestre, escolha uma arma simples ou tática ligada à profissão. Você é proficiente nela e recebe +1 em ataque, dano e margem de ameaça.",
+    "fonte": "Ordem Paranormal v1.1, p. 20"
+  },
+  "Policial": {
+    "pericias": "Percepção e Pontaria",
+    "poder": "Patrulha",
+    "efeito": "Receba +2 na Defesa.",
+    "fonte": "Ordem Paranormal v1.1, p. 20"
+  },
+  "Religioso": {
+    "pericias": "Religião e Vontade",
+    "poder": "Acalentar",
+    "efeito": "Receba +5 em Religião para acalmar. Ao acalmar alguém, essa pessoa recupera 1d6 + PRE de Sanidade.",
+    "fonte": "Ordem Paranormal v1.1, p. 20"
+  },
+  "Servidor Público": {
+    "pericias": "Intuição e Vontade",
+    "poder": "Espírito Cívico",
+    "efeito": "Ao testar para ajudar, gaste 1 PE para aumentar o bônus concedido em +2.",
+    "fonte": "Ordem Paranormal v1.1, p. 20"
+  },
+  "Teórico da Conspiração": {
+    "pericias": "Investigação e Ocultismo",
+    "poder": "Eu Já Sabia",
+    "efeito": "Receba resistência a dano mental igual ao seu INT.",
+    "fonte": "Ordem Paranormal v1.1, p. 21"
+  },
+  "T.I.": {
+    "pericias": "Investigação e Tecnologia",
+    "poder": "Motor de Busca",
+    "efeito": "Com internet e autorização do mestre, gaste 2 PE para substituir um teste de perícia por Tecnologia.",
+    "fonte": "Ordem Paranormal v1.1, p. 21"
+  },
+  "Trabalhador Rural": {
+    "pericias": "Adestramento e Sobrevivência",
+    "poder": "Desbravador",
+    "efeito": "Gaste 2 PE para +5 em Adestramento ou Sobrevivência. Terreno difícil não reduz seu deslocamento.",
+    "fonte": "Ordem Paranormal v1.1, p. 21"
+  },
+  "Trambiqueiro": {
+    "pericias": "Crime e Enganação",
+    "poder": "Impostor",
+    "efeito": "Uma vez por cena, 2 PE permitem substituir um teste de perícia por Enganação.",
+    "fonte": "Ordem Paranormal v1.1, p. 21"
+  },
+  "Universitário": {
+    "pericias": "Atualidades e Investigação",
+    "poder": "Dedicação",
+    "efeito": "Receba +1 PE inicial e mais +1 em NEX 15%, 25% e assim por diante. Seu limite de PE por turno aumenta em 1.",
+    "fonte": "Ordem Paranormal v1.1, p. 21"
+  },
+  "Vítima": {
+    "pericias": "Reflexos e Vontade",
+    "poder": "Cicatrizes Psicológicas",
+    "efeito": "Receba +1 SAN por patamar de 5% de NEX.",
+    "fonte": "Ordem Paranormal v1.1, p. 21"
+  },
+  "Amigo dos Animais": {
+    "pericias": "Adestramento e Percepção",
+    "poder": "Companheiro Animal",
+    "efeito": "Possui um animal aliado com +2 em uma perícia aprovada pelo mestre. Ele evolui em NEX 35% e 70%; perdê-lo causa perda permanente de 10 SAN e perturbação na cena.",
+    "fonte": "Sobrevivendo ao Horror v1.2, p. 7"
+  },
+  "Astronauta": {
+    "pericias": "Ciências e Fortitude",
+    "poder": "Acostumado ao Extremo",
+    "efeito": "Ao sofrer dano de fogo, frio ou mental, gaste 1 PE para reduzir em 5. O custo aumenta em 1 a cada repetição na cena.",
+    "fonte": "Sobrevivendo ao Horror v1.2, p. 8"
+  },
+  "Chef do Outro Lado": {
+    "pericias": "Ocultismo e Profissão (cozinheiro)",
+    "poder": "Fome do Outro Lado",
+    "efeito": "Cozinhe ingredientes paranormais no interlúdio para conceder resistência ou causar vulnerabilidade ao elemento. Consumir o prato perde 1 SAN permanente; veja os testes e riscos na fonte.",
+    "fonte": "Sobrevivendo ao Horror v1.2, p. 8"
+  },
+  "Colegial": {
+    "pericias": "Atualidades e Tecnologia",
+    "poder": "Poder da Amizade",
+    "efeito": "Escolha seu melhor amigo. Em alcance médio, podendo trocar olhares, receba +2 em perícias. A morte dele reduz PE até o fim da missão.",
+    "fonte": "Sobrevivendo ao Horror v1.2, p. 9"
+  },
+  "Cosplayer": {
+    "pericias": "Artes e Vontade",
+    "poder": "Não É Fantasia, É Cosplay!",
+    "efeito": "Use Artes para disfarces. Um cosplay relacionado ao teste concede +2 na perícia.",
+    "fonte": "Sobrevivendo ao Horror v1.2, p. 9"
+  },
+  "Diplomata": {
+    "pericias": "Atualidades e Diplomacia",
+    "poder": "Conexões",
+    "efeito": "Receba +2 em Diplomacia. Contatando um NPC capaz de ajudar, 10 minutos e 2 PE permitem substituir uma perícia relacionada ao conhecimento dele por Diplomacia até o fim da cena.",
+    "fonte": "Sobrevivendo ao Horror v1.2, p. 9"
+  },
+  "Explorador": {
+    "pericias": "Fortitude e Sobrevivência",
+    "poder": "Manual do Sobrevivente",
+    "efeito": "Gaste 2 PE para +5 em resistência a perigos ambientais, armadilhas e venenos. Sono precário conta como normal.",
+    "fonte": "Sobrevivendo ao Horror v1.2, p. 9"
+  },
+  "Experimento": {
+    "pericias": "Atletismo e Fortitude",
+    "poder": "Mutação",
+    "efeito": "Receba RD 2 e +2 em uma perícia originalmente de FOR, AGI ou VIG à escolha. Sofra –1d20 em Diplomacia.",
+    "fonte": "Sobrevivendo ao Horror v1.2, p. 9"
+  },
+  "Fanático por Criaturas": {
+    "pericias": "Investigação e Ocultismo",
+    "poder": "Conhecimento Oculto",
+    "efeito": "Identifique características de criaturas por pistas com Ocultismo, sem revelar sua identidade ou tipo específico. Ao passar, receba +2 em todos os testes contra a criatura até o fim da missão.",
+    "fonte": "Sobrevivendo ao Horror v1.2, p. 10"
+  },
+  "Fotógrafo": {
+    "pericias": "Artes e Percepção",
+    "poder": "Através da Lente",
+    "efeito": "Ao investigar, perceber ou adquirir pistas usando câmera ou fotos, gaste 2 PE para +5. Andar olhando pela lente reduz seu deslocamento à metade.",
+    "fonte": "Sobrevivendo ao Horror v1.2, p. 10"
+  },
+  "Inventor Paranormal": {
+    "pericias": "Profissão (engenheiro) e Vontade",
+    "poder": "Invenção Paranormal",
+    "efeito": "Escolha um ritual de 1º círculo para seu invento: categoria 0, 1 espaço. Ative com Profissão DT 15, +5 por ativação na missão; falha exige manutenção no interlúdio.",
+    "fonte": "Sobrevivendo ao Horror v1.2, p. 10"
+  },
+  "Jovem Místico": {
+    "pericias": "Ocultismo e Religião",
+    "poder": "A Culpa é das Estrelas",
+    "efeito": "Escolha um número da sorte de 1 a 6. No começo da cena, gaste 1 PE e role 1d6: acertar concede +2 em perícias na cena. Falhar adiciona outro número na próxima tentativa; acertar reinicia a seleção em um número.",
+    "fonte": "Sobrevivendo ao Horror v1.2, p. 11"
+  },
+  "Legista do Turno da Noite": {
+    "pericias": "Ciências e Medicina",
+    "poder": "Luto Habitual",
+    "efeito": "Sofra metade do dano mental de cenas ligadas à rotina de legista, a critério do mestre. Gaste 2 PE para +5 em Medicina para primeiros socorros ou necropsia.",
+    "fonte": "Sobrevivendo ao Horror v1.2, p. 11"
+  },
+  "Mateiro": {
+    "pericias": "Percepção e Sobrevivência",
+    "poder": "Mapa Celeste",
+    "efeito": "Vendo o céu, reconheça direções e retorne a locais conhecidos sem se perder. Gaste 2 PE para repetir Sobrevivência e escolher o melhor. Sono precário conta como normal.",
+    "fonte": "Sobrevivendo ao Horror v1.2, p. 12"
+  },
+  "Mergulhador": {
+    "pericias": "Atletismo e Fortitude",
+    "poder": "Fôlego de Nadador",
+    "efeito": "Receba +5 PV, prenda a respiração por 2 × VIG rodadas e nade seu deslocamento completo ao passar no teste.",
+    "fonte": "Sobrevivendo ao Horror v1.2, p. 12"
+  },
+  "Motorista": {
+    "pericias": "Pilotagem e Reflexos",
+    "poder": "Mãos no Volante",
+    "efeito": "Ignore penalidades de ataque por veículo em movimento. Pilotando, gaste 2 PE para +5 em Pilotagem ou resistência.",
+    "fonte": "Sobrevivendo ao Horror v1.2, p. 13"
+  },
+  "Nerd Entusiasta": {
+    "pericias": "Ciências e Tecnologia",
+    "poder": "O Inteligentão",
+    "efeito": "A ação ler do interlúdio concede +2d6 em vez de +1d6.",
+    "fonte": "Sobrevivendo ao Horror v1.2, p. 13"
+  },
+  "Profetizado": {
+    "pericias": "Vontade e mais uma à escolha",
+    "poder": "Luta ou Fuga",
+    "efeito": "Receba +2 em Vontade. Uma referência à premonição da sua morte concede 2 PE temporários até o fim da cena; combine a premonição com o mestre.",
+    "fonte": "Sobrevivendo ao Horror v1.2, p. 13"
+  },
+  "Psicólogo": {
+    "pericias": "Intuição e Profissão (psicólogo)",
+    "poder": "Terapia",
+    "efeito": "Use Profissão (psicólogo) como Diplomacia. Uma vez por rodada, 2 PE permitem testar Profissão e substituir uma resistência falha contra dano mental sua ou de aliado em alcance curto.",
+    "fonte": "Sobrevivendo ao Horror v1.2, p. 13"
+  },
+  "Repórter Investigativo": {
+    "pericias": "Atualidades e Investigação",
+    "poder": "Encontrar a Verdade",
+    "efeito": "Use Investigação para persuadir e mudar atitude. Gaste 2 PE para receber +5 em Investigação.",
+    "fonte": "Sobrevivendo ao Horror v1.2, p. 13"
+  }
 };
+const ORIGENS = Object.keys(ORIGEM_INFO).sort((a,b) => a.localeCompare(b, "pt-BR"));
 
 /* ===========================================================
    PERSONAGENS DE IDADE VARIADA  —  regra opcional, OPRPG p. 172
@@ -226,7 +421,7 @@ const DESVANTAGENS_IDADE = [
 /* Quanto a idade tira de PV e PE. "Por NEX" é por nível de NEX, e em NEX 5%
    você já tem o primeiro — daí o `passos + 1`. */
 function ajusteIdade(p) {
-  const niveis = Math.max(0, Math.floor((Number(p?.nex || 5) - 5) / 5)) + 1;
+  const niveis = Number(p?.nex) === 99 ? 20 : Math.max(1, Math.floor(Number(p?.nex || 5) / 5));
   return (p?.desvantagensIdade || []).reduce((acc, id) => {
     const d = DESVANTAGENS_IDADE.find(x => x.id === id);
     if (d?.pvPorNex) acc.pv -= d.pvPorNex * niveis;
@@ -257,9 +452,9 @@ const corDoElemento = id => (ELEMENTOS.find(e => e.id === id) || ELEMENTOS[0]).c
 const CIRCULOS = [
   { v: '',  label: '—',         pe: '',   nex: 0  },
   { v: '1', label: '1º círculo', pe: '1',  nex: 5  },
-  { v: '2', label: '2º círculo', pe: '3',  nex: 45 },
-  { v: '3', label: '3º círculo', pe: '6',  nex: 75 },
-  { v: '4', label: '4º círculo', pe: '10', nex: 99 }
+  { v: '2', label: '2º círculo', pe: '3',  nex: 25 },
+  { v: '3', label: '3º círculo', pe: '6',  nex: 55 },
+  { v: '4', label: '4º círculo', pe: '10', nex: 85 }
 ];
 const circuloInfo = v => CIRCULOS.find(c => c.v === String(v || '')) || CIRCULOS[0];
 
@@ -287,8 +482,8 @@ const PROGRESSAO = {
   'Combatente':   { pv: [20, 4], pvAttr: 'VIG', pe: [2, 2], peAttr: 'PRE', san: [12, 3] },
   'Especialista': { pv: [16, 3], pvAttr: 'VIG', pe: [3, 3], peAttr: 'PRE', san: [16, 4] },
   'Ocultista':    { pv: [12, 2], pvAttr: 'VIG', pe: [4, 4], peAttr: 'PRE', san: [20, 5] },
-  'Sobrevivente': { pv: [16, 3], pvAttr: 'VIG', pe: [3, 3], peAttr: 'PRE', san: [16, 4] },
-  'Mundano':      { pv: [12, 2], pvAttr: 'VIG', pe: [2, 2], peAttr: 'PRE', san: [12, 3] }
+  'Sobrevivente': { pv: [8, 2], pvAttr: 'VIG', pe: [2, 1], peAttr: 'PRE', san: [8, 2] },
+  'Mundano':      { pv: [8, 0], pvAttr: 'VIG', pe: [1, 0], peAttr: 'PRE', san: [8, 0] }
 };
 
 /* O que cada classe entrega na criação — usado pelo passo a passo guiado.
@@ -310,7 +505,7 @@ const CLASSE_INFO = {
   },
   'Ocultista': {
     frase: 'Quem mexe com o Outro Lado. Frágil de corpo, forte de poder.',
-    livres: 3, obrigatorias: [['Ocultismo', 'Vontade']],
+    livres: 3, obrigatorias: [['Ocultismo'], ['Vontade']],
     proficiencias: 'Armas simples',
     marca: 'Escolhido pelo Outro Lado: lança rituais desde o começo.'
   },
@@ -319,24 +514,29 @@ const CLASSE_INFO = {
     livres: 1, obrigatorias: [], pontos: 3,
     proficiencias: 'Armas simples',
     marca: 'Empenho: gasta 1 PE pra somar +2 em qualquer teste de perícia.',
-    aviso: 'No livro o sobrevivente evolui por estágios e é bem mais frágil. Aqui ele usa a progressão por NEX desta mesa.'
+    aviso: 'NEX 0%, estágios de 1 a 5. Ganha +2 PV, +1 PE e +2 SAN por estágio; não usa patentes.'
   },
   'Mundano': {
-    frase: 'Civil sem treinamento nenhum. Classe caseira desta mesa.',
-    livres: 2, obrigatorias: [],
+    frase: 'Civil de NEX 0%. Consulte a regra opcional do livro básico.',
+    livres: 1, obrigatorias: [], pontos: 3,
     proficiencias: 'Armas simples',
-    marca: 'Sem habilidade de classe — o que ele tem é a origem e a cabeça.',
-    aviso: 'Não é uma classe oficial de Ordem Paranormal: é uma opção criada nesta mesa.'
+    marca: 'Empenho: 1 PE concede +2 em um teste de perícia.',
+    aviso: 'Regra opcional do básico, p. 171–172. NEX 0%; ao se tornar agente, requer treinamento. Não evolui por estágios.'
   }
 };
 
 /* Calcula PV/PE/SAN máximos a partir de classe, NEX e atributos */
-function calcularStatus(classe, nex, attrs) {
+function calcularStatus(classe, nex, attrs, estagio = 1) {
   const p = PROGRESSAO[classe];
   if (!p) return null;
-  const passos = Math.max(0, Math.floor((Number(nex || 5) - 5) / 5));
+  const passos = Math.max(0, (Number(nex) === 99 ? 20 : Math.floor(Number(nex || 5) / 5)) - 1);
   const vig = Number(attrs?.VIG || 0);
   const pre = Number(attrs?.PRE || 0);
+  if (classe === 'Mundano') return { pv: 8 + vig, pe: 1 + pre, san: 8 };
+  if (classe === 'Sobrevivente') {
+    const etapas = Math.max(0, Math.min(4, Math.floor(Number(estagio) || 1) - 1));
+    return { pv: 8 + vig + 2 * etapas, pe: 2 + pre + etapas, san: 8 + 2 * etapas };
+  }
   return {
     pv:  (p.pv[0]  + vig) + passos * (p.pv[1]  + vig),
     pe:  (p.pe[0]  + pre) + passos * (p.pe[1]  + pre),

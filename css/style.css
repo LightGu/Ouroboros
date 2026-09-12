@@ -700,7 +700,10 @@ textarea { resize: vertical; }
   padding: 16px 18px; border-bottom: 1px solid var(--linha);
 }
 .modal-head h2 { font-size: 16px; letter-spacing: .1em; text-transform: uppercase; }
-.modal-body { padding: 18px; overflow-y: auto; display: flex; flex-direction: column; gap: 13px; }
+.modal-body { padding: 18px; overflow-y: auto; min-height: 0; display: flex; flex-direction: column; gap: 13px; }
+/* O corpo rola; as listas internas não podem encolher até esconder opções. */
+.modal-body > * { flex-shrink: 0; }
+.modal-head, .modal-foot { flex-shrink: 0; }
 .modal-foot { display: flex; justify-content: flex-end; gap: 8px; padding: 14px 18px; border-top: 1px solid var(--linha); }
 
 .dialogo { margin: 0; line-height: 1.6; font-size: 14px; color: var(--texto-2); }
@@ -2203,6 +2206,41 @@ body.com-painel .view { padding-right: 352px; }
   .idade-escolhas { grid-template-columns: 1fr; }
   .idade-item { grid-template-columns: 1fr; gap: 3px; }
 }
+
+/* Organização acessível dos blocos da ficha. */
+.paineis-ficha { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+.paineis-ficha > .bloco { min-width: 0; }
+.painel-controles { margin-left: auto; display: flex; align-items: center; gap: 5px; letter-spacing: normal; }
+.painel-controles button { min-height: 32px; min-width: 32px; }
+.painel-alca { cursor: grab; }
+.painel-alca:active { cursor: grabbing; }
+.arrastando { opacity: .5; }
+.destino-arraste { outline: 2px dashed var(--roxo); outline-offset: 3px; }
+.organizar-paineis p, .guia-ficha p, .guia-ficha li { font-size: 13px; line-height: 1.65; color: var(--texto-2); }
+.painel-acoes, .painel-visibilidade { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0; }
+.organizar-paineis [aria-pressed="true"] { background: #8b5cf625; border-color: var(--roxo); color: var(--texto); }
+.organizar-paineis summary, .guia-ficha summary { cursor: pointer; padding: 8px 0; }
+.modo-cascata > .bloco { border-left: 3px solid var(--roxo); }
+.modo-cascata > .bloco:nth-child(3n+2) { margin-left: 14px; }
+.modo-cascata > .bloco:nth-child(3n) { margin-left: 28px; }
+.painel-conteudo[hidden], .paineis-ficha > [hidden] { display: none !important; }
+.guia-ficha { border-left: 3px solid var(--roxo); }
+.guia-ficha .guia-grade { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px,1fr)); gap: 16px; }
+.guia-ficha ul { padding-left: 20px; }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+button:focus-visible, summary:focus-visible { outline: 2px solid var(--roxo); outline-offset: 3px; }
+@media (max-width: 600px) {
+  .painel-controles { width: 100%; margin-left: 0; }
+  .painel-controles button { min-height: 40px; min-width: 40px; }
+  .modo-cascata > .bloco:nth-child(n) { margin-left: 0; }
+}
+@media print {
+  .organizar-paineis, .painel-controles { display: none !important; }
+  .paineis-ficha > .bloco, .painel-conteudo[hidden] { display: block !important; margin-left: 0 !important; }
+}
+.cri-itens-catalogo { max-height: 250px; overflow-y: auto; margin: 12px 0; display: grid; grid-template-columns: repeat(auto-fit,minmax(210px,1fr)); gap: 6px; }
+.cri-item { display: flex; flex-direction: column; text-align: left; align-items: flex-start; }
+.cri-item span { color: var(--texto-3); font-size: 12px; }
 
 /* ===========================================================
    TOQUE

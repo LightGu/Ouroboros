@@ -22,6 +22,7 @@ const Ficha = {
     if (!mesma) this.filtroItem = '';
     App.mostrar('ficha');
     $('#view-ficha').innerHTML = this.html(this.atual);
+    Paineis.montar(this.atual);
 
     if (mesma) {
       window.scrollTo(0, y);
@@ -41,7 +42,7 @@ const Ficha = {
   travar() {
     const raiz = $('#view-ficha');
     $$('input, select, textarea', raiz).forEach(el => { el.disabled = true; });
-    $$('[data-add], [data-del], [data-attr], [data-excluir], [data-calcular], [data-catalogo]', raiz)
+    $$('[data-add], [data-del], [data-attr], [data-excluir], [data-calcular], [data-catalogo], [data-subirnex], [data-desv-idade], [data-aliado-pronto], [data-virar-ritual], [data-add-bonus], [data-add-hab], [data-foto-aliado]', raiz)
       .forEach(el => el.remove());
     $('[data-trocar-img]', raiz)?.removeAttribute('data-trocar-img');
     const ind = $('#indicador-salvo', raiz);
@@ -96,7 +97,7 @@ const Ficha = {
           <div class="grade-4">
             <label class="campo"${dica(AJUDA.campos.nex)}><span>NEX %</span><input type="number" data-bind="nex" value="${num(p.nex)}" min="0" max="99" step="5"></label>
             <label class="campo"${dica(AJUDA.campos.desl)}><span>Deslocamento</span><input type="number" data-bind="desl" value="${num(p.desl)}"></label>
-            <label class="campo"${dica(AJUDA.campos.peRodada)}><span>PE / rodada</span><input data-bind="peRodada" value="${esc(p.peRodada)}"></label>
+            <label class="campo"${dica(AJUDA.campos.peRodada)}><span>PE / turno</span><input data-bind="peRodada" value="${esc(p.peRodada)}"></label>
             <label class="campo"${dica(AJUDA.campos.patente)}><span>Patente</span>
               <input data-bind="patente" value="${esc(p.patente)}" list="dl-patentes">
               <datalist id="dl-patentes">${PATENTES.map(o => `<option value="${esc(o)}">`).join('')}</datalist></label>
@@ -104,8 +105,10 @@ const Ficha = {
         </div>
       </section>
 
+      ${Regras.guia(p)}
       ${this.blocoIdade(p)}
 
+      ${p.classe === 'Sobrevivente' ? `<section class="bloco"><label class="campo"><span>Estágio do Sobrevivente (NEX 0%)</span><select data-bind="estagio" data-recarrega>${[1,2,3,4,5].map(n=>`<option value="${n}" ${num(p.estagio,1)===n?'selected':''}>Estágio ${n}</option>`).join('')}</select></label><p class="dica-passo">Escolha o estágio, confira os benefícios no guia e use Calcular pela classe para revisar os máximos.</p></section>` : ''}
       <!-- ATRIBUTOS -->
       <section class="bloco">
         <h2 class="titulo-bloco">Atributos</h2>
@@ -127,7 +130,7 @@ const Ficha = {
       <section class="bloco">
         <h2 class="titulo-bloco">Status
           <button class="btn btn-ghost btn-peq" data-calcular title="Calcula PV/PE/SAN pela classe, NEX e atributos">Calcular pela classe</button>
-          <button class="btn btn-ghost btn-peq" data-subirnex title="Avança 5% de NEX e recalcula">▲ Subir NEX</button>
+          <button class="btn btn-ghost btn-peq" data-subirnex title="Revisar avanço do personagem">▲ ${p.classe === "Sobrevivente" ? "Subir estágio" : "Subir NEX"}</button>
         </h2>
         <div class="status-grade">
           ${this.caixaStatus('pv',  'Pontos de Vida',    p)}
@@ -436,7 +439,7 @@ const Ficha = {
     const info  = circuloInfo(r.circulo);
     const cor   = corDoElemento(r.elemento);
     const nex   = num(p.nex);
-    const cedo  = info.nex && nex && nex < info.nex;
+    const cedo  = p.classe === 'Ocultista' && info.nex && nex < info.nex;
     const opt   = (lista, val) => lista.map(o =>
       `<option value="${esc(o)}" ${o === (r[val] || '') ? 'selected' : ''}>${esc(o || '—')}</option>`).join('');
 
@@ -454,7 +457,7 @@ const Ficha = {
           <button class="btn-mini perigo" data-del="rituais:${i}" title="Remover">✕</button>
         </div>
 
-        ${cedo ? `<p class="ritual-aviso">Precisa de NEX ${info.nex}% pra aprender ${info.label.toLowerCase()}. Você está em ${nex}%.</p>` : ''}
+        ${cedo ? `<p class="ritual-aviso">Ocultistas precisam de NEX ${info.nex}% para acessar ${info.label.toLowerCase()}. Você está em ${nex}%.</p>` : ''}
 
         <div class="ritual-campos">
           <label><span>Execução</span><select data-bind="rituais.${i}.execucao">${opt(EXECUCOES, 'execucao')}</select></label>
@@ -530,6 +533,7 @@ const Ficha = {
     });
 
     raiz.addEventListener('click', e => {
+      if (e.target.closest('[data-revisar-guia]')) return this.abrir(this.atual.id);
       if (e.target.closest('[data-voltar]'))     return this.voltar();
       if (e.target.closest('[data-excluir]'))    return this.excluir();
       if (e.target.closest('[data-trocar-img]')) return Mesa.trocarImagem(this.atual.id);
@@ -825,28 +829,28 @@ const Ficha = {
 
   calcular() {
     const p = this.atual;
-    const r = calcularStatus(p.classe, p.nex, p.atributos);
+    const r = Regras.status(p);
     if (!r) return toast('Escolha uma classe conhecida (Combatente, Especialista, Ocultista...).', 'erro');
     /* Frágil e Melancólico saem direto do total: são as duas desvantagens de
        idade que mexem em número que a ficha calcula sozinha. */
     const aj = ajusteIdade(p);
-    r.pv = Math.max(1, r.pv + aj.pv);
-    r.pe = Math.max(0, r.pe + aj.pe);
+
     Modal.abrir({
       titulo: 'Calcular status',
-      corpo: `<p class="dialogo">Pela classe <b>${esc(p.classe)}</b>, NEX <b>${num(p.nex)}%</b>,
+      corpo: `<p class="dialogo">Pela classe <b>${esc(p.classe)}</b>, NEX <b>${num(p.nex)}%</b>${p.classe === "Sobrevivente" ? `, estágio <b>${num(p.estagio,1)}</b>` : ""},
               VIG <b>${num(p.atributos.VIG)}</b> e PRE <b>${num(p.atributos.PRE)}</b>:</p>
               <ul class="lista-calc">
                 <li><b>PV</b> ${r.pv}</li><li><b>PE</b> ${r.pe}</li><li><b>Sanidade</b> ${r.san}</li>
               </ul>
               ${(aj.pv || aj.pe) ? `<p class="dialogo fraco">Já com o Peso da Idade descontado:
                 ${[aj.pv ? aj.pv + ' PV' : '', aj.pe ? aj.pe + ' PE' : ''].filter(Boolean).join(' e ')}.</p>` : ''}
-              <p class="dialogo fraco">Isso substitui os máximos e enche os atuais. Habilidades e trilhas que dão bônus extras você ajusta na mão depois.</p>`,
+              <p class="dialogo fraco">Isso substitui os máximos e enche os atuais. Inclui os bônus de origem em PV/PE/SAN e de Durão. Outros poderes e trilhas exigem ajustes manuais.</p>`,
       confirmar: 'Aplicar',
       onConfirmar: () => {
         p.pv  = { atual: r.pv,  max: r.pv  };
         p.pe  = { atual: r.pe,  max: r.pe  };
         p.san = { atual: r.san, max: r.san };
+        p.peRodada = Regras.limitePE(p);
         Store.salvar(p);
         this.abrir(p.id);
         toast('Status calculados.');
@@ -905,9 +909,12 @@ const Ficha = {
 
   subirNex() {
     const p = this.atual;
+    if (p.classe === 'Sobrevivente') return Regras.subirEstagio(p);
+    if (Regras.civil(p)) return toast('Sobrevivente evolui por estágio; Mundano precisa de treinamento para mudar de classe. Consulte o guia.', 'erro');
+    if (num(p.nex) >= 99) return toast('NEX máximo atingido.');
     const nexNovo = Math.min(99, num(p.nex) + 5);
-    const antes = calcularStatus(p.classe, p.nex, p.atributos);
-    const depois = calcularStatus(p.classe, nexNovo, p.atributos);
+    const antes = Regras.status(p);
+    const depois = Regras.status({...p, nex: nexNovo});
     if (!antes || !depois)
       return toast('Escolha uma classe conhecida (Combatente, Especialista, Ocultista...).', 'erro');
 
@@ -915,8 +922,7 @@ const Ficha = {
        o nível, e o ganho real da subida é menor do que o da tabela da classe. */
     const ajA = ajusteIdade(p);
     const ajD = ajusteIdade(Object.assign({}, p, { nex: nexNovo }));
-    antes.pv  = Math.max(1, antes.pv  + ajA.pv);  antes.pe  = Math.max(0, antes.pe  + ajA.pe);
-    depois.pv = Math.max(1, depois.pv + ajD.pv);  depois.pe = Math.max(0, depois.pe + ajD.pe);
+
 
     const linha = (r, a, d) => `<li><b>${r}</b> ${a} → ${d} <em>(+${d - a})</em></li>`;
     Modal.abrir({
@@ -933,10 +939,11 @@ const Ficha = {
       onConfirmar: () => {
         ['pv', 'pe', 'san'].forEach(k => {
           const ganho = depois[k] - antes[k];
-          p[k].max = depois[k];
-          p[k].atual = Math.min(depois[k], num(p[k].atual) + ganho);
+          p[k].max = num(p[k].max) + ganho;
+          p[k].atual = Math.min(p[k].max, num(p[k].atual) + ganho);
         });
         p.nex = nexNovo;
+        p.peRodada = Regras.limitePE(p);
         Store.salvar(p);
         this.abrir(p.id);
         toast(`Agora é NEX ${nexNovo}%.`);

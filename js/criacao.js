@@ -26,7 +26,7 @@ const Criacao = {
         <div class="escolha-modo">
           <button class="modo" data-modo="guiado">
             <b>Passo a passo</b>
-            <span>Sete telas curtas: conceito, origem, classe, atributos e perícias.
+            <span>Escolhas explicadas: conceito, origem, classe, atributos, perícias e equipamento.
                   Explica cada escolha e calcula PV, PE e Sanidade no fim.</span>
             <i>recomendado pra quem está começando</i>
           </button>
@@ -54,10 +54,11 @@ const Criacao = {
   },
 
   guiado() {
+    this.criado = null;
     this.d = {
       nome: '', jogador: '', origem: '', classe: '',
       attrs: { AGI: 1, FOR: 1, INT: 1, PRE: 1, VIG: 1 },
-      pericias: [], nex: 5, patente: 'Recruta',
+      pericias: [], nex: 5, estagio: 1, patente: 'Recruta', perito: [], rituais: [], itens: [], escolhaOrigem: '',
       descricao: { aparencia: '', personalidade: '', historico: '', objetivo: '' }
     };
     this.ir(0);
@@ -156,8 +157,7 @@ const Criacao = {
         const d = Criacao.d;
         return `
         <p class="dialogo">A <b>origem</b> é a vida que ele tinha antes da Ordem. Ela dá
-        <b>duas perícias treinadas</b> e <b>um poder</b> — procure as duas no livro e marque
-        no próximo passo junto com as da classe.</p>
+        <b>duas perícias treinadas</b> e <b>um poder</b>. As perícias fixas serão marcadas para você e o poder será registrado na ficha.</p>
         <label class="campo"><span>Origem</span>
           <input id="c-origem" value="${esc(d.origem)}" list="dl-origens-cri" placeholder="Ex.: Teórico da Conspiração">
           <datalist id="dl-origens-cri">${ORIGENS.map(o => `<option value="${esc(o)}">`).join('')}</datalist>
@@ -189,7 +189,7 @@ const Criacao = {
           if (!i) return;
           detalhe.innerHTML = `<span class="od-sub">Treina ${esc(i.pericias)}</span>
             <b class="od-poder">${esc(i.poder)}</b>
-            <span class="od-efeito">${esc(i.efeito)}</span>`;
+            <span class="od-efeito">${esc(i.efeito)}</span><small>${esc(i.fonte || "")}</small>`;
         };
 
         const marcar = nome => {
@@ -204,7 +204,12 @@ const Criacao = {
         $('#c-origem', raiz).addEventListener('input', e => marcar(e.target.value.trim()));
         marcar($('#c-origem', raiz).value.trim());
       },
-      validar() { this.d.origem = $('#c-origem', this.raiz()).value.trim(); }
+      validar() {
+        const origem = $('#c-origem', this.raiz()).value.trim();
+        if (origem !== this.d.origem) this.d.pericias = [];
+        this.d.origem = origem;
+        if (!origem) { toast('Escolha ou escreva sua origem.', 'erro'); return false; }
+      }
     },
 
     /* 3. classe -------------------------------------------------- */
@@ -234,7 +239,10 @@ const Criacao = {
       ligar() {
         $$('[data-classe]', Criacao.raiz()).forEach(b => b.addEventListener('click', () => {
           $$('[data-classe]', Criacao.raiz()).forEach(x => x.classList.toggle('ativo', x === b));
+          if (Criacao.d.classe !== b.dataset.classe) { Criacao.d.pericias = []; Criacao.d.perito = []; Criacao.d.rituais = []; }
           Criacao.d.classe = b.dataset.classe;
+          Criacao.d.nex = Regras.civil(Criacao.d) ? 0 : 5;
+          Criacao.d.patente = Regras.civil(Criacao.d) ? '' : 'Recruta';
         }));
       },
       validar() {
@@ -277,9 +285,9 @@ const Criacao = {
           const el = $('#attr-sobra', raiz);
           el.textContent = sobra === 0 ? 'Pontos distribuídos ✓' : `Pontos restantes: ${sobra}`;
           el.className = sobra === 0 ? 'ok' : (sobra < 0 ? 'erro' : '');
-          const s = calcularStatus(d.classe, 5, d.attrs);
+          const s = Regras.status(d);
           $('#attr-previa', raiz).textContent = s
-            ? `Como ${d.classe} em NEX 5%: ${s.pv} PV · ${s.pe} PE · ${s.san} SAN · Defesa ${10 + num(d.attrs.AGI)}`
+            ? `Como ${d.classe} em NEX ${d.nex}%: ${s.pv} PV · ${s.pe} PE · ${s.san} SAN · Defesa ${10 + num(d.attrs.AGI) + (d.origem === 'Policial' ? 2 : 0)}`
             : '';
         };
         $$('[data-p]', Criacao.raiz()).forEach(b => b.addEventListener('click', () => {
@@ -292,7 +300,7 @@ const Criacao = {
             return toast('Só dá pra zerar um atributo.', 'erro');
           const antes = d.attrs[k];
           d.attrs[k] = novo;
-          if (Criacao.pontosGastos() > Criacao.pontosTotais()) {
+          if (Number(delta) > 0 && Criacao.pontosGastos() > Criacao.pontosTotais()) {
             d.attrs[k] = antes;
             return toast('Acabaram os pontos. Tire de outro atributo primeiro.', 'erro');
           }
@@ -302,7 +310,7 @@ const Criacao = {
       },
       validar() {
         const sobra = Criacao.pontosTotais() - Criacao.pontosGastos();
-        if (sobra > 0) { toast(`Ainda sobra ${sobra} ponto${sobra > 1 ? 's' : ''} pra distribuir.`, 'erro'); return false; }
+        if (sobra !== 0) { toast(sobra > 0 ? `Distribua os ${sobra} pontos restantes.` : `Retire ${-sobra} pontos: a classe escolhida tem menos pontos iniciais.`, 'erro'); return false; }
       }
     },
 
@@ -313,19 +321,21 @@ const Criacao = {
         const d = Criacao.d;
         const info = CLASSE_INFO[d.classe] || { obrigatorias: [], livres: 0 };
         const obrig = info.obrigatorias.map(par => par.join(' ou ')).join(' · ');
+        const fixas = [...new Set([...Regras.origemFixas(d.origem), ...info.obrigatorias.filter(p=>p.length===1).map(p=>slug(p[0]))])];
+        d.pericias = [...new Set([...fixas, ...d.pericias])];
         return `
         <p class="dialogo">Treinar dá <b>+5</b> nos testes daquela perícia. Como <b>${esc(d.classe)}</b>
         com Intelecto ${num(d.attrs.INT)}, você marca <b>${Criacao.totalPericias()}</b> no total —
-        isso já inclui as <b>2 da origem</b>.</p>
+        isso já inclui as <b>2 da origem</b>. Perícias repetidas entre origem e classe liberam escolhas adicionais; não dão +10.</p>
         ${obrig ? `<p class="dica-passo">Sua classe pede obrigatoriamente: <b>${esc(obrig)}</b>.</p>` : ''}
         <p class="dica-passo">As marcadas com <i>*</i> só podem ser usadas se treinadas — sem treino,
         você nem rola o dado.</p>
         <div class="grade-pericias" id="grade-pericias">
           ${PERICIAS.map(per => `
             <label class="per-item" data-item="${per.key}">
-              <input type="checkbox" data-per-chk="${per.key}" ${d.pericias.includes(per.key) ? 'checked' : ''}>
+              <input type="checkbox" data-per-chk="${per.key}" ${d.pericias.includes(per.key) ? 'checked' : ''} ${fixas.includes(per.key) ? 'data-fixa disabled' : ''}>
               <span class="per-txt"><b>${esc(per.nome)}${per.treinada ? '<i class="ast">*</i>' : ''}</b>
-                <em>${per.attr}</em>
+                <em>${per.attr}${fixas.includes(per.key) ? ' · recebida da origem/classe' : ''}</em>
                 <small>${esc(AJUDA.pericias[per.nome] || '')}</small></span>
             </label>`).join('')}
         </div>
@@ -338,11 +348,11 @@ const Criacao = {
         const pinta = () => {
           const n = marcadas().length, sobra = limite - n;
           const el = $('#per-sobra', raiz);
-          el.textContent = sobra === 0 ? 'Todas escolhidas ✓' : `Faltam ${sobra} de ${limite}`;
+          el.textContent = sobra === 0 ? 'Todas escolhidas ✓' : sobra > 0 ? `Faltam ${sobra} de ${limite}` : `Retire ${-sobra} perícias para respeitar o limite ${limite}`;
           el.className = sobra === 0 ? 'ok' : '';
           /* trava o que sobrou quando o limite fecha, pra ninguém treinar demais */
           $$('[data-per-chk]', raiz).forEach(c => {
-            c.disabled = sobra <= 0 && !c.checked;
+            c.disabled = c.hasAttribute('data-fixa') || (sobra <= 0 && !c.checked);
             c.closest('.per-item').classList.toggle('travado', c.disabled);
             c.closest('.per-item').classList.toggle('marcado', c.checked);
           });
@@ -353,7 +363,9 @@ const Criacao = {
       validar() {
         this.d.pericias = $$('[data-per-chk]', this.raiz()).filter(c => c.checked).map(c => c.dataset.perChk);
         const falta = Criacao.totalPericias() - this.d.pericias.length;
-        if (falta > 0) { toast(`Ainda dá pra treinar mais ${falta}.`, 'erro'); return false; }
+        if (falta !== 0) { toast(falta > 0 ? `Escolha mais ${falta} perícias.` : `Retire ${-falta} perícias.`, 'erro'); return false; }
+        const faltando = Regras.obrigatorias(this.d.classe).find(par => !par.some(n=>this.d.pericias.includes(slug(n))));
+        if (faltando) { toast(`Sua classe exige ${faltando.join(' ou ')}. Troque uma das escolhas livres.`, 'erro'); return false; }
       }
     },
 
@@ -392,77 +404,149 @@ const Criacao = {
       titulo: 'Conferindo',
       html() {
         const d = Criacao.d;
-        const s = calcularStatus(d.classe, d.nex, d.attrs) || { pv: 0, pe: 0, san: 0 };
+        const s = Regras.status(d) || { pv: 0, pe: 0, san: 0 };
         const nomes = d.pericias.map(k => PERICIAS.find(p => p.key === k)?.nome).filter(Boolean);
         return `
         <p class="dialogo">Último olhar. O que estiver errado dá pra corrigir voltando — e tudo
         continua editável na ficha depois.</p>
-        <div class="grade-2">
-          <label class="campo"${dica(AJUDA.campos.nex)}><span>NEX %</span>
-            <input type="number" id="c-nex" value="${num(d.nex)}" min="0" max="99" step="5"></label>
-          <label class="campo"${dica(AJUDA.campos.patente)}><span>Patente</span>
-            <input id="c-patente" value="${esc(d.patente)}" list="dl-patentes-cri">
-            <datalist id="dl-patentes-cri">${PATENTES.map(o => `<option value="${esc(o)}">`).join('')}</datalist></label>
-        </div>
+        <p class="dica-passo">Criação inicial: ${Regras.civil(d) ? 'NEX 0%' : 'NEX 5%' }${d.classe === 'Sobrevivente' ? ', estágio 1' : ''}. Depois você pode evoluir pela ficha e acompanhar as novas escolhas no guia.</p>
         <div class="revisao">
           <div><span>Personagem</span><b>${esc(d.nome)}</b></div>
           <div><span>Origem</span><b>${esc(d.origem || '—')}</b></div>
           <div><span>Classe</span><b>${esc(d.classe)}</b></div>
           <div><span>Atributos</span><b>${ATRIBUTOS.map(a => `${a.key} ${num(d.attrs[a.key])}`).join(' · ')}</b></div>
           <div><span>Treinadas</span><b>${nomes.length ? esc(nomes.join(', ')) : '—'}</b></div>
-          <div><span>Vai nascer com</span><b id="c-status">${s.pv} PV · ${s.pe} PE · ${s.san} SAN · Defesa ${10 + num(d.attrs.AGI)}</b></div>
+          <div><span>Vai nascer com</span><b id="c-status">${s.pv} PV · ${s.pe} PE · ${s.san} SAN · Defesa ${10 + num(d.attrs.AGI) + (d.origem === 'Policial' ? 2 : 0)}</b></div>
         </div>
-        <p class="dica-passo">Falta o equipamento: os limites de item e o crédito vêm da patente,
-        e estão na tabela do livro. Abra a ficha e preencha o inventário antes da sessão.</p>`;
+        <p class="dica-passo">${d.itens.length} itens escolhidos. Poderes condicionais, escolhas narrativas e ataques das armas devem ser conferidos na ficha. Bônus de origem em PV, PE, SAN e Defesa já entram nesta prévia.</p>`;
       },
-      ligar() {
-        const atualiza = () => {
-          const d = Criacao.d;
-          d.nex = num($('#c-nex', Criacao.raiz()).value, 5);
-          const s = calcularStatus(d.classe, d.nex, d.attrs);
-          if (s) $('#c-status', Criacao.raiz()).textContent =
-            `${s.pv} PV · ${s.pe} PE · ${s.san} SAN · Defesa ${10 + num(d.attrs.AGI)}`;
-        };
-        $('#c-nex', Criacao.raiz()).addEventListener('input', atualiza);
-      },
-      validar() {
-        this.d.nex = num($('#c-nex', this.raiz()).value, 5);
-        this.d.patente = $('#c-patente', this.raiz()).value.trim();
-      }
+
     }
   ],
 
   /* ---------------- gravar ---------------- */
 
   async finalizar() {
+    if (this.salvando) return false;
+    this.salvando = true;
     const d = this.d;
     try {
-      const p = await Store.criar(false);
+      const p = this.criado || await Store.criar(false);
+      this.criado = p;
       p.nome = d.nome;
       p.jogador = d.jogador;
       p.origem = d.origem;
       p.classe = d.classe;
       p.patente = d.patente;
       p.nex = d.nex;
+      p.estagio = d.classe === "Sobrevivente" ? 1 : null;
+      p.perito = [...d.perito];
+      p.proficiencias = CLASSE_INFO[d.classe].proficiencias;
+      p.escolhaOrigem = d.escolhaOrigem;
+      p.habilidades = Regras.habilidadesIniciais(d);
+      p.rituais = d.rituais.map(r=>({...r}));
+      p.inventario = { ...Regras.equipamento(d), itens: d.itens.map(i=>({...i})) };
+      p.peRodada = Regras.limitePE(d);
+      p.dtRituais = 10 + Regras.limitePE({...d, origem: ""}) + num(d.attrs.PRE);
+      p.defesa.outros = d.origem === "Policial" ? 2 : 0;
+      if (d.origem === "Teórico da Conspiração") p.resistencias = `Mental ${num(d.attrs.INT)}`;
+      if (d.origem === "Experimento") p.resistencias = "Todos 2";
+      p.pericias = {};
+      PERICIAS.forEach(per => { p.pericias[per.key] = {treino: 0, outros: 0}; });
       p.atributos = { ...d.attrs };
       p.descricao = { ...d.descricao };
       d.pericias.forEach(k => { p.pericias[k] = { treino: 5, outros: 0 }; });
 
-      const s = calcularStatus(d.classe, d.nex, d.attrs);
+      const s = Regras.status(d);
       if (s) {
         p.pv = { atual: s.pv, max: s.pv };
         p.pe = { atual: s.pe, max: s.pe };
         p.san = { atual: s.san, max: s.san };
       }
 
+      if (d.origem === 'Diplomata') p.pericias.diplomacia.outros = 2;
+      if (d.origem === 'Profetizado') p.pericias.vontade.outros = 2;
       await Store.salvarAgora(p);
       Mesa.render();
       toast(`${p.nome} entrou na mesa.`);
       Ficha.abrir(p.id);
       this.d = null;
+      this.criado = null;
     } catch (e) {
       toast('Não consegui criar: ' + (e.message || e), 'erro');
       return false;
-    }
+    } finally { this.salvando = false; }
   }
 };
+
+/* Escolhas que antes eram perdidas entre a criação e a ficha. */
+Criacao.passos.splice(5, 0, {
+  titulo: 'Poderes e escolhas',
+  html() {
+    const d=Criacao.d, o=ORIGEM_INFO[d.origem];
+    return `<p class="dialogo">O poder da origem e as habilidades iniciais da classe serão registrados. Quando um poder pede uma escolha, anote-a aqui para lembrar durante o jogo.</p>
+      <div class="origem-detalhe"><b>${esc(o?.poder || 'Origem personalizada')}</b><p>${esc(o?.efeito || 'Descreva com o mestre as regras da sua origem.')}</p><small>${esc(o?.fonte || '')}</small></div>
+      <label class="campo"><span>Escolhas da origem / detalhes do poder</span><textarea id="c-escolha-origem" rows="3" placeholder="Ex.: arma de trabalho do Operário; poder paranormal do Cultista; perícia do companheiro animal; número da sorte…">${esc(d.escolhaOrigem)}</textarea></label>
+      ${d.classe==='Especialista'?`<p class="dialogo"><b>Perito:</b> escolha duas perícias treinadas, exceto Luta e Pontaria. Gastando 2 PE, você soma 1d6 ao teste de uma delas.</p><div class="grade-pericias">${PERICIAS.filter(p=>d.pericias.includes(p.key)&&!['luta','pontaria'].includes(p.key)).map(p=>`<label class="per-item"><input type="checkbox" data-perito="${p.key}" ${d.perito.includes(p.key)?'checked':''}><span>${esc(p.nome)}</span></label>`).join('')}</div>`:''}
+      ${d.classe==='Ocultista'?`<p class="dialogo"><b>Escolhido pelo Outro Lado:</b> escolha três rituais diferentes de 1º círculo. Consulte o capítulo de rituais para escolher os efeitos. O custo básico é 1 PE; aprender um ritual não preenche automaticamente seus efeitos.</p>${[0,1,2].map(i=>`<div class="grade-2"><label class="campo"><span>Ritual ${i+1} — nome</span><input data-ritual-nome="${i}" value="${esc(d.rituais[i]?.nome || '')}" placeholder="Nome do ritual de 1º círculo"></label><label class="campo"><span>Elemento</span><select data-ritual-elemento="${i}">${ELEMENTOS.filter(e=>!['medo','varia'].includes(e.id)).map(e=>`<option value="${e.id}" ${d.rituais[i]?.elemento===e.id?'selected':''}>${e.nome}</option>`).join('')}</select></label></div>`).join('')}`:`<p class="dica-passo">${esc(CLASSE_INFO[d.classe].marca)} Uma habilidade no custo mínimo pode ser usada mesmo quando esse custo supera seu limite de PE por turno.</p>`}`;
+  },
+  validar() {
+    const d=this.d, raiz=this.raiz();
+    d.escolhaOrigem=$('#c-escolha-origem',raiz).value.trim();
+    if (d.classe==='Especialista') {
+      d.perito=$$('[data-perito]:checked',raiz).map(c=>c.dataset.perito);
+      if(d.perito.length!==2) {toast('Escolha exatamente duas perícias para Perito.','erro');return false;}
+    }
+    if(d.classe==='Ocultista') {
+      d.rituais=[0,1,2].map(i=>({nome:$(`[data-ritual-nome="${i}"]`,raiz).value.trim(),elemento:$(`[data-ritual-elemento="${i}"]`,raiz).value,circulo:'1',custo:'1',execucao:'',alcance:'',alvo:'',duracao:'',resistencia:'',pagina:'',desc:''}));
+      if(d.rituais.some(r=>!r.nome||!r.elemento)||new Set(d.rituais.map(r=>slug(r.nome))).size!==3) {toast('Informe três rituais diferentes e seus elementos.','erro');return false;}
+    }
+    if(['Cultista Arrependido','Amnésico','Operário','Engenheiro','Amigo dos Animais','Experimento','Inventor Paranormal','Profetizado','Jovem Místico','Colegial'].includes(d.origem) && !d.escolhaOrigem) {
+      toast('Essa origem pede uma escolha. Registre o detalhe combinado com o mestre.','erro'); return false;
+    }
+  }
+}, {
+  titulo: 'Equipamento inicial',
+  html() {
+    const d=Criacao.d;
+    if(!Regras.civil(d)&&!Regras.patentes[d.patente]) d.patente='Recruta';
+    const eq=Regras.equipamento(d);
+    return `<p class="dialogo">${Regras.civil(d)?'Você pode escolher um item de categoria I e itens de categoria 0 compatíveis com sua origem. Civis não usam patentes.':'Sua patente define os itens que a Ordem libera. Categoria 0 não tem limite de quantidade, mas ainda ocupa espaço.'}</p>
+      ${!Regras.civil(d)?`<label class="campo"><span>Patente combinada com o mestre</span><select id="c-patente">${PATENTES.map(p=>`<option ${p===d.patente?'selected':''}>${p}</option>`).join('')}</select></label>`:''}
+      <p class="dica-passo" id="c-equip-limites">${CATEGORIAS_ITEM.map(c=>`${c}: ${eq.limites[c]}`).join(' · ')} · Crédito ${esc(eq.credito)} · Carga ${eq.cargaMax} espaços</p>
+      <label class="campo"><span>Buscar no catálogo</span><input id="c-item-busca" placeholder="Ex.: lanterna, proteção, arma"></label>
+      <div id="c-itens-catalogo" class="cri-itens-catalogo"><p>Carregando itens…</p></div>
+      <div id="c-itens-escolhidos"></div>
+      <p class="dica-passo">Pode continuar sem equipamento e completá-lo depois em Inventário. Os limites validados aqui são os padrões; ajuste exceções de poderes na ficha.</p>`;
+  },
+  ligar() {
+    const raiz=this.raiz(), d=this.d;
+    const lista=$('#c-itens-catalogo',raiz), selecionados=$('#c-itens-escolhidos',raiz);
+    const pintar=()=>{
+      const eq=Regras.equipamento(d);
+      $('#c-equip-limites',raiz).textContent=`${CATEGORIAS_ITEM.map(c=>`${c}: ${eq.limites[c]}`).join(' · ')} · Crédito ${eq.credito} · Carga ${eq.cargaMax} espaços`;
+      selecionados.innerHTML=`<p>${d.itens.length} itens · ${d.itens.reduce((n,i)=>n+num(i.espacos),0)} / ${eq.cargaMax} espaços</p>${d.itens.map((i,n)=>`<button class="btn btn-ghost btn-peq" data-remover-item="${n}" aria-label="Remover ${esc(i.nome)}">${esc(i.nome)} ×</button>`).join('')}`;
+    };
+    const buscar=()=>{
+      const itens=Catalogo.filtrar({busca:$('#c-item-busca',raiz).value});
+      lista.innerHTML=itens.length?itens.slice(0,35).map(i=>`<button class="btn btn-ghost cri-item" data-item-id="${Catalogo.itens.indexOf(i)}"><b>${esc(i.nome)}</b><span>Categoria ${esc(Catalogo.categoriaTexto(i.categoria)||'0')} · ${num(i.espacos)} espaços</span></button>`).join(''):'<p>Nenhum item disponível. Você pode preencher o Inventário na ficha.</p>';
+    };
+    $('#c-patente',raiz)?.addEventListener('change',e=>{d.patente=e.target.value;pintar();});
+    $('#c-item-busca',raiz).addEventListener('input',buscar);
+    lista.addEventListener('click',e=>{
+      const b=e.target.closest('[data-item-id]');if(!b)return;
+      const i=Catalogo.itens[Number(b.dataset.itemId)];if(!i)return;
+      const item=Catalogo.paraItemDaFicha(i),eq=Regras.equipamento(d);
+      if(item.categoria&&d.itens.filter(x=>x.categoria===item.categoria).length>=eq.limites[item.categoria]) return toast('Limite dessa categoria atingido.','erro');
+      if(d.itens.reduce((n,x)=>n+num(x.espacos),0)+num(item.espacos)>eq.cargaMax) return toast('Não cabe sem sobrecarga. Retire outro item primeiro.','erro');
+      d.itens.push(item);pintar();
+    });
+    selecionados.addEventListener('click',e=>{const b=e.target.closest('[data-remover-item]');if(b){d.itens.splice(Number(b.dataset.removerItem),1);pintar();}});
+    pintar();
+    Catalogo.carregar().then(()=>{if(lista.isConnected)buscar();}).catch(()=>{if(lista.isConnected)lista.textContent='Catálogo indisponível. Complete o inventário na ficha.';});
+  },
+  validar() {
+    const eq=Regras.equipamento(this.d), itens=this.d.itens;
+    if(CATEGORIAS_ITEM.some(c=>itens.filter(i=>i.categoria===c).length>eq.limites[c])||itens.reduce((n,i)=>n+num(i.espacos),0)>eq.cargaMax){toast('Revise os itens: a patente ou os atributos mudaram e os limites foram excedidos.','erro');return false;}
+  }
+});
