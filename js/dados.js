@@ -58,6 +58,83 @@ const ORIGENS = [
   'Trombadinha', 'Universitário', 'Vítima'
 ].sort((a, b) => a.localeCompare(b, 'pt-BR'));
 
+/* Resumo de cada origem: as duas perícias que ela treina e o poder que ela
+   entrega. Aparece na dica ao passar o mouse no passo "De onde ele veio" da
+   criação guiada.
+
+   ATENÇÃO A QUEM FOR EDITAR: o livro básico NÃO está na pasta de PDFs — lá só
+   existem os Arquivos Secretos e o Sobrevivendo ao Horror. Estes textos foram
+   escritos de fora, então trate os números como aproximação até conferir no
+   livro. Corrigir é só mexer aqui; nada mais depende dessa tabela. */
+const ORIGEM_INFO = {
+  'Acadêmico': { pericias: 'Ciências e Investigação', poder: 'Saber é Poder',
+    efeito: 'Gastando PE você soma um bônus grande num teste de perícia baseada em Intelecto. A origem dos que resolvem no raciocínio.' },
+  'Agente de Saúde': { pericias: 'Intuição e Medicina', poder: 'Técnica Medicinal',
+    efeito: 'Seus usos de Medicina rendem mais: cura acima do normal e mais chance de tirar alguém de Morrendo. O médico de campo do grupo.' },
+  'Amnésico': { pericias: 'duas à escolha do mestre', poder: 'Lampejo do Passado',
+    efeito: 'Uma vez por sessão uma memória volta e você fica treinado numa perícia qualquer até o fim da cena. Coringa, e um prato cheio de história.' },
+  'Artista': { pericias: 'Artes e Enganação', poder: 'Musa Inspiradora',
+    efeito: 'Gastando PE você inspira quem te vê ou ouve, dando bônus em testes ao grupo. Suporte que trabalha na base do carisma.' },
+  'Atleta': { pericias: 'Acrobacia e Atletismo', poder: 'Impulso Atlético',
+    efeito: 'Gasta PE pra aumentar o deslocamento no turno. Quem chega primeiro, foge melhor e alcança o que ninguém alcança.' },
+  'Chef': { pericias: 'Fortitude e Profissão', poder: 'Ingrediente Secreto',
+    efeito: 'A refeição que você prepara no interlúdio devolve mais PE e PV ao grupo. Vale muito mais do que parece numa campanha longa.' },
+  'Criminoso': { pericias: 'Crime e Furtividade', poder: 'Dedos Leves',
+    efeito: 'Arromba, furta e abre fechadura mais rápido e sem chamar atenção. Resolve por fora o que o grupo não consegue por dentro.' },
+  'Cultista Arrependido': { pericias: 'Ocultismo e Religião', poder: 'Conhecimento Proibido',
+    efeito: 'Você já conhece um ritual de 1º círculo, mesmo sem ser Ocultista. Traz o Outro Lado pra qualquer classe.' },
+  'Desgarrado': { pericias: 'Fortitude e Sobrevivência', poder: 'Sem Raízes',
+    efeito: 'Viveu sem casa e sem rede de apoio: aguenta fome, frio e noite mal dormida sem penalidade. Difícil de quebrar pelo desgaste.' },
+  'Engenheiro': { pericias: 'Profissão e Tecnologia', poder: 'Projetista',
+    efeito: 'Improvisa reparo e melhora equipamento com o que tiver à mão. Mantém o material do grupo funcionando no meio do nada.' },
+  'Executivo': { pericias: 'Diplomacia e Profissão', poder: 'Patrocínio',
+    efeito: 'Seu crédito junto à Ordem é maior: consegue requisitar mais coisa sem justificar. Equipa o time.' },
+  'Explorador': { pericias: 'Percepção e Sobrevivência', poder: 'Desbravador',
+    efeito: 'Se vira em qualquer terreno: rastreia, acha caminho e não se perde. A origem das missões longe da cidade.' },
+  'Fanático': { pericias: 'Religião e Vontade', poder: 'Fé Inabalável',
+    efeito: 'Sua convicção segura o baque mental: resiste melhor a medo e a efeito que mexa com a cabeça. Sanidade é o recurso mais frágil do jogo.' },
+  'Ginasta': { pericias: 'Acrobacia e Reflexos', poder: 'Equilibrista',
+    efeito: 'Cai, escala e passa por lugar apertado sem se machucar. Mobilidade pura, útil em perseguição e em armadilha.' },
+  'Investigador': { pericias: 'Investigação e Percepção', poder: 'Faro para Pistas',
+    efeito: 'Acha pista que passaria batido e junta as peças mais rápido. A origem que mais empurra a história pra frente.' },
+  'Inventor': { pericias: 'Profissão e Tecnologia', poder: 'Engenhoca',
+    efeito: 'Monta um dispositivo improvisado que resolve um problema específico da cena. Criativo, depende de combinar com o mestre.' },
+  'Lutador': { pericias: 'Luta e Fortitude', poder: 'Golpe de Mestre',
+    efeito: 'Briga treinada: acerta mais e bate mais forte no corpo a corpo. Direto ao ponto.' },
+  'Magnata': { pericias: 'Diplomacia e Pilotagem', poder: 'Dinheiro é Poder',
+    efeito: 'Dinheiro abre portas que a Ordem não abre: contato, transporte, acesso. Resolve fora do combate.' },
+  'Máquina': { pericias: 'Fortitude e Luta', poder: 'Extensão do Corpo',
+    efeito: 'Corpo modificado ou prótese que conta como parte de você. Aguenta pancada e bate com o que tem.' },
+  'Mercenário': { pericias: 'Iniciativa e Intimidação', poder: 'Matador de Aluguel',
+    efeito: 'Age antes dos outros e impõe medo. Quem controla o primeiro turno controla a luta.' },
+  'Militar': { pericias: 'Pontaria e Tática', poder: 'Treinamento de Combate',
+    efeito: 'Formação de caserna: arma de fogo, disciplina sob fogo e leitura de campo. A origem mais direta pro Combatente.' },
+  'Operário': { pericias: 'Fortitude e Profissão', poder: 'Ferramenta de Trabalho',
+    efeito: 'Ferramenta pesada vira arma na sua mão e trabalho braçal não te cansa. Prático e barato.' },
+  'Policial': { pericias: 'Percepção e Pontaria', poder: 'Patrulheiro',
+    efeito: 'Treino de rua: arma, abordagem e reconhecer quem está mentindo. Investiga e atira.' },
+  'Político': { pericias: 'Diplomacia e Enganação', poder: 'Discurso Caloroso',
+    efeito: 'Convence, desarma e vira uma sala a seu favor. Resolve cena social sem tirar a arma.' },
+  'Profetizado': { pericias: 'Religião e Vontade', poder: 'Sina',
+    efeito: 'Uma profecia te cerca: de vez em quando o destino mexe um resultado a seu favor. Rende muita história.' },
+  'Religioso': { pericias: 'Religião e Vontade', poder: 'Palavra de Conforto',
+    efeito: 'Acalma quem está perdendo a cabeça e ajuda o grupo a segurar a Sanidade. Suporte mental.' },
+  'Servidor Público': { pericias: 'Intuição e Vontade', poder: 'Espírito Cívico',
+    efeito: 'Conhece a máquina por dentro: consegue informação, documento e acesso oficial. Abre porta na burocracia.' },
+  'T.I.': { pericias: 'Investigação e Tecnologia', poder: 'Hacker',
+    efeito: 'Invade sistema, rastreia registro e tira da rede o que não deveria estar lá. Investigação moderna.' },
+  'Teórico da Conspiração': { pericias: 'Investigação e Ocultismo', poder: 'Eu Já Sabia!',
+    efeito: 'Passou a vida juntando peças que ninguém levava a sério — e estava certo. Reconhece o paranormal antes dos outros.' },
+  'Trabalhador Rural': { pericias: 'Adestramento e Sobrevivência', poder: 'Vida na Fazenda',
+    efeito: 'Lida com bicho e com terra: monta, doma e sabe ler o mato. Combina com quem quer um animal de estimação.' },
+  'Trombadinha': { pericias: 'Crime e Reflexos', poder: 'Mãos Rápidas',
+    efeito: 'Furta, escapa e some no meio da multidão. Rápido e escorregadio.' },
+  'Universitário': { pericias: 'Atualidades e Investigação', poder: 'Dedicação',
+    efeito: 'Ainda está aprendendo, mas aprende rápido: pode se virar em perícia que não treinou. Versátil e barato de montar.' },
+  'Vítima': { pericias: 'Reflexos e Vontade', poder: 'Sobrevivente',
+    efeito: 'Já encontrou o paranormal e escapou. Reage melhor ao susto e resiste onde os outros congelam.' }
+};
+
 const PATENTES = ['Recruta', 'Operador', 'Agente Especial', 'Oficial de Operações', 'Agente de Elite'];
 
 const CATEGORIAS_ITEM = ['I', 'II', 'III', 'IV'];

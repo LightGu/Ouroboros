@@ -118,6 +118,11 @@ const Dica = {
     return this.el;
   },
 
+  /* Dica simples é só `data-ajuda`. Quando o elemento também traz
+     `data-ajuda-titulo` / `data-ajuda-sub`, a caixa ganha três faixas —
+     é o caso das origens, que precisam mostrar perícias, nome do poder e
+     o que ele faz sem virar um parágrafo corrido. Cada pedaço entra por
+     `textContent`, então nada do conteúdo é interpretado como HTML. */
   mostrar(alvo) {
     const texto = alvo?.dataset?.ajuda;
     if (!texto) return this.esconder();
@@ -125,7 +130,22 @@ const Dica = {
 
     this.alvo = alvo;
     const cx = this.caixa();
-    cx.textContent = texto;
+    const sub = alvo.dataset.ajudaSub;
+    const tit = alvo.dataset.ajudaTitulo;
+
+    cx.textContent = '';
+    cx.classList.toggle('dica-rica', !!(sub || tit));
+    const faixa = (cls, txt) => {
+      if (!txt) return;
+      const d = document.createElement('div');
+      d.className = cls;
+      d.textContent = txt;
+      cx.appendChild(d);
+    };
+    faixa('dica-sub', sub);
+    faixa('dica-titulo', tit);
+    faixa('dica-corpo', texto);
+
     cx.hidden = false;
     this.posicionar(alvo, cx);
   },

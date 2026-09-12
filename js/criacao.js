@@ -162,20 +162,47 @@ const Criacao = {
           <input id="c-origem" value="${esc(d.origem)}" list="dl-origens-cri" placeholder="Ex.: Teórico da Conspiração">
           <datalist id="dl-origens-cri">${ORIGENS.map(o => `<option value="${esc(o)}">`).join('')}</datalist>
         </label>
-        <div class="chips">
-          ${ORIGENS.map(o => `<button class="chip" data-origem="${esc(o)}">${esc(o)}</button>`).join('')}
+        <div class="chips chips-origem">
+          ${ORIGENS.map(o => {
+            const i = ORIGEM_INFO[o];
+            const info = i
+              ? ` data-ajuda="${esc(i.efeito)}" data-ajuda-sub="Treina ${esc(i.pericias)}" data-ajuda-titulo="${esc(i.poder)}"`
+              : '';
+            return `<button class="chip" data-origem="${esc(o)}"${info}>${esc(o)}</button>`;
+          }).join('')}
         </div>
-        <p class="dica-passo">Não achou a sua na lista? Pode digitar qualquer coisa — o campo é livre,
-        e origens de outros livros funcionam igual.</p>`;
+        <p class="dica-passo">Passe o mouse em qualquer uma pra ver as perícias que ela treina e o poder que ela dá.
+        Não achou a sua na lista? Pode digitar qualquer coisa — o campo é livre,
+        e origens de outros livros funcionam igual.</p>
+        <div class="origem-detalhe" id="c-origem-detalhe" hidden></div>`;
       },
       ligar() {
         const raiz = Criacao.raiz();
+
+        /* A dica passa rápido demais pra anotar. Depois de escolher, o mesmo
+           resumo fica fixo embaixo da lista — é o que a pessoa vai copiar pro
+           passo das perícias. Vale também pra origem digitada à mão. */
+        const detalhe = $('#c-origem-detalhe', raiz);
+        const fixar = nome => {
+          const i = ORIGEM_INFO[nome];
+          detalhe.hidden = !i;
+          if (!i) return;
+          detalhe.innerHTML = `<span class="od-sub">Treina ${esc(i.pericias)}</span>
+            <b class="od-poder">${esc(i.poder)}</b>
+            <span class="od-efeito">${esc(i.efeito)}</span>`;
+        };
+
+        const marcar = nome => {
+          $$('[data-origem]', raiz).forEach(x => x.classList.toggle('ativo', x.dataset.origem === nome));
+          fixar(nome);
+        };
+
         $$('[data-origem]', raiz).forEach(b => b.addEventListener('click', () => {
           $('#c-origem', raiz).value = b.dataset.origem;
-          $$('[data-origem]', raiz).forEach(x => x.classList.toggle('ativo', x === b));
+          marcar(b.dataset.origem);
         }));
-        const atual = $('#c-origem', raiz).value;
-        $$('[data-origem]', raiz).forEach(x => x.classList.toggle('ativo', x.dataset.origem === atual));
+        $('#c-origem', raiz).addEventListener('input', e => marcar(e.target.value.trim()));
+        marcar($('#c-origem', raiz).value.trim());
       },
       validar() { this.d.origem = $('#c-origem', this.raiz()).value.trim(); }
     },

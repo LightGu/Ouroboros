@@ -389,3 +389,27 @@ sozinho em campo com menos de 16px). Como quase toda regra ali empata em
 especificidade com a do componente, quem vence é a que vier depois no arquivo.
 Blocos novos entram **antes** dela, nunca depois.
 
+
+### `ORIGEM_INFO` não veio de PDF nenhum
+
+`js/dados.js` tem um resumo de cada uma das 33 origens — perícias treinadas,
+nome do poder e o que ele faz. **O livro básico não está na pasta de PDFs**
+(lá só existem os Arquivos Secretos e o Sobrevivendo ao Horror), então esses
+textos foram escritos de fora e os efeitos são descritos de forma qualitativa,
+sem números inventados. Quem tiver o livro deve conferir e corrigir: é uma
+tabela só, e nada mais no código depende dela.
+
+O que **é** verificável está verificado: todo nome de perícia citado ali existe
+em `PERICIAS`. Vale rodar essa checagem de novo depois de qualquer edição.
+
+### Dica com três faixas
+
+`Dica.mostrar` tem dois modos. Só `data-ajuda` → uma caixa de texto corrido,
+como sempre foi. Com `data-ajuda-sub` e/ou `data-ajuda-titulo` junto → a caixa
+ganha as três faixas (perícias / poder / efeito) e a classe `dica-rica`. Cada
+pedaço entra por `textContent`, nunca por `innerHTML`.
+
+A classe `dica-rica` é *alternada* a cada `mostrar`, não só adicionada — sem
+isso a primeira dica rica deixaria todas as simples seguintes com o layout
+errado, já que a caixa é um elemento único reaproveitado.
+

@@ -2067,6 +2067,50 @@ body.com-painel .view { padding-right: 352px; }
 }
 
 /* ===========================================================
+   DICA RICA / ORIGENS NA CRIAÇÃO
+   =========================================================== */
+
+.dica-flutuante.dica-rica { max-width: 340px; padding: 10px 13px; }
+.dica-sub {
+  font-size: 10px; letter-spacing: .09em; text-transform: uppercase;
+  color: var(--roxo-cl); margin-bottom: 5px;
+}
+.dica-titulo {
+  font-family: var(--display); font-size: 13.5px; letter-spacing: .02em;
+  color: var(--texto); margin-bottom: 4px;
+}
+.dica-corpo { font-size: 12.5px; line-height: 1.5; color: var(--texto-2); }
+
+/* as origens são 33 botões: em lista corrida cansa o olho, então elas ganham
+   respiro e o selecionado fica evidente */
+.chips-origem { display: flex; flex-wrap: wrap; gap: 6px; margin: 10px 0 4px; }
+.chips-origem .chip {
+  padding: 6px 11px; font-size: 12px; border-radius: 99px; cursor: pointer;
+  background: var(--painel-2); border: 1px solid var(--linha); color: var(--texto-2);
+  transition: border-color .15s, color .15s, background .15s;
+}
+.chips-origem .chip:hover { color: var(--texto); border-color: var(--roxo); }
+.chips-origem .chip.ativo {
+  background: rgba(139,92,246,.14); border-color: var(--roxo); color: #c4b5fd; font-weight: 600;
+}
+
+/* o resumo que fica fixo depois de escolher */
+.origem-detalhe {
+  display: block; margin-top: 10px; padding: 11px 13px;
+  background: var(--painel); border: 1px solid var(--linha);
+  border-left: 3px solid var(--roxo); border-radius: var(--raio);
+}
+.od-sub {
+  display: block; font-size: 10px; letter-spacing: .09em;
+  text-transform: uppercase; color: var(--roxo-cl); margin-bottom: 5px;
+}
+.od-poder {
+  display: block; font-family: var(--display); font-size: 14px;
+  color: var(--texto); margin-bottom: 4px;
+}
+.od-efeito { display: block; font-size: 12.5px; line-height: 1.55; color: var(--texto-2); }
+
+/* ===========================================================
    TOQUE
    =========================================================== */
 
@@ -2078,6 +2122,7 @@ button, .aba, .chip, select, label { touch-action: manipulation; }
   .aba { padding: 9px 13px; }
   .btn-mini { min-width: 30px; min-height: 30px; }
   .chip { padding: 5px 9px; }
+  .chips-origem .chip { min-height: 34px; padding: 7px 13px; }
   .btn { min-height: 34px; }
 }
 
