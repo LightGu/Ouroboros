@@ -207,12 +207,17 @@ veja a pegadinha do canal único na seção 5.
 
 Cada item aqui custou pelo menos uma rodada de depuração.
 
-**Uma tabela sem permissão derruba o canal inteiro.** Todas as tabelas dividem um canal. Se o
-Realtime recusar UMA inscrição, **todas as outras morrem junto** e a pessoa fica sem nada ao
-vivo. Foi o que aconteceu quando `sons` virou exclusiva do mestre: os jogadores perderam PV ao
-vivo, mapa e mensagens de uma vez. Passou despercebido porque eu testava realtime logado como
-mestre. Hoje `sons` está fora do canal. **Ao tornar uma tabela restrita, tire-a do canal de quem
-não a lê.**
+**Uma inscrição recusada derruba o canal inteiro.** Todas as tabelas dividem um canal. Se o
+Realtime recusar UMA — porque a tabela não existe, ou porque aquele usuário não pode lê-la —
+**todas as outras morrem junto** e a pessoa fica sem nada ao vivo. Aconteceu com `sons`, e o
+sintoma (jogadores sem PV ao vivo, sem mapa, sem mensagem) não apontava em nada para a causa.
+Hoje `sons` está fora do canal. **Ao restringir ou criar tabela, confira o canal de quem não a lê.**
+
+**Migração que aborta no meio deixa rastro silencioso.** O `schema.sql` é um script só: um erro
+no meio (foi um `create or replace function` com assinatura mudada) interrompe tudo que vem
+depois, sem aviso. A tabela `sons` e o bucket de áudio ficaram faltando por semanas assim, e só
+apareceram quando alguém tentou subir um arquivo. Pior: **listar um bucket inexistente não dá
+erro** — devolve lista vazia. Depois de rodar migração, confira o que foi criado.
 
 **Trocar de canal precisa de `await`.** O canal usa sempre o mesmo nome (o broadcast exige
 tópico comum). Se o novo entrar antes de o antigo sair, o servidor ignora o segundo: ele fica
