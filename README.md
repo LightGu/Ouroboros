@@ -335,3 +335,32 @@ livros. Ele vai pro Supabase, atrás do login.
 - Animação só com `transform` e `opacity`. Respeite `prefers-reduced-motion`
 - Todo texto de usuário passa por `esc()` antes de entrar em `innerHTML`
 - `.gitignore` barra os PDFs dos livros e o `catalogo/`. **Confira antes de publicar**
+
+### `repeat(auto-fill, minmax(400px, 1fr))` estoura tela estreita
+
+`auto-fill` com um mínimo em pixels **nunca** encolhe abaixo desse mínimo: num
+celular de 375px uma grade `minmax(432px, 1fr)` força 432px, estica a página
+inteira e tudo que usa `100%` (o celular flutuante, por exemplo) herda a
+largura errada. A forma correta é `minmax(min(432px, 100%), 1fr)`.
+
+### Item flex com `overflow-x: auto` ainda estica o pai
+
+A faixa de abas rolava de lado e mesmo assim empurrava a largura do documento.
+Um item flex tem `min-width: auto` por padrão e se recusa a encolher abaixo do
+conteúdo. Toda faixa que rola precisa de `min-width: 0` explícito.
+
+### Campo com fonte abaixo de 16px dá zoom sozinho no iOS
+
+E o iOS não desfaz o zoom depois. Por isso o bloco
+`@media (pointer: coarse) and (max-width: 860px)` força 16px em todo
+`input`/`select`/`textarea`. O `max-width` ali não é decoração: sem ele um
+notebook com tela sensível cairia na regra e a ficha inteira incharia.
+
+### Os botões da topbar no celular
+
+`+ Personagem`, `+ Rápido`, `Exportar` e `Importar` vivem dentro de
+`#acoes-extra`. No desktop esse invólucro é `display: contents` — ele some do
+layout e os botões ficam soltos como sempre foram. Abaixo de 860px ele vira um
+menu suspenso atrás do `⋯`. Não existe botão duplicado: é o mesmo elemento nos
+dois casos, então os `id` e os listeners continuam únicos.
+

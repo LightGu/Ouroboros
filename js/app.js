@@ -232,6 +232,26 @@ const App = {
 
     $('#btn-rapido').addEventListener('click', () => Mesa.modalRapido(null));
 
+    /* A máscara na ponta direita das abas só faz sentido enquanto sobra
+       aba escondida; no fim da rolagem ela vira um borrão sem motivo. */
+    const abas = $('.abas');
+    const marcarFim = () => abas.classList.toggle(
+      'no-fim', abas.scrollLeft + abas.clientWidth >= abas.scrollWidth - 2);
+    abas.addEventListener('scroll', marcarFim);
+    addEventListener('resize', marcarFim);
+    marcarFim();
+
+    /* menu ⋯ da topbar, só existe em tela estreita */
+    $('#btn-mais').addEventListener('click', e => {
+      e.stopPropagation();
+      $('#acoes-extra').classList.toggle('aberto');
+    });
+    document.addEventListener('click', e => {
+      if (!e.target.closest('#acoes-extra') && !e.target.closest('#btn-mais'))
+        $('#acoes-extra').classList.remove('aberto');
+    });
+    $('#acoes-extra').addEventListener('click', () => $('#acoes-extra').classList.remove('aberto'));
+
     $('#btn-turnos').addEventListener('click',     () => Mesa.iniciarTurnos());
     $('#btn-parar').addEventListener('click',      () => Mesa.pararTurnos());
     $('#btn-proximo').addEventListener('click',    () => Mesa.passarTurno(1));

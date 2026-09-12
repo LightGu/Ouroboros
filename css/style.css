@@ -171,7 +171,7 @@ textarea { resize: vertical; }
 
 .grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(270px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(min(270px, 100%), 1fr));
   gap: 16px;
 }
 
@@ -497,13 +497,13 @@ textarea { resize: vertical; }
 }
 
 .titulo-bloco {
-  display: flex; align-items: center; gap: 10px;
+  display: flex; flex-wrap: wrap; align-items: center; gap: 10px;
   font-size: 15px; letter-spacing: .14em; text-transform: uppercase;
   color: var(--texto-2); margin-bottom: 16px;
   padding-bottom: 10px; border-bottom: 1px solid var(--linha);
 }
 .titulo-bloco::before { content: ''; width: 3px; height: 15px; background: var(--roxo); border-radius: 2px; }
-.legenda { font-family: var(--fonte); font-size: 11px; letter-spacing: 0; text-transform: none; color: var(--texto-3); font-weight: 400; }
+.legenda { min-width: 0; font-family: var(--fonte); font-size: 11px; letter-spacing: 0; text-transform: none; color: var(--texto-3); font-weight: 400; }
 
 /* --- campos --- */
 
@@ -596,7 +596,7 @@ textarea { resize: vertical; }
 
 /* --- perícias --- */
 
-.pericias { display: grid; grid-template-columns: repeat(auto-fill, minmax(432px, 1fr)); gap: 5px; }
+.pericias { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(432px, 100%), 1fr)); gap: 5px; }
 .pericia {
   display: grid; grid-template-columns: minmax(96px, 1fr) 30px 106px 46px 80px;
   align-items: center; gap: 7px;
@@ -1167,7 +1167,7 @@ body.com-painel .view { padding-right: 352px; }
 }
 .chip-filtro[style*="--h"].ativo { background: hsl(var(--h) 55% 42%); border-color: hsl(var(--h) 55% 42%); }
 
-.notas-grade { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px; }
+.notas-grade { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(260px, 100%), 1fr)); gap: 12px; }
 
 .nota {
   display: flex; flex-direction: column; gap: 8px;
@@ -1319,7 +1319,8 @@ body.com-painel .view { padding-right: 352px; }
   padding: 11px 14px; margin-bottom: 14px;
   background: var(--painel); border: 1px solid var(--linha); border-radius: var(--raio-g);
 }
-.il-conforto-cena { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--texto-2); }
+.il-conforto-cena { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; font-size: 12px; color: var(--texto-2); }
+.il-conforto-cena select { min-width: 0; flex: 1 1 180px; }
 .il-conforto-cena select, .il-conforto select, .il-prato select {
   padding: 6px 9px; background: var(--bg-2); border: 1px solid var(--linha);
   border-radius: 7px; font-size: 12.5px; max-width: 320px;
@@ -1345,7 +1346,7 @@ body.com-painel .view { padding-right: 352px; }
 .il-regras dt { font-family: var(--display); color: var(--texto); font-size: 13px; }
 .il-regras dd { margin: 0; font-size: 12.5px; }
 
-.interludio-grade { display: grid; grid-template-columns: repeat(auto-fill, minmax(310px, 1fr)); gap: 14px; }
+.interludio-grade { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(310px, 100%), 1fr)); gap: 14px; }
 
 .interludio-card {
   display: flex; flex-direction: column; gap: 10px;
@@ -1613,7 +1614,7 @@ body.com-painel .view { padding-right: 352px; }
   background: var(--painel); border: 1px solid var(--linha);
   border-left: 3px solid var(--roxo); border-radius: var(--raio);
 }
-.espia-grade { display: grid; grid-template-columns: repeat(auto-fill, minmax(330px, 1fr)); gap: 14px; }
+.espia-grade { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(330px, 100%), 1fr)); gap: 14px; }
 .espia-conversa {
   background: var(--painel); border: 1px solid var(--linha); border-radius: var(--raio-g);
   overflow: hidden; display: flex; flex-direction: column; max-height: 420px;
@@ -1770,3 +1771,135 @@ body.com-painel .view { padding-right: 352px; }
 }
 .aliado-mini img { width: 100%; height: 100%; object-fit: cover; }
 .aliado-chip i { font-style: normal; font-size: 10px; color: #79c986; }
+
+/* ===========================================================
+   CELULAR / TELA ESTREITA
+   =========================================================== */
+
+/* no desktop o invólucro não existe: os botões ficam soltos como antes */
+.acoes-extra { display: contents; }
+#btn-mais { display: none; }
+
+@media (max-width: 860px) {
+  .topbar { flex-wrap: wrap; gap: 10px 12px; padding: 9px 12px; }
+  .brand h1 { font-size: 16px; }
+  .brand-mark { width: 22px !important; height: 22px !important; }
+  .topbar-actions { gap: 6px; }
+
+  #btn-mais { display: inline-flex; }
+  .acoes-extra {
+    display: none; position: absolute; top: 52px; right: 10px; z-index: 60;
+    flex-direction: column; gap: 5px; min-width: 190px; padding: 6px;
+    background: var(--painel-2); border: 1px solid var(--linha-2);
+    border-radius: var(--raio); box-shadow: var(--sombra);
+  }
+  .acoes-extra.aberto { display: flex; }
+  .acoes-extra .btn { width: 100%; justify-content: flex-start; }
+  .acoes-extra .sep { width: 100%; height: 1px; margin: 2px 0; }
+
+  /* As abas ganham a própria faixa e rolam de lado. `min-width: 0` é
+     obrigatório: sem ele um item flex se recusa a encolher abaixo do
+     conteúdo, a faixa estica a página toda e tudo que usa 100% (o celular,
+     por exemplo) herda a largura errada. */
+  .abas {
+    order: 3; width: 100%; min-width: 0; max-width: 100%; margin-left: 0;
+    padding-bottom: 2px; border-top: 1px solid var(--linha); padding-top: 8px;
+    /* sombra na borda direita enquanto houver aba escondida */
+    mask-image: linear-gradient(to right, #000 calc(100% - 22px), transparent);
+    -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 22px), transparent);
+  }
+  .abas.no-fim { mask-image: none; -webkit-mask-image: none; }
+  .topbar { position: relative; max-width: 100vw; }
+  .aba { padding: 6px 12px; font-size: 12.5px; }
+}
+
+@media (max-width: 480px) {
+  .brand h1 { font-size: 0; }                 /* some o texto, fica o ouroboros */
+  .brand h1::after { content: 'OUROBOROS'; font-size: 14px; letter-spacing: .06em; }
+  .brand { gap: 8px; }
+  #mesa-nome { font-size: 10px; }
+  .topbar { padding: 8px 10px; }
+
+  .view { padding: 12px 10px 80px; }
+  .turnbar { padding: 9px 11px; gap: 8px; }
+  .turno-nome { max-width: 130px; font-size: 15px; }
+  .rodada-num { font-size: 17px; }
+
+  .card-corpo { padding: 10px 11px 12px; gap: 8px; }
+  .atrib b { font-size: 13px; }
+  .atrib i { font-size: 8px; }
+
+  /* o celular ocupa a tela quase toda */
+  /* `bottom: 0` já encosta o aparelho na borda; o deslocamento tem que ser
+     negativo pra sobrar folga, senão os 8px finais ficam fora da tela. */
+  .celular { width: calc(100% - 12px); height: 84vh; }
+  .celular.aberto, .celular.aberto:hover { transform: translate(-50%, -6px); }
+
+  .modal { max-height: 92vh; }
+  .modal-body { padding: 14px; }
+  .espia-grade, .notas-grade, .interludio-grade { grid-template-columns: 1fr; }
+  .mapa-barra { padding: 8px 10px; gap: 6px; }
+  .sel-mapa { max-width: 130px; }
+
+  /* A perícia tem 5 colunas; em 375px elas não cabem lado a lado. Vira
+     duas linhas, com o total ocupando a altura toda à direita — o nome e
+     o resultado, que é o que se lê de relance, continuam na mesma altura. */
+  .pericia {
+    grid-template-columns: 1fr 34px 50px 72px;
+    grid-template-areas:
+      "nome  attr  attr   total"
+      "trein trein outros total";
+    gap: 5px 6px; padding: 7px 8px;
+  }
+  .pericia-nome    { grid-area: nome; }
+  .pericia-attr    { grid-area: attr; }
+  .pericia select  { grid-area: trein; }
+  .pericia-outros  { grid-area: outros; }
+  .pericia-formula { grid-area: total; align-self: center; }
+  .pericia + .pericia { border-top: 1px solid var(--linha); border-radius: 0; }
+
+  /* a barra de cima da ficha quebra em vez de espremer */
+  .ficha-topo { flex-wrap: wrap; gap: 6px; }
+  .ficha-topo .salvo { font-size: 10px; }
+
+  /* tabelas largas (ataques, rituais, inventário) rolam dentro de si */
+  .tabela { overflow-x: auto; }
+  .tabela-cab, .tabela-linha { min-width: 420px; }
+}
+
+/* ===========================================================
+   TOQUE
+   =========================================================== */
+
+/* Sem isto o navegador espera ~300ms por um possível duplo-toque antes de
+   entregar o clique, e a ficha inteira parece travada no celular. */
+button, .aba, .chip, select, label { touch-action: manipulation; }
+
+@media (pointer: coarse) {
+  .aba { padding: 9px 13px; }
+  .btn-mini { min-width: 30px; min-height: 30px; }
+  .chip { padding: 5px 9px; }
+  .btn { min-height: 34px; }
+}
+
+/* O iOS dá zoom sozinho em qualquer campo com fonte abaixo de 16px, e depois
+   não volta. Só vale em tela de celular: num notebook com tela sensível o
+   `pointer: coarse` sozinho inflaria a ficha inteira sem motivo. */
+@media (pointer: coarse) and (max-width: 860px) {
+  input, select, textarea,
+  .pericia select, .pericia input,
+  .tabela input, .tabela select,
+  .chip input, .campo input, .campo select { font-size: 16px; }
+}
+
+@media (pointer: coarse) {
+  /* linhas de toque com altura de dedo, não de cursor */
+  .pericia-nome { min-height: 30px; text-align: left; }
+  .cel-acao { min-height: 32px; min-width: 32px; }
+}
+
+/* respeita o entalhe / barra de gestos dos celulares modernos */
+@supports (padding: env(safe-area-inset-bottom)) {
+  .topbar { padding-left: max(10px, env(safe-area-inset-left)); padding-right: max(10px, env(safe-area-inset-right)); }
+  .celular { bottom: env(safe-area-inset-bottom); }
+}
