@@ -390,17 +390,28 @@ especificidade com a do componente, quem vence é a que vier depois no arquivo.
 Blocos novos entram **antes** dela, nunca depois.
 
 
-### `ORIGEM_INFO` não veio de PDF nenhum
+### `ORIGEM_INFO` ainda não veio do livro
 
-`js/dados.js` tem um resumo de cada uma das 33 origens — perícias treinadas,
-nome do poder e o que ele faz. **O livro básico não está na pasta de PDFs**
-(lá só existem os Arquivos Secretos e o Sobrevivendo ao Horror), então esses
-textos foram escritos de fora e os efeitos são descritos de forma qualitativa,
-sem números inventados. Quem tiver o livro deve conferir e corrigir: é uma
-tabela só, e nada mais no código depende dela.
+`js/dados.js` tem um resumo das 33 origens — perícias treinadas, nome do poder
+e efeito. Ele foi escrito **antes** do livro básico entrar na pasta, então os
+efeitos estão descritos de forma qualitativa, sem números. O básico agora está
+em `arquivos secretos/Ordem-Paranormal-v1-1.pdf`: vale substituir pelos textos
+oficiais. O que já está verificado é que todo nome de perícia citado ali existe
+em `PERICIAS`.
 
-O que **é** verificável está verificado: todo nome de perícia citado ali existe
-em `PERICIAS`. Vale rodar essa checagem de novo depois de qualquer edição.
+### Os PDFs digitalizados não têm camada de texto
+
+`Ordem-Paranormal-v1-1.pdf` e `AS_07_hq_vampyre.pdf` devolvem zero linha no
+`pdftotext`. Não há `tesseract` nem `ocrmypdf` na máquina. O caminho que
+funciona é renderizar a página e **ler a imagem**:
+
+```bash
+pdftoppm -f <pag> -l <pag> -r 115 -png Ordem-Paranormal-v1-1.pdf saida
+```
+
+Atenção ao deslocamento: a página **impressa** 164 é a página **172 do PDF**,
+ou seja, `PDF = impressa + 8`. Confira com uma página conhecida antes de
+renderizar um intervalo grande.
 
 ### Dica com três faixas
 
@@ -412,4 +423,26 @@ pedaço entra por `textContent`, nunca por `innerHTML`.
 A classe `dica-rica` é *alternada* a cada `mostrar`, não só adicionada — sem
 isso a primeira dica rica deixaria todas as simples seguintes com o layout
 errado, já que a caixa é um elemento único reaproveitado.
+
+
+### Idade e Peso da Idade
+
+Regra opcional do livro básico, p. 172, transcrita em `FAIXAS_IDADE` e
+`DESVANTAGENS_IDADE` (`js/dados.js`). O bloco na ficha só aparece quando a
+idade está preenchida **e** a faixa tem efeito — Jovem (17-24) é o padrão do
+sistema e não rende bloco nenhum.
+
+Das 15 desvantagens, só **Frágil** (−2 PV por NEX) e **Melancólico** (−1 PE por
+NEX) mexem em número que a ficha calcula; elas carregam `pvPorNex`/`pePorNex` e
+`ajusteIdade()` as aplica em `calcular()` e em `subirNex()`. O resto é efeito de
+mesa e fica como texto.
+
+"Por NEX" é **por nível de NEX**, e em NEX 5% você já tem o primeiro — por isso
+`ajusteIdade` usa `passos + 1`, não `passos`. Errar isso tira um nível inteiro
+de desconto.
+
+Em `subirNex` o ajuste é calculado **duas vezes**, no NEX velho e no novo: como
+a penalidade cresce junto com o nível, o ganho real da subida é menor que o da
+tabela da classe (Combatente VIG 3 sobe +7 PV por NEX, mas com Frágil mostra
++5). Se calcular uma vez só, a conta mente.
 

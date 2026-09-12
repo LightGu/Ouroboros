@@ -2111,6 +2111,58 @@ body.com-painel .view { padding-right: 352px; }
 .od-efeito { display: block; font-size: 12.5px; line-height: 1.55; color: var(--texto-2); }
 
 /* ===========================================================
+   IDADE / PESO DA IDADE
+   =========================================================== */
+
+.idade-lista { display: grid; gap: 7px; margin-top: 10px; }
+.idade-item {
+  display: grid; grid-template-columns: 165px 1fr; gap: 10px; align-items: baseline;
+  padding: 8px 11px; background: var(--painel-2);
+  border: 1px solid var(--linha); border-left: 3px solid var(--roxo); border-radius: 8px;
+}
+.idade-item b { font-family: var(--display); font-size: 12.5px; color: #c4b5fd; }
+.idade-item span { font-size: 12.5px; line-height: 1.5; color: var(--texto-2); }
+
+.idade-sub {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 9px;
+  margin: 16px 0 9px; font-family: var(--display); font-size: 14px;
+  letter-spacing: .04em; color: var(--texto);
+}
+.idade-falta {
+  padding: 2px 8px; border-radius: 99px; font-family: var(--fonte); font-size: 10.5px;
+  color: #e8b75f; background: rgba(232,183,95,.1); border: 1px solid rgba(232,183,95,.28);
+}
+.idade-ok {
+  padding: 2px 8px; border-radius: 99px; font-family: var(--fonte); font-size: 10.5px;
+  color: #7fc98a; background: rgba(127,201,138,.1); border: 1px solid rgba(127,201,138,.26);
+}
+
+.idade-escolhas { display: grid; grid-template-columns: repeat(2, 1fr); gap: 7px; }
+.idade-desv {
+  display: grid; grid-template-columns: 18px 1fr; gap: 4px 9px; align-items: start;
+  padding: 9px 11px; cursor: pointer; border-radius: 8px;
+  background: var(--painel-2); border: 1px solid var(--linha);
+  transition: border-color .15s, background .15s;
+}
+.idade-desv:hover { border-color: var(--texto-3); }
+.idade-desv.on { background: rgba(139,92,246,.1); border-color: var(--roxo); }
+.idade-desv input { grid-row: 1 / span 2; margin-top: 2px; accent-color: var(--roxo); cursor: pointer; }
+.idade-desv b { font-family: var(--display); font-size: 12.5px; color: var(--texto); }
+.idade-desv.on b { color: #c4b5fd; }
+.idade-desv span { font-size: 11.5px; line-height: 1.5; color: var(--texto-3); }
+
+.idade-conta {
+  margin: 11px 0 0; padding: 7px 11px; font-size: 12px;
+  color: var(--texto-2); background: var(--bg-2);
+  border: 1px solid var(--linha); border-radius: 7px;
+}
+
+@media (max-width: 760px) {
+  .idade-escolhas { grid-template-columns: 1fr; }
+  .idade-item { grid-template-columns: 1fr; gap: 3px; }
+}
+
+/* ===========================================================
    TOQUE
    =========================================================== */
 

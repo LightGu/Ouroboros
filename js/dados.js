@@ -135,6 +135,106 @@ const ORIGEM_INFO = {
     efeito: 'Já encontrou o paranormal e escapou. Reage melhor ao susto e resiste onde os outros congelam.' }
 };
 
+/* ===========================================================
+   PERSONAGENS DE IDADE VARIADA  —  regra opcional, OPRPG p. 172
+   Transcrita do livro básico. Jovem (17-24) é o padrão do sistema e não
+   tem modificador nenhum; as faixas adulta pra cima ganham benefício e,
+   em troca, devem escolher desvantagens — é o "Peso da Idade".
+   =========================================================== */
+
+const FAIXAS_IDADE = [
+  { id: 'crianca', nome: 'Criança', min: 9, max: 12, desvantagens: 0,
+    resumo: 'A menor faixa etária possível. O livro não recomenda jogar abaixo de 9 anos.',
+    beneficios: [
+      ['Força e Vigor 0', 'Você começa com FOR 0 e VIG 0 e só pode aumentar esses atributos até 1.'],
+      ['Tampinha', 'Deslocamento 6m e tamanho Pequeno: +5 em Furtividade, −5 em manobras de combate, precisa usar armas leves como armas de uma mão e armas de uma mão como armas de duas mãos, e não pode usar armas de duas mãos.'],
+      ['Página em Branco', 'Você recebe apenas um benefício de origem: uma das perícias ou o poder, a sua escolha.'],
+      ['Sorte de Principiante', '+2 em Defesa e +5 em todos os testes de resistência. Inimigos normalmente ignoram crianças, justamente por elas serem menos perigosas.']
+    ] },
+  { id: 'adolescente', nome: 'Adolescente', min: 13, max: 16, desvantagens: 0,
+    resumo: 'Já tem algum conhecimento, mas ainda não está plenamente "formado".',
+    beneficios: [
+      ['Força 0', 'Você começa com FOR 0 e só pode aumentar esse atributo até 2.'],
+      ['Anos de Formação', 'Você recebe apenas dois benefícios de origem: as duas perícias, ou uma perícia e o poder.'],
+      ['Ímpeto Juvenil', '+5 pontos de esforço. Adolescentes acham que podem tudo, e essa confiança exacerbada acaba deixando-os mais heroicos.']
+    ] },
+  { id: 'jovem', nome: 'Jovem', min: 17, max: 24, desvantagens: 0,
+    resumo: 'Idade comum para agentes recrutas. É o padrão do sistema.',
+    beneficios: [] },
+  { id: 'adulto', nome: 'Adulto', min: 25, max: 44, desvantagens: 1,
+    resumo: 'Idade comum para agentes veteranos. Mais competentes, mas já carregam algumas marcas.',
+    beneficios: [
+      ['Vivência', 'Um poder de classe adicional a sua escolha. Você ainda precisa preencher os pré-requisitos do poder.']
+    ] },
+  { id: 'maduro', nome: 'Maduro', min: 45, max: 64, desvantagens: 2,
+    nexBonus: 5,
+    resumo: 'Provavelmente no auge da carreira: menos energia que os mais novos, compensada com experiência.',
+    beneficios: [['NEX +5%', 'Você começa com NEX +5%.']] },
+  { id: 'idoso', nome: 'Idoso', min: 65, max: 200, desvantagens: 3,
+    nexBonus: 10,
+    resumo: 'Poucos agentes chegam lá. Quem chega vira fonte de sabedoria para as novas gerações.',
+    beneficios: [
+      ['Decrepitude', 'Ao receber a habilidade Aumento de Atributo, você não pode aumentar Agilidade, Força ou Vigor. Seu auge físico já ficou para trás.'],
+      ['NEX +10%', 'Você começa com NEX +10%.']
+    ] }
+];
+
+/* Idade fora de qualquer faixa (abaixo de 9) devolve null de propósito: o
+   livro não cobre esse caso e inventar faixa seria pior do que não mostrar. */
+function faixaDaIdade(anos) {
+  const n = Number(anos);
+  if (!n || n < 9) return null;
+  return FAIXAS_IDADE.find(f => n >= f.min && n <= f.max) || null;
+}
+
+/* As 15 desvantagens do "Peso da Idade". `pvPorNex` e `pePorNex` só existem
+   nas duas que mexem em número que a ficha já calcula sozinha — o resto é
+   efeito de mesa e fica como texto. */
+const DESVANTAGENS_IDADE = [
+  { id: 'catarata', nome: 'Catarata',
+    efeito: 'Seus olhos já não são os mesmos. Você sofre −5 em testes de Percepção e Pontaria.' },
+  { id: 'definhamento', nome: 'Definhamento',
+    efeito: 'A idade roubou seu peso. Você sofre −5 em testes de Fortitude e de manobras de combate.' },
+  { id: 'devagar', nome: '“Devagar, Jovem!”',
+    efeito: 'Você já não anda no mesmo ritmo. Seu deslocamento é reduzido em −3m e você não pode fazer investidas.' },
+  { id: 'distraido', nome: 'Distraído',
+    efeito: 'Você fica surpreendido na primeira rodada de qualquer cena de ação e perde seu primeiro turno em qualquer cena de investigação.' },
+  { id: 'fragil', nome: 'Frágil', pvPorNex: 2,
+    efeito: 'Sua vitalidade se foi. Você perde 2 PV por NEX.' },
+  { id: 'gota', nome: 'Gota',
+    efeito: 'Sempre que faz um teste de Agilidade ou baseado em Agilidade, ou escolhe a ação esquiva, você sofre 1d6 pontos de dano.' },
+  { id: 'juntas', nome: 'Juntas Duras',
+    efeito: 'Suas articulações doem. Você sofre −5 em testes de Acrobacia e Reflexos.' },
+  { id: 'melancolico', nome: 'Melancólico', pePorNex: 1,
+    efeito: 'O mundo já não tem mais cor. Você perde 1 PE por NEX.' },
+  { id: 'nomeutempo', nome: '“No Meu Tempo”',
+    efeito: 'Preso a visões idealizadas de um passado que nunca ocorreu, você se torna presa fácil para manipulação. Sofre −5 em testes de Intuição e Vontade.' },
+  { id: 'pulmao', nome: 'Pulmão Ruim',
+    efeito: 'Sempre que faz um teste de Força ou baseado em Força, você sofre 1d6 pontos de dano. Além disso, só prende a respiração por um número de rodadas igual a seu Vigor, e sempre que faz uma investida fica fatigado até o fim da cena.' },
+  { id: 'rabugento', nome: 'Rabugento',
+    efeito: 'Você é duro de aguentar. Sofre −5 em testes de Presença e de perícias baseadas em Presença, com exceção de Intimidação.' },
+  { id: 'recurvado', nome: 'Recurvado',
+    efeito: 'A idade dobrou suas costas. Você é considerado Pequeno (veja “Tampinha”), mas não recebe o bônus de Furtividade.' },
+  { id: 'sonoruim', nome: 'Sono Ruim',
+    efeito: 'Sua condição de descanso é sempre uma categoria pior. Condições normais contam como ruins; se já era ruim, você não recupera nenhum PV nem PE.' },
+  { id: 'teimoso', nome: 'Teimoso',
+    efeito: 'Você faz as coisas sempre do seu jeito. Não pode receber nem fornecer bônus por ajuda.' },
+  { id: 'tosse', nome: 'Tosse',
+    efeito: 'Em cenas de ação e investigação, role 1d6 no início de cada rodada: num 1, você tem uma crise de tosse e perde o turno. Em cenas de interpretação, role 1d6 sempre que fizer teste de perícia baseada em Presença: num 1, sofre −5 no teste.' }
+];
+
+/* Quanto a idade tira de PV e PE. "Por NEX" é por nível de NEX, e em NEX 5%
+   você já tem o primeiro — daí o `passos + 1`. */
+function ajusteIdade(p) {
+  const niveis = Math.max(0, Math.floor((Number(p?.nex || 5) - 5) / 5)) + 1;
+  return (p?.desvantagensIdade || []).reduce((acc, id) => {
+    const d = DESVANTAGENS_IDADE.find(x => x.id === id);
+    if (d?.pvPorNex) acc.pv -= d.pvPorNex * niveis;
+    if (d?.pePorNex) acc.pe -= d.pePorNex * niveis;
+    return acc;
+  }, { pv: 0, pe: 0 });
+}
+
 const PATENTES = ['Recruta', 'Operador', 'Agente Especial', 'Oficial de Operações', 'Agente de Elite'];
 
 const CATEGORIAS_ITEM = ['I', 'II', 'III', 'IV'];

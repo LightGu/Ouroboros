@@ -53,6 +53,8 @@ const AJUDA = {
   campos: {
     origem:     'De onde o personagem veio antes da Ordem. A origem dá duas perícias treinadas e um poder.',
     classe:     'Define PV, PE e Sanidade por NEX, quantas perícias você treina, as proficiências e as habilidades que ganha.',
+    idade:      'Idade do agente em anos. Preenchendo, a ficha mostra a faixa etária e o Peso da Idade da regra opcional Personagens de Idade Variada (livro básico, p. 172). Deixe vazio se a mesa não usa essa regra.',
+    pesoIdade:  'Regra opcional do livro básico (p. 172). Adulto escolhe 1 desvantagem, Maduro 2 e Idoso 3. Frágil e Melancólico entram sozinhas na conta de PV e PE.',
     nex:        'Nível de Exposição: o "nível" do agente, de 5% a 99%. Sobe de 5 em 5 e é o que aumenta PV, PE e Sanidade.',
     desl:       'Quantos metros você percorre com uma ação de movimento. O padrão de uma pessoa é 9m.',
     peRodada:   'Teto de PE que dá pra gastar em uma única rodada. Sobe conforme o NEX.',

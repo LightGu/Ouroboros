@@ -80,8 +80,10 @@ const Ficha = {
         <div class="identidade-campos">
           <label class="campo campo-destaque"><span>Personagem</span>
             <input data-bind="nome" value="${esc(p.nome)}" placeholder="Nome do agente"></label>
-          <div class="grade-3">
+          <div class="grade-4">
             <label class="campo"><span>Jogador</span><input data-bind="jogador" value="${esc(p.jogador)}"></label>
+            <label class="campo"${dica(AJUDA.campos.idade)}><span>Idade</span>
+              <input type="number" data-bind="idade" value="${esc(p.idade)}" min="0" max="120" placeholder="—"></label>
             <label class="campo"${dica(AJUDA.campos.origem)}><span>Origem</span>
               <input data-bind="origem" value="${esc(p.origem)}" list="dl-origens">
               <datalist id="dl-origens">${ORIGENS.map(o => `<option value="${esc(o)}">`).join('')}</datalist></label>
@@ -99,6 +101,8 @@ const Ficha = {
           </div>
         </div>
       </section>
+
+      ${this.blocoIdade(p)}
 
       <!-- ATRIBUTOS -->
       <section class="bloco">
@@ -342,6 +346,53 @@ const Ficha = {
       </div>`;
   },
 
+  /* Só aparece quando a idade está preenchida: mesa que não usa a regra
+     opcional não precisa ver o bloco. Jovem (17-24) é o padrão do sistema,
+     então também não rende bloco nenhum. */
+  blocoIdade(p) {
+    const f = faixaDaIdade(p.idade);
+    if (!f || (!f.beneficios.length && !f.desvantagens)) return '';
+
+    const escolhidas = p.desvantagensIdade || [];
+    const faltam = f.desvantagens - escolhidas.length;
+    const aj = ajusteIdade(p);
+
+    return `
+      <section class="bloco">
+        <h2 class="titulo-bloco"${dica(AJUDA.campos.pesoIdade)}>Idade
+          <span class="legenda">${esc(f.nome)}, ${f.min}${f.max > 150 ? ' anos ou mais' : ' a ' + f.max + ' anos'}</span></h2>
+        <p class="dialogo fraco">${esc(f.resumo)}</p>
+
+        ${f.beneficios.length ? `<div class="idade-lista">
+          ${f.beneficios.map(([n, t]) => `
+            <div class="idade-item bom"><b>${esc(n)}</b><span>${esc(t)}</span></div>`).join('')}
+        </div>` : ''}
+
+        ${f.desvantagens ? `
+          <h3 class="idade-sub">O Peso da Idade
+            <span class="legenda">${f.desvantagens === 1 ? 'escolha 1 desvantagem'
+              : 'escolha ' + f.desvantagens + ' desvantagens'}</span>
+            ${faltam > 0 ? `<span class="idade-falta">falta${faltam > 1 ? 'm' : ''} ${faltam}</span>`
+              : faltam < 0 ? `<span class="idade-falta">${-faltam} a mais do que a regra pede</span>`
+              : '<span class="idade-ok">completo</span>'}</h3>
+
+          <div class="idade-escolhas">
+            ${DESVANTAGENS_IDADE.map(d => {
+              const on = escolhidas.includes(d.id);
+              return `<label class="idade-desv ${on ? 'on' : ''}">
+                <input type="checkbox" data-desv-idade="${d.id}" ${on ? 'checked' : ''}>
+                <b>${esc(d.nome)}</b><span>${esc(d.efeito)}</span>
+              </label>`;
+            }).join('')}
+          </div>
+
+          ${(aj.pv || aj.pe) ? `<p class="idade-conta">Já descontado no cálculo de status:
+            ${[aj.pv ? aj.pv + ' PV' : '', aj.pe ? aj.pe + ' PE' : ''].filter(Boolean).join(' e ')}
+            (NEX ${num(p.nex)}%).</p>` : ''}
+        ` : ''}
+      </section>`;
+  },
+
   /* Um ritual tem campos demais pra caber numa linha de tabela, então cada um
      vira um cartão com a faixa do Elemento na lateral. A ordem dos campos é a
      mesma do bloco impresso no livro, pra dar pra copiar de cima pra baixo. */
@@ -415,6 +466,14 @@ const Ficha = {
         Store.salvar(this.atual);
         return this.abrir(this.atual.id);
       }
+      /* idade troca a faixa etária inteira; no change pra não redesenhar
+         a ficha a cada tecla digitada no campo */
+      if (e.target.dataset.bind === 'idade') {
+        setPath(this.atual, 'idade', e.target.value);
+        Store.salvar(this.atual);
+        return this.abrir(this.atual.id);
+      }
+
       /* trocar o Elemento repinta a faixa do cartão, então redesenha */
       if (e.target.dataset.bind && e.target.dataset.recarrega !== undefined) {
         setPath(this.atual, e.target.dataset.bind, e.target.value);
@@ -485,6 +544,16 @@ const Ficha = {
           { nome: '', elemento: '', circulo: '', custo: '', execucao: '', alcance: '',
             alvo: '', duracao: '', resistencia: '', pagina: '', desc: '' },
           { nome: h.nome, custo: h.custo, pagina: h.pagina, desc: h.desc }));
+        Store.salvar(this.atual);
+        return this.abrir(this.atual.id);
+      }
+
+      const desv = e.target.closest('[data-desv-idade]');
+      if (desv) {
+        const id = desv.dataset.desvIdade;
+        const lista = this.atual.desvantagensIdade;
+        const i = lista.indexOf(id);
+        if (i >= 0) lista.splice(i, 1); else lista.push(id);
         Store.salvar(this.atual);
         return this.abrir(this.atual.id);
       }
@@ -563,6 +632,11 @@ const Ficha = {
     const p = this.atual;
     const r = calcularStatus(p.classe, p.nex, p.atributos);
     if (!r) return toast('Escolha uma classe conhecida (Combatente, Especialista, Ocultista...).', 'erro');
+    /* Frágil e Melancólico saem direto do total: são as duas desvantagens de
+       idade que mexem em número que a ficha calcula sozinha. */
+    const aj = ajusteIdade(p);
+    r.pv = Math.max(1, r.pv + aj.pv);
+    r.pe = Math.max(0, r.pe + aj.pe);
     Modal.abrir({
       titulo: 'Calcular status',
       corpo: `<p class="dialogo">Pela classe <b>${esc(p.classe)}</b>, NEX <b>${num(p.nex)}%</b>,
@@ -570,6 +644,8 @@ const Ficha = {
               <ul class="lista-calc">
                 <li><b>PV</b> ${r.pv}</li><li><b>PE</b> ${r.pe}</li><li><b>Sanidade</b> ${r.san}</li>
               </ul>
+              ${(aj.pv || aj.pe) ? `<p class="dialogo fraco">Já com o Peso da Idade descontado:
+                ${[aj.pv ? aj.pv + ' PV' : '', aj.pe ? aj.pe + ' PE' : ''].filter(Boolean).join(' e ')}.</p>` : ''}
               <p class="dialogo fraco">Isso substitui os máximos e enche os atuais. Habilidades e trilhas que dão bônus extras você ajusta na mão depois.</p>`,
       confirmar: 'Aplicar',
       onConfirmar: () => {
@@ -639,6 +715,13 @@ const Ficha = {
     const depois = calcularStatus(p.classe, nexNovo, p.atributos);
     if (!antes || !depois)
       return toast('Escolha uma classe conhecida (Combatente, Especialista, Ocultista...).', 'erro');
+
+    /* Frágil e Melancólico tiram por NEX — então o desconto cresce junto com
+       o nível, e o ganho real da subida é menor do que o da tabela da classe. */
+    const ajA = ajusteIdade(p);
+    const ajD = ajusteIdade(Object.assign({}, p, { nex: nexNovo }));
+    antes.pv  = Math.max(1, antes.pv  + ajA.pv);  antes.pe  = Math.max(0, antes.pe  + ajA.pe);
+    depois.pv = Math.max(1, depois.pv + ajD.pv);  depois.pe = Math.max(0, depois.pe + ajD.pe);
 
     const linha = (r, a, d) => `<li><b>${r}</b> ${a} → ${d} <em>(+${d - a})</em></li>`;
     Modal.abrir({

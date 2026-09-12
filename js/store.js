@@ -179,6 +179,7 @@ const Store = {
       ordem: 0,
       nome: '',
       jogador: '',
+      idade: '',
       imagem: '',
       origem: '',
       classe: '',
@@ -197,6 +198,7 @@ const Store = {
       ataques: [],
       habilidades: [],
       rituais: [],
+      desvantagensIdade: [],
       dtRituais: '',
       inventario: { limites: { I: '', II: '', III: '', IV: '' }, credito: '', cargaMax: '', itens: [] },
       prestigio: '',
@@ -225,6 +227,7 @@ const Store = {
     out.ataques     = p?.ataques     || [];
     out.habilidades = p?.habilidades || [];
     out.rituais     = p?.rituais     || [];
+    out.desvantagensIdade = p?.desvantagensIdade || [];
     out.condicoes   = p?.condicoes   || [];
     out.municoes    = p?.municoes    || [];
     out.aliados     = (p?.aliados || []).map(a => Object.assign(
