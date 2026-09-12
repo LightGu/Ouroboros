@@ -52,7 +52,7 @@ de topo de arquivo **não** vira propriedade de `window` (só é acessível pelo
 Ordem de carga (há dependências):
 
 ```
-config → dados → ui → nuvem → store → mesa → ficha → rolagem → mapa
+config → dados → ui → ajuda → nuvem → store → mesa → ficha → criacao → rolagem → mapa
 → sons → campanha → interludio → celular → logs → contas → telas → app
 ```
 
@@ -63,10 +63,12 @@ config → dados → ui → nuvem → store → mesa → ficha → rolagem → m
 | `js/config.js` | URL e chave publicável do Supabase |
 | `js/dados.js` | Constantes: atributos, 28 perícias, classes, origens, progressão, cores de jogador |
 | `js/ui.js` | `$`/`$$`, `esc`, modal, toast, `get/setPath`, redimensionar imagem |
+| `js/ajuda.js` | Textos de regra das dicas (`AJUDA`, `dica()`) e a tooltip de hover (`Dica`) |
 | `js/nuvem.js` | **Única** camada que fala com o Supabase. Ninguém mais usa `cliente` direto |
 | `js/store.js` | Modelo da ficha, estado em memória, gravação agrupada, permissões, cache offline |
 | `js/mesa.js` | Cards, barras, munição, condições, turnos, personagem rápido, reivindicar, drag |
 | `js/ficha.js` | Ficha completa, binding genérico, subir NEX, calcular status |
+| `js/criacao.js` | Criação de personagem: escolha guiado/livre e o passo a passo em 7 telas |
 | `js/rolagem.js` | Motor de dados e painel compartilhado |
 | `js/mapa.js` | Mapa de batalha, fog of war, tokens |
 | `js/sons.js` | Acervo de áudio (só do mestre, toca só na máquina dele) |
@@ -363,4 +365,27 @@ notebook com tela sensível cairia na regra e a ficha inteira incharia.
 layout e os botões ficam soltos como sempre foram. Abaixo de 860px ele vira um
 menu suspenso atrás do `⋯`. Não existe botão duplicado: é o mesmo elemento nos
 dois casos, então os `id` e os listeners continuam únicos.
+
+
+### Rituais e habilidades são listas separadas
+
+`dados.habilidades` guarda poder de classe, de origem e de trilha — tabela
+simples de quatro colunas. `dados.rituais` é uma lista própria, com os campos
+do bloco impresso no livro: elemento, círculo, custo, execução, alcance, alvo,
+duração, resistência, página e descrição. O vocabulário fechado dessas colunas
+(`ELEMENTOS`, `CIRCULOS`, `EXECUCOES`, `ALCANCES`, `DURACOES`) está em
+`js/dados.js`; `CIRCULOS` também carrega o custo em PE e o NEX mínimo de cada
+círculo (1º→5%, 2º→45%, 3º→75%, 4º→99%), conferidos nos Arquivos Secretos.
+
+Ficha gravada antes dessa mudança não tem a chave `rituais`; `Store.normalizar`
+cria a lista vazia, então nada quebra e nada precisa de migração no banco. O
+botão `⇩` em cada linha de habilidade move a linha inteira para Rituais,
+preservando nome, custo, página e descrição.
+
+### A seção TOQUE precisa ser a última do style.css
+
+Ela existe para vencer o `font-size` que cada componente declara (o iOS dá zoom
+sozinho em campo com menos de 16px). Como quase toda regra ali empata em
+especificidade com a do componente, quem vence é a que vier depois no arquivo.
+Blocos novos entram **antes** dela, nunca depois.
 

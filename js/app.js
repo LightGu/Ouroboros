@@ -225,10 +225,7 @@ const App = {
     $$('.aba').forEach(b => b.addEventListener('click', () => this.mostrar(b.dataset.aba)));
     $('#btn-conta').addEventListener('click', e => { e.stopPropagation(); Telas.menuConta($('#btn-conta')); });
 
-    $('#btn-novo').addEventListener('click', async () => {
-      try { Ficha.abrir((await Store.criar(false)).id); }
-      catch (e) { toast('Não consegui criar: ' + (e.message || e), 'erro'); }
-    });
+    $('#btn-novo').addEventListener('click', () => Criacao.inicio());
 
     $('#btn-rapido').addEventListener('click', () => Mesa.modalRapido(null));
 

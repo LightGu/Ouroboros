@@ -631,7 +631,7 @@ textarea { resize: vertical; }
 }
 .tabela-ataques .tabela-cab, .tabela-ataques .tabela-linha,
 .tabela-habilidades .tabela-cab, .tabela-habilidades .tabela-linha {
-  grid-template-columns: 1.1fr .9fr .8fr 1.6fr 30px;
+  grid-template-columns: 1.1fr .9fr .8fr 1.6fr 30px 30px;
 }
 .tabela-itens .tabela-cab, .tabela-itens .tabela-linha { grid-template-columns: 3fr .8fr .8fr 30px; }
 
@@ -685,6 +685,136 @@ textarea { resize: vertical; }
 }
 .toast-erro { border-color: var(--roxo); color: #ff9c8c; }
 
+/* ---------------- dica de regra (hover na ficha) ---------------- */
+
+/* z-index acima do modal (300): a ficha também abre dentro de modal em
+   alguns fluxos, e a dica precisa passar por cima de qualquer camada.
+   pointer-events: none pra ela nunca roubar o hover do que está embaixo. */
+.dica-flutuante {
+  position: fixed; z-index: 350; pointer-events: none;
+  max-width: 320px; padding: 9px 12px;
+  background: var(--painel-2); color: var(--texto);
+  border: 1px solid var(--linha-2); border-radius: var(--raio);
+  box-shadow: var(--sombra);
+  font-size: 12.5px; line-height: 1.45; font-weight: 400;
+  animation: sobe .12s ease;
+}
+
+/* quem tem dica ganha um pontilhado discreto — senão ninguém descobre que
+   existe texto ali. Só nos rótulos de campo e nos cabeçalhos de tabela: na
+   grade de perícias, sublinhar sigla e fórmula das 28 linhas viraria poluição. */
+.campo[data-ajuda] > span:first-child,
+.tabela-cab span[data-ajuda] {
+  text-decoration: underline dotted var(--texto-3);
+  text-underline-offset: 3px;
+}
+[data-ajuda] { cursor: help; }
+/* campo de digitar continua com cursor de texto: ali o clique serve pra editar */
+.campo[data-ajuda] input, .campo[data-ajuda] textarea { cursor: auto; }
+
+@media (max-width: 560px) {
+  .dica-flutuante { max-width: calc(100vw - 24px); font-size: 12px; }
+}
+
+/* ---------------- criação guiada ---------------- */
+
+.modal-largo { width: min(760px, 100%); }
+
+/* escolha guiado x livre */
+.escolha-modo { display: grid; gap: 10px; }
+.modo {
+  display: flex; flex-direction: column; gap: 5px; text-align: left;
+  padding: 14px 16px; border-radius: var(--raio);
+  background: var(--painel-2); border: 1px solid var(--linha-2); color: var(--texto);
+  cursor: pointer; transition: border-color .12s, transform .12s;
+}
+.modo:hover { border-color: var(--roxo); transform: translateY(-1px); }
+.modo b { font-family: var(--display); font-size: 16px; letter-spacing: .04em; }
+.modo span { font-size: 13px; color: var(--texto-2); line-height: 1.5; }
+.modo i { font-size: 11.5px; color: var(--roxo-cl); font-style: normal; text-transform: uppercase; letter-spacing: .08em; }
+
+/* trilha de passos */
+.trilha { display: flex; align-items: center; gap: 6px; }
+.trilha-ponto { width: 22px; height: 3px; border-radius: 2px; background: var(--linha-2); }
+.trilha-ponto.feito { background: var(--roxo); opacity: .55; }
+.trilha-ponto.agora { background: var(--roxo-cl); }
+.trilha em { margin-left: auto; font-style: normal; font-size: 11.5px; color: var(--texto-3); }
+
+.dica-passo { margin: 0; font-size: 12.5px; line-height: 1.55; color: var(--texto-3); }
+.dica-passo b { color: var(--texto-2); }
+
+/* chips de origem */
+.chips { display: flex; flex-wrap: wrap; gap: 6px; max-height: 168px; overflow-y: auto; }
+.chip {
+  padding: 5px 10px; border-radius: 999px; font-size: 12px;
+  background: var(--painel-2); border: 1px solid var(--linha); color: var(--texto-2); cursor: pointer;
+}
+.chip:hover { border-color: var(--linha-2); color: var(--texto); }
+.chip.ativo { background: var(--roxo); border-color: var(--roxo); color: #fff; }
+
+/* cartas de classe */
+.cartas-classe { display: grid; grid-template-columns: repeat(auto-fit, minmax(215px, 1fr)); gap: 9px; }
+.carta-classe {
+  display: flex; flex-direction: column; gap: 4px; text-align: left;
+  padding: 12px 13px; border-radius: var(--raio);
+  background: var(--painel-2); border: 1px solid var(--linha-2); color: var(--texto); cursor: pointer;
+}
+.carta-classe:hover { border-color: var(--roxo); }
+.carta-classe.ativo { border-color: var(--roxo-cl); box-shadow: inset 0 0 0 1px var(--roxo-cl); }
+.carta-classe b { font-family: var(--display); font-size: 15px; letter-spacing: .04em; }
+.carta-frase { font-size: 12.5px; color: var(--texto-2); line-height: 1.45; }
+.carta-nums { font-size: 12px; color: var(--roxo-cl); }
+.carta-linha { font-size: 11.5px; color: var(--texto-3); }
+.carta-marca { font-size: 11.5px; color: var(--texto-2); line-height: 1.45; margin-top: 2px; }
+.carta-aviso { font-size: 11px; color: var(--sanidade); line-height: 1.4; }
+
+/* atributos no passo a passo */
+.attr-passo { display: flex; flex-direction: column; gap: 7px; }
+.attr-linha {
+  display: grid; grid-template-columns: 96px 1fr auto; align-items: center; gap: 10px;
+  padding: 8px 10px; border-radius: var(--raio); background: var(--painel-2); border: 1px solid var(--linha);
+}
+.attr-id { display: flex; flex-direction: column; }
+.attr-id b { font-family: var(--display); font-size: 15px; }
+.attr-id span { font-size: 11px; color: var(--texto-3); }
+.attr-ajuda { margin: 0; font-size: 11.5px; color: var(--texto-3); line-height: 1.4; }
+.attr-ctrl { display: flex; align-items: center; gap: 7px; }
+.attr-num { min-width: 22px; text-align: center; font-family: var(--display); font-size: 18px; }
+
+.attr-resumo { display: flex; justify-content: space-between; gap: 10px; font-size: 12.5px; color: var(--texto-2); }
+.attr-resumo .ok { color: var(--ok); }
+.attr-resumo .erro { color: var(--perigo-cl); }
+
+/* grade de perícias do passo a passo */
+.grade-pericias {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(228px, 1fr)); gap: 6px;
+  max-height: 46vh; overflow-y: auto; padding-right: 4px;
+}
+.per-item {
+  display: flex; gap: 8px; align-items: flex-start;
+  padding: 7px 9px; border-radius: var(--raio); border: 1px solid var(--linha);
+  background: var(--painel-2); cursor: pointer;
+}
+.per-item:hover { border-color: var(--linha-2); }
+.per-item.marcado { border-color: var(--roxo); background: rgba(124,58,237,.11); }
+.per-item.travado { opacity: .42; cursor: not-allowed; }
+.per-txt { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+.per-txt b { font-size: 13px; }
+.per-txt em { font-style: normal; font-size: 10.5px; color: var(--texto-3); letter-spacing: .06em; }
+.per-txt small { font-size: 11px; color: var(--texto-3); line-height: 1.35; }
+
+/* revisão final */
+.revisao { display: flex; flex-direction: column; gap: 6px; }
+.revisao div { display: grid; grid-template-columns: 108px 1fr; gap: 10px; font-size: 13px; align-items: baseline; }
+.revisao span { color: var(--texto-3); font-size: 11.5px; text-transform: uppercase; letter-spacing: .06em; }
+.revisao b { color: var(--texto); font-weight: 500; line-height: 1.45; }
+
+@media (max-width: 560px) {
+  .attr-linha { grid-template-columns: 1fr auto; }
+  .attr-ajuda { grid-column: 1 / -1; }
+  .grade-pericias { max-height: 40vh; }
+}
+
 /* ---------------- responsivo ---------------- */
 
 @media (max-width: 900px) {
@@ -694,7 +824,7 @@ textarea { resize: vertical; }
   .grade-limites { grid-template-columns: repeat(4, 1fr); }
   .grade-3, .grade-4 { grid-template-columns: repeat(2, 1fr); }
   .tabela-ataques .tabela-cab, .tabela-habilidades .tabela-cab { display: none; }
-  .tabela-ataques .tabela-linha, .tabela-habilidades .tabela-linha { grid-template-columns: 1fr 1fr 30px; }
+  .tabela-ataques .tabela-linha, .tabela-habilidades .tabela-linha { grid-template-columns: 1fr 1fr 30px 30px; }
 }
 
 @media (max-width: 620px) {
@@ -1868,6 +1998,75 @@ body.com-painel .view { padding-right: 352px; }
 }
 
 /* ===========================================================
+   RITUAIS
+   =========================================================== */
+
+/* Cada ritual é um cartão com a faixa do Elemento na lateral, para dar pra
+   achar "o de Sangue" correndo o olho pela coluna de cor. */
+.ritual {
+  margin-bottom: 10px; padding: 11px 13px;
+  background: var(--painel); border: 1px solid var(--linha);
+  border-left: 3px solid var(--elem, #6b6b78); border-radius: var(--raio);
+}
+.ritual:last-child { margin-bottom: 0; }
+
+.ritual-cab { display: grid; grid-template-columns: 1fr 150px 118px 62px 30px; gap: 7px; align-items: center; }
+/* item de grid tem `min-width: auto` e se recusa a encolher abaixo do conteúdo */
+.ritual-cab > * { min-width: 0; }
+.ritual-nome {
+  padding: 6px 9px; font-family: var(--display); font-size: 14px; letter-spacing: .02em;
+  background: var(--bg-2); border: 1px solid var(--linha); border-radius: 7px; color: var(--texto);
+}
+.ritual-cab select, .ritual-pe {
+  padding: 6px 8px; font-size: 12px; border-radius: 7px;
+  background: var(--painel-2); border: 1px solid var(--linha); color: var(--texto-2);
+}
+.ritual-elem { color: var(--elem, var(--texto-2)); font-weight: 600; }
+.ritual-pe { text-align: center; }
+.ritual-nome:focus, .ritual-cab select:focus, .ritual-pe:focus,
+.ritual-campos input:focus, .ritual-campos select:focus, .ritual-desc:focus {
+  outline: none; border-color: var(--elem, var(--roxo));
+}
+
+.ritual-aviso {
+  margin: 8px 0 0; padding: 5px 9px; font-size: 11px;
+  color: #e8b75f; background: rgba(232,183,95,.08);
+  border: 1px solid rgba(232,183,95,.22); border-radius: 6px;
+}
+
+.ritual-campos {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 7px 10px; margin-top: 9px;
+}
+.ritual-campos label { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.ritual-campos span {
+  font-size: 9.5px; letter-spacing: .1em; text-transform: uppercase; color: var(--texto-3);
+}
+.ritual-campos input, .ritual-campos select {
+  min-width: 0; padding: 5px 8px; font-size: 12px; border-radius: 6px;
+  background: var(--painel-2); border: 1px solid var(--linha); color: var(--texto);
+}
+
+.ritual-desc {
+  width: 100%; margin-top: 9px; padding: 7px 9px; resize: vertical;
+  font-family: var(--fonte); font-size: 12.5px; line-height: 1.5;
+  background: var(--painel-2); border: 1px solid var(--linha);
+  border-radius: 7px; color: var(--texto-2);
+}
+
+/* Em tela estreita o nome ocupa a primeira linha inteira e elemento,
+   círculo, PE e o ✕ dividem a segunda. */
+@media (max-width: 760px) {
+  .ritual-cab { grid-template-columns: 1fr 1fr 56px 30px; }
+  .ritual-nome { grid-column: 1 / -1; }
+  .ritual-campos { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 480px) {
+  .ritual { padding: 10px; }
+  .ritual-cab { gap: 6px; }
+  .ritual-campos { gap: 6px 8px; }
+}
+
+/* ===========================================================
    TOQUE
    =========================================================== */
 
@@ -1889,7 +2088,9 @@ button, .aba, .chip, select, label { touch-action: manipulation; }
   input, select, textarea,
   .pericia select, .pericia input,
   .tabela input, .tabela select,
-  .chip input, .campo input, .campo select { font-size: 16px; }
+  .chip input, .campo input, .campo select,
+  .ritual-nome, .ritual-cab select, .ritual-pe,
+  .ritual-campos input, .ritual-campos select, .ritual-desc { font-size: 16px; }
 }
 
 @media (pointer: coarse) {

@@ -82,18 +82,18 @@ const Ficha = {
             <input data-bind="nome" value="${esc(p.nome)}" placeholder="Nome do agente"></label>
           <div class="grade-3">
             <label class="campo"><span>Jogador</span><input data-bind="jogador" value="${esc(p.jogador)}"></label>
-            <label class="campo"><span>Origem</span>
+            <label class="campo"${dica(AJUDA.campos.origem)}><span>Origem</span>
               <input data-bind="origem" value="${esc(p.origem)}" list="dl-origens">
               <datalist id="dl-origens">${ORIGENS.map(o => `<option value="${esc(o)}">`).join('')}</datalist></label>
-            <label class="campo"><span>Classe</span>
+            <label class="campo"${dica(AJUDA.campos.classe)}><span>Classe</span>
               <input data-bind="classe" value="${esc(p.classe)}" list="dl-classes">
               <datalist id="dl-classes">${CLASSES.map(o => `<option value="${esc(o)}">`).join('')}</datalist></label>
           </div>
           <div class="grade-4">
-            <label class="campo"><span>NEX %</span><input type="number" data-bind="nex" value="${num(p.nex)}" min="0" max="99" step="5"></label>
-            <label class="campo"><span>Deslocamento</span><input type="number" data-bind="desl" value="${num(p.desl)}"></label>
-            <label class="campo"><span>PE / rodada</span><input data-bind="peRodada" value="${esc(p.peRodada)}"></label>
-            <label class="campo"><span>Patente</span>
+            <label class="campo"${dica(AJUDA.campos.nex)}><span>NEX %</span><input type="number" data-bind="nex" value="${num(p.nex)}" min="0" max="99" step="5"></label>
+            <label class="campo"${dica(AJUDA.campos.desl)}><span>Deslocamento</span><input type="number" data-bind="desl" value="${num(p.desl)}"></label>
+            <label class="campo"${dica(AJUDA.campos.peRodada)}><span>PE / rodada</span><input data-bind="peRodada" value="${esc(p.peRodada)}"></label>
+            <label class="campo"${dica(AJUDA.campos.patente)}><span>Patente</span>
               <input data-bind="patente" value="${esc(p.patente)}" list="dl-patentes">
               <datalist id="dl-patentes">${PATENTES.map(o => `<option value="${esc(o)}">`).join('')}</datalist></label>
           </div>
@@ -105,7 +105,7 @@ const Ficha = {
         <h2 class="titulo-bloco">Atributos</h2>
         <div class="atributos">
           ${ATRIBUTOS.map(a => `
-            <div class="atributo">
+            <div class="atributo"${dica(AJUDA.atributos[a.key] + ' ' + COMO_ROLA)}>
               <button class="btn-mini" data-attr="${a.key}:-1">−</button>
               <div class="atributo-caixa">
                 <input class="atributo-valor" type="number" data-bind="atributos.${a.key}" data-attr-input="${a.key}" value="${num(p.atributos[a.key])}">
@@ -128,19 +128,19 @@ const Ficha = {
           ${this.caixaStatus('pe',  'Pontos de Esforço', p)}
           ${this.caixaStatus('san', 'Sanidade',          p)}
 
-          <div class="caixa-status caixa-defesa">
+          <div class="caixa-status caixa-defesa"${dica(AJUDA.campos.defesa)}>
             <h3>Defesa</h3>
             <div class="defesa-total" id="defesa-total">${defesaTotal(p)}</div>
             <p class="formula">10 + AGI (<span id="def-agi">${num(p.atributos.AGI)}</span>) + equip. + outros</p>
             <div class="grade-2">
-              <label class="campo"><span>Equipamento</span><input type="number" data-bind="defesa.equip" data-def value="${num(p.defesa.equip)}"></label>
-              <label class="campo"><span>Outros</span><input type="number" data-bind="defesa.outros" data-def value="${num(p.defesa.outros)}"></label>
+              <label class="campo"${dica(AJUDA.campos.defEquip)}><span>Equipamento</span><input type="number" data-bind="defesa.equip" data-def value="${num(p.defesa.equip)}"></label>
+              <label class="campo"${dica(AJUDA.campos.defOutros)}><span>Outros</span><input type="number" data-bind="defesa.outros" data-def value="${num(p.defesa.outros)}"></label>
             </div>
           </div>
         </div>
         <div class="grade-2 espaco-topo">
-          <label class="campo"><span>Proteção</span><input data-bind="protecao" value="${esc(p.protecao)}" placeholder="Ex.: Colete balístico"></label>
-          <label class="campo"><span>Resistências</span><input data-bind="resistencias" value="${esc(p.resistencias)}" placeholder="Ex.: Balístico 5, Sangue 2"></label>
+          <label class="campo"${dica(AJUDA.campos.protecao)}><span>Proteção</span><input data-bind="protecao" value="${esc(p.protecao)}" placeholder="Ex.: Colete balístico"></label>
+          <label class="campo"${dica(AJUDA.campos.resistencias)}><span>Resistências</span><input data-bind="resistencias" value="${esc(p.resistencias)}" placeholder="Ex.: Balístico 5, Sangue 2"></label>
         </div>
       </section>
 
@@ -156,7 +156,7 @@ const Ficha = {
       <section class="bloco">
         <h2 class="titulo-bloco">Ataques <button class="btn btn-ghost btn-peq" data-add="ataques">+ Ataque</button></h2>
         <div class="tabela tabela-ataques">
-          <div class="tabela-cab"><span>Ataque</span><span>Teste</span><span>Dano</span><span>Crítico / Alcance / Especial</span><span></span></div>
+          <div class="tabela-cab"><span${dica(AJUDA.campos.ataqueNome)}>Ataque</span><span${dica(AJUDA.campos.ataqueTeste)}>Teste</span><span${dica(AJUDA.campos.ataqueDano)}>Dano</span><span${dica(AJUDA.campos.ataqueEspecial)}>Crítico / Alcance / Especial</span><span></span></div>
           ${p.ataques.length ? p.ataques.map((a, i) => `
             <div class="tabela-linha">
               <input data-bind="ataques.${i}.nome"     value="${esc(a.nome)}"     placeholder="Pistola">
@@ -171,7 +171,7 @@ const Ficha = {
 
       <!-- ALIADOS -->
       <section class="bloco">
-        <h2 class="titulo-bloco">Aliados
+        <h2 class="titulo-bloco"${dica(AJUDA.campos.aliado)}>Aliados
           <button class="btn btn-ghost btn-peq" data-add="aliados">+ Aliado</button>
           <button class="btn btn-ghost btn-peq" data-aliado-pronto>Usar um pronto</button>
           <span class="legenda">bicho de estimação, cão adestrado, contato — o bônus entra na rolagem sozinho</span>
@@ -218,7 +218,7 @@ const Ficha = {
 
       <!-- MUNIÇÃO -->
       <section class="bloco">
-        <h2 class="titulo-bloco">Munição
+        <h2 class="titulo-bloco"${dica(AJUDA.campos.municao)}>Munição
           <button class="btn btn-ghost btn-peq" data-add="municoes">+ Munição</button></h2>
         <div class="tabela tabela-municao">
           <div class="tabela-cab"><span>Arma / tipo</span><span>Atual</span><span>Máximo</span><span></span></div>
@@ -233,11 +233,10 @@ const Ficha = {
         </div>
       </section>
 
-      <!-- HABILIDADES E RITUAIS -->
+      <!-- HABILIDADES -->
       <section class="bloco">
-        <h2 class="titulo-bloco">Habilidades &amp; Rituais
+        <h2 class="titulo-bloco"${dica(AJUDA.campos.habilidade)}>Habilidades
           <button class="btn btn-ghost btn-peq" data-add="habilidades">+ Habilidade</button></h2>
-        <label class="campo campo-curto"><span>DT de rituais</span><input data-bind="dtRituais" value="${esc(p.dtRituais)}" placeholder="Ex.: 15"></label>
         <div class="tabela tabela-habilidades">
           <div class="tabela-cab"><span>Nome</span><span>Custo</span><span>Página</span><span>Descritivo</span><span></span></div>
           ${p.habilidades.length ? p.habilidades.map((h, i) => `
@@ -246,9 +245,23 @@ const Ficha = {
               <input data-bind="habilidades.${i}.custo"  value="${esc(h.custo)}"  placeholder="1 PE">
               <input data-bind="habilidades.${i}.pagina" value="${esc(h.pagina)}" placeholder="p. 00">
               <input data-bind="habilidades.${i}.desc"   value="${esc(h.desc)}"   placeholder="O que faz">
+              <button class="btn-mini" data-virar-ritual="${i}" title="Mover pra Rituais">⇩</button>
               <button class="btn-mini perigo" data-del="habilidades:${i}" title="Remover">✕</button>
-            </div>`).join('') : '<p class="vazio-linha">Nenhuma habilidade ou ritual cadastrado.</p>'}
+            </div>`).join('') : '<p class="vazio-linha">Nenhum poder de classe, origem ou trilha.</p>'}
         </div>
+      </section>
+
+      <datalist id="lista-duracoes">${DURACOES.filter(Boolean).map(d => `<option value="${d}">`).join('')}</datalist>
+      <datalist id="lista-resist">${['nenhuma', 'Vontade evita', 'Vontade parcial', 'Fortitude parcial', 'Reflexos reduz à metade', 'Reflexos evita'].map(d => `<option value="${d}">`).join('')}</datalist>
+
+      <!-- RITUAIS -->
+      <section class="bloco">
+        <h2 class="titulo-bloco"${dica(AJUDA.campos.ritual)}>Rituais
+          <span class="legenda">${p.rituais.length ? p.rituais.length + (p.rituais.length === 1 ? ' conhecido' : ' conhecidos') : ''}</span>
+          <button class="btn btn-ghost btn-peq" data-add="rituais">+ Ritual</button></h2>
+        <label class="campo campo-curto"${dica(AJUDA.campos.dtRituais)}><span>DT de rituais</span><input data-bind="dtRituais" value="${esc(p.dtRituais)}" placeholder="Ex.: 15"></label>
+        ${p.rituais.length ? p.rituais.map((r, i) => this.cartaoRitual(p, r, i)).join('')
+          : '<p class="vazio-linha">Nenhum ritual conhecido.</p>'}
       </section>
 
       <!-- INVENTÁRIO -->
@@ -256,11 +269,11 @@ const Ficha = {
         <h2 class="titulo-bloco">Inventário <button class="btn btn-ghost btn-peq" data-add="itens">+ Item</button></h2>
         <div class="grade-limites">
           ${CATEGORIAS_ITEM.map(c => `
-            <label class="campo campo-mini"><span>Limite ${c}</span>
+            <label class="campo campo-mini"${dica(AJUDA.campos.limiteItem)}><span>Limite ${c}</span>
               <input data-bind="inventario.limites.${c}" value="${esc(p.inventario.limites[c])}"></label>`).join('')}
-          <label class="campo campo-mini"><span>Limite de crédito</span><input data-bind="inventario.credito" value="${esc(p.inventario.credito)}"></label>
-          <label class="campo campo-mini"><span>Carga máx.</span><input data-bind="inventario.cargaMax" value="${esc(p.inventario.cargaMax)}"></label>
-          <label class="campo campo-mini"><span>Prestígio</span><input data-bind="prestigio" value="${esc(p.prestigio)}"></label>
+          <label class="campo campo-mini"${dica(AJUDA.campos.credito)}><span>Limite de crédito</span><input data-bind="inventario.credito" value="${esc(p.inventario.credito)}"></label>
+          <label class="campo campo-mini"${dica(AJUDA.campos.cargaMax)}><span>Carga máx.</span><input data-bind="inventario.cargaMax" value="${esc(p.inventario.cargaMax)}"></label>
+          <label class="campo campo-mini"${dica(AJUDA.campos.prestigio)}><span>Prestígio</span><input data-bind="prestigio" value="${esc(p.prestigio)}"></label>
         </div>
         <div class="tabela tabela-itens">
           <div class="tabela-cab"><span>Item</span><span>Categoria</span><span>Espaços</span><span></span></div>
@@ -281,10 +294,10 @@ const Ficha = {
       <section class="bloco">
         <h2 class="titulo-bloco">Descrição</h2>
         <div class="grade-2">
-          <label class="campo"><span>Aparência</span><textarea data-bind="descricao.aparencia" rows="4">${esc(p.descricao.aparencia)}</textarea></label>
-          <label class="campo"><span>Personalidade</span><textarea data-bind="descricao.personalidade" rows="4">${esc(p.descricao.personalidade)}</textarea></label>
-          <label class="campo"><span>Histórico</span><textarea data-bind="descricao.historico" rows="4">${esc(p.descricao.historico)}</textarea></label>
-          <label class="campo"><span>Objetivo</span><textarea data-bind="descricao.objetivo" rows="4">${esc(p.descricao.objetivo)}</textarea></label>
+          <label class="campo"${dica(AJUDA.campos.aparencia)}><span>Aparência</span><textarea data-bind="descricao.aparencia" rows="4">${esc(p.descricao.aparencia)}</textarea></label>
+          <label class="campo"${dica(AJUDA.campos.personalidade)}><span>Personalidade</span><textarea data-bind="descricao.personalidade" rows="4">${esc(p.descricao.personalidade)}</textarea></label>
+          <label class="campo"${dica(AJUDA.campos.historico)}><span>Histórico</span><textarea data-bind="descricao.historico" rows="4">${esc(p.descricao.historico)}</textarea></label>
+          <label class="campo"${dica(AJUDA.campos.objetivo)}><span>Objetivo</span><textarea data-bind="descricao.objetivo" rows="4">${esc(p.descricao.objetivo)}</textarea></label>
         </div>
         ${Store.ehMestre ? `
         <label class="campo campo-mestre"><span>Anotações do mestre 🔒</span>
@@ -297,7 +310,7 @@ const Ficha = {
 
   caixaStatus(chave, rotulo, p) {
     return `
-      <div class="caixa-status caixa-${chave}">
+      <div class="caixa-status caixa-${chave}"${dica(AJUDA.campos[chave])}>
         <h3>${rotulo}</h3>
         <div class="status-nums">
           <label><span>Atuais</span><input type="number" data-bind="${chave}.atual" data-status="${chave}" value="${num(p[chave].atual)}"></label>
@@ -311,17 +324,61 @@ const Ficha = {
   linhaPericia(p, per) {
     const dado = p.pericias[per.key] || { treino: 0, outros: 0 };
     const usada = num(dado.treino) > 0 || num(dado.outros) !== 0;
+    const aliado = bonusAliados(p, per.key);
+    /* a dica da fórmula muda quando tem aliado somando: a pessoa precisa
+       saber de onde veio aquele número a mais */
+    const dicaFormula = AJUDA.campos.formula + (aliado ? ` Inclui +${aliado} de aliado.` : '');
     return `
-      <div class="pericia ${usada ? 'pericia-ativa' : ''}" data-pericia="${per.key}">
-        <button class="pericia-nome" data-rolar="${per.key}" title="Clique para rolar">${esc(per.nome)}${per.treinada ? '<i class="ast">*</i>' : ''}</button>
-        <span class="pericia-attr">${per.attr}</span>
-        <select data-bind="pericias.${per.key}.treino" data-per="${per.key}">
+      <div class="pericia ${usada ? 'pericia-ativa' : ''}" data-pericia="${per.key}"${dica(AJUDA.pericias[per.nome])}>
+        <button class="pericia-nome" data-rolar="${per.key}"
+                ${dica((AJUDA.pericias[per.nome] || '') + ' Clique pra rolar.')}>${esc(per.nome)}${per.treinada ? '<i class="ast">*</i>' : ''}</button>
+        <span class="pericia-attr"${dica(AJUDA.atributos[per.attr] + ' ' + COMO_ROLA)}>${per.attr}</span>
+        <select data-bind="pericias.${per.key}.treino" data-per="${per.key}"${dica(AJUDA.campos.treino)}>
           ${TREINO.map(t => `<option value="${t.v}" ${num(dado.treino) === t.v ? 'selected' : ''}>${t.label}</option>`).join('')}
         </select>
-        <input class="pericia-outros" type="number" data-bind="pericias.${per.key}.outros" data-per="${per.key}" value="${num(dado.outros)}" title="Outros bônus">
-        <span class="pericia-formula ${bonusAliados(p, per.key) ? 'com-aliado' : ''}"
-              data-formula="${per.key}"
-              title="${bonusAliados(p, per.key) ? '+' + bonusAliados(p, per.key) + ' de aliado' : ''}">${formulaPericia(p, per.key)}</span>
+        <input class="pericia-outros" type="number" data-bind="pericias.${per.key}.outros" data-per="${per.key}" value="${num(dado.outros)}"${dica(AJUDA.campos.outros)}>
+        <span class="pericia-formula ${aliado ? 'com-aliado' : ''}"
+              data-formula="${per.key}"${dica(dicaFormula)}>${formulaPericia(p, per.key)}</span>
+      </div>`;
+  },
+
+  /* Um ritual tem campos demais pra caber numa linha de tabela, então cada um
+     vira um cartão com a faixa do Elemento na lateral. A ordem dos campos é a
+     mesma do bloco impresso no livro, pra dar pra copiar de cima pra baixo. */
+  cartaoRitual(p, r, i) {
+    const info  = circuloInfo(r.circulo);
+    const cor   = corDoElemento(r.elemento);
+    const nex   = num(p.nex);
+    const cedo  = info.nex && nex && nex < info.nex;
+    const opt   = (lista, val) => lista.map(o =>
+      `<option value="${esc(o)}" ${o === (r[val] || '') ? 'selected' : ''}>${esc(o || '—')}</option>`).join('');
+
+    return `
+      <div class="ritual" style="--elem: ${cor}">
+        <div class="ritual-cab">
+          <input class="ritual-nome" data-bind="rituais.${i}.nome" value="${esc(r.nome)}" placeholder="Nome do ritual">
+          <select class="ritual-elem" data-bind="rituais.${i}.elemento" data-recarrega${dica(AJUDA.campos.ritualElemento)}>
+            ${ELEMENTOS.map(e => `<option value="${e.id}" ${e.id === (r.elemento || '') ? 'selected' : ''}>${e.nome}</option>`).join('')}
+          </select>
+          <select class="ritual-circ" data-circulo="${i}"${dica(AJUDA.campos.ritualCirculo)}>
+            ${CIRCULOS.map(c => `<option value="${c.v}" ${c.v === String(r.circulo || '') ? 'selected' : ''}>${c.label}</option>`).join('')}
+          </select>
+          <input class="ritual-pe" data-bind="rituais.${i}.custo" value="${esc(r.custo)}" placeholder="PE" title="Custo em PE">
+          <button class="btn-mini perigo" data-del="rituais:${i}" title="Remover">✕</button>
+        </div>
+
+        ${cedo ? `<p class="ritual-aviso">Precisa de NEX ${info.nex}% pra aprender ${info.label.toLowerCase()}. Você está em ${nex}%.</p>` : ''}
+
+        <div class="ritual-campos">
+          <label><span>Execução</span><select data-bind="rituais.${i}.execucao">${opt(EXECUCOES, 'execucao')}</select></label>
+          <label><span>Alcance</span><select data-bind="rituais.${i}.alcance">${opt(ALCANCES, 'alcance')}</select></label>
+          <label${dica(AJUDA.campos.ritualAlvo)}><span>Alvo / Área</span><input data-bind="rituais.${i}.alvo" value="${esc(r.alvo)}" placeholder="1 ser"></label>
+          <label><span>Duração</span><input data-bind="rituais.${i}.duracao" value="${esc(r.duracao)}" placeholder="cena" list="lista-duracoes"></label>
+          <label${dica(AJUDA.campos.ritualResist)}><span>Resistência</span><input data-bind="rituais.${i}.resistencia" value="${esc(r.resistencia)}" placeholder="Vontade evita" list="lista-resist"></label>
+          <label><span>Página</span><input data-bind="rituais.${i}.pagina" value="${esc(r.pagina)}" placeholder="p. 00"></label>
+        </div>
+
+        <textarea class="ritual-desc" data-bind="rituais.${i}.desc" rows="2" placeholder="O que o ritual faz. Aprimoramentos (+PE) também entram aqui.">${esc(r.desc)}</textarea>
       </div>`;
   },
 
@@ -344,6 +401,27 @@ const Ficha = {
     });
 
     raiz.addEventListener('change', e => {
+      /* O círculo decide o custo base em PE (1/3/6/10). Preenche quando o campo
+         está vazio ou quando contém apenas um custo-base — inclusive o "1 PE"
+         que veio junto de uma habilidade movida. Já "3 PE (5 com aprimoramento)"
+         é escolha do jogador e fica intocado. */
+      const circ = e.target.dataset.circulo;
+      if (circ !== undefined) {
+        const r = this.atual.rituais[Number(circ)];
+        const cru = String(r.custo || '').trim().toLowerCase().replace(/\s*pe$/, '').trim();
+        const soBase = !cru || CIRCULOS.some(c => c.pe && c.pe === cru);
+        r.circulo = e.target.value;
+        if (soBase) r.custo = circuloInfo(r.circulo).pe;
+        Store.salvar(this.atual);
+        return this.abrir(this.atual.id);
+      }
+      /* trocar o Elemento repinta a faixa do cartão, então redesenha */
+      if (e.target.dataset.bind && e.target.dataset.recarrega !== undefined) {
+        setPath(this.atual, e.target.dataset.bind, e.target.value);
+        Store.salvar(this.atual);
+        return this.abrir(this.atual.id);
+      }
+
       if (e.target.dataset.bind && e.target.tagName === 'SELECT') {
         const v = e.target.dataset.per ? num(e.target.value) : e.target.value;
         setPath(this.atual, e.target.dataset.bind, v);
@@ -398,6 +476,19 @@ const Ficha = {
       if (foto) return this.fotoAliado(Number(foto.dataset.fotoAliado));
       if (e.target.closest('[data-aliado-pronto]')) return this.aliadoPronto();
 
+      /* Quem já tinha ritual anotado na tabela de habilidades não precisa
+         redigitar: o ⇩ leva a linha inteira pro bloco de baixo. */
+      const vira = e.target.closest('[data-virar-ritual]');
+      if (vira) {
+        const [h] = this.atual.habilidades.splice(Number(vira.dataset.virarRitual), 1);
+        this.atual.rituais.push(Object.assign(
+          { nome: '', elemento: '', circulo: '', custo: '', execucao: '', alcance: '',
+            alvo: '', duracao: '', resistencia: '', pagina: '', desc: '' },
+          { nome: h.nome, custo: h.custo, pagina: h.pagina, desc: h.desc }));
+        Store.salvar(this.atual);
+        return this.abrir(this.atual.id);
+      }
+
       const del = e.target.closest('[data-del]');
       if (del) {
         const [lista, i] = del.dataset.del.split(':');
@@ -430,6 +521,8 @@ const Ficha = {
     const modelos = {
       ataques:     { nome: '', teste: '', dano: '', especial: '' },
       habilidades: { nome: '', custo: '', pagina: '', desc: '' },
+      rituais:     { nome: '', elemento: '', circulo: '', custo: '', execucao: '', alcance: '',
+                     alvo: '', duracao: '', resistencia: '', pagina: '', desc: '' },
       itens:       { nome: '', categoria: '', espacos: '' },
       municoes:    { nome: '', atual: 0, max: 0 },
       aliados:     { nome: '', tipo: '', foto: '', descricao: '', bonus: [], habilidades: [] }

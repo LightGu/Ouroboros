@@ -42,8 +42,11 @@ function toast(msg, tipo = 'ok') {
 const Modal = {
   aoConfirmar: null,
 
-  abrir({ titulo, corpo, confirmar = 'Salvar', cancelar = 'Cancelar', perigo = false, onConfirmar }) {
+  abrir({ titulo, corpo, confirmar = 'Salvar', cancelar = 'Cancelar', perigo = false, largo = false, onConfirmar }) {
     delete Modal._imagemPendente;
+    /* `largo` é do passo a passo de criação: 560px não cabe a grade de perícias.
+       Sempre com toggle, pra um modal largo não deixar o próximo largo também. */
+    $('#modal .modal').classList.toggle('modal-largo', largo);
     $('#modal-titulo').textContent = titulo;
     $('#modal-body').innerHTML = corpo;
     $('#modal-foot').innerHTML =

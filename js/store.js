@@ -196,6 +196,7 @@ const Store = {
       pericias: {},
       ataques: [],
       habilidades: [],
+      rituais: [],
       dtRituais: '',
       inventario: { limites: { I: '', II: '', III: '', IV: '' }, credito: '', cargaMax: '', itens: [] },
       prestigio: '',
@@ -223,6 +224,7 @@ const Store = {
     out.inventario.itens = p?.inventario?.itens || [];
     out.ataques     = p?.ataques     || [];
     out.habilidades = p?.habilidades || [];
+    out.rituais     = p?.rituais     || [];
     out.condicoes   = p?.condicoes   || [];
     out.municoes    = p?.municoes    || [];
     out.aliados     = (p?.aliados || []).map(a => Object.assign(
