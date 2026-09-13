@@ -58,6 +58,16 @@ const assert = require('node:assert/strict');
     await assert.rejects(()=>db.query("insert into rituais_catalogo (nome,elemento,circulo,livro,pagina) values ('x','medo',1,'x','1')"),/permission denied/);
     await assert.rejects(()=>db.query("update historias_personagens set objetivo='ataque'"),/permission denied/);
     await db.exec('reset role;');
+    if (fs.existsSync('catalogo/seed-itens.sql')) {
+      await db.exec(fs.readFileSync('catalogo/seed-itens.sql','utf8'));
+      await db.exec(`insert into itens_catalogo(nome,livro,grupo) values ('Medo','Sobrevivendo ao Horror','Itens paranormais');
+        update itens_catalogo set grupo='Itens paranormais' where nome='Ampliador';`);
+      await migration('v20-catalisadores.sql'); await migration('v20-catalisadores.sql');
+      const stats=(await db.query(`select count(*)::int total,
+        count(*) filter(where grupo='Catalisadores')::int catalisadores,
+        count(*) filter(where trim(descricao)='')::int vazios from itens_catalogo`)).rows[0];
+      assert.deepEqual(stats,{total:158,catalisadores:5,vazios:0});
+    }
     console.log('SQL: migrações e seed repetíveis, preservação, atualizações parciais, RLS e catálogo privado passaram.');
   } finally { await db.close(); }
 })().catch(e => {console.error(e);process.exit(1);});

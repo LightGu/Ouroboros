@@ -22,6 +22,7 @@ function check(v,msg){if(!v)throw Error(msg);}
 function input(bind,value){const el=document.querySelector('[data-bind="'+bind+'"]');el.value=value;el.dispatchEvent(new Event('input',{bubbles:true}));}
 (async()=>{
  Ficha.abrir(p.id);
+ check(!document.querySelector('[data-bind$=".pagina"]'),'sem campos de página');
  check(document.querySelector('#dt-rituais').textContent==='14','DT inicial');
  input('nex','25');check(document.querySelector('#dt-rituais').textContent==='18','DT muda com NEX');
  input('atributos.PRE','4');input('dtRituaisBonus','2');check(document.querySelector('#dt-rituais').textContent==='21','DT PRE e bônus');
@@ -31,7 +32,12 @@ function input(bind,value){const el=document.querySelector('[data-bind="'+bind+'
  check(Regras.dtRituais(Store.normalizar(antigo))===20,'migração idempotente');
  await CatalogoRituais.abrir(p);
  check(document.querySelectorAll('[data-rit-escolher]').length===4,'catálogo carregado');
+ const detalhes=document.querySelector('.ritual-catalogo-detalhes');
+ detalhes.querySelector('summary').click();
+ check(CatalogoRituais.estado.escolhidos.size===0,'consultar ritual não seleciona');
  document.querySelector('[data-rit-escolher="0"]').click();
+ check(detalhes.isConnected&&detalhes.open,'seleção preserva descrição aberta');
+ check(detalhes.closest('.ritual-catalogo-item').classList.contains('ativo'),'card selecionado');
  check(document.querySelector('[data-modal-ok]').textContent==='Adicionar 1','seleção');
  await Modal.aoConfirmar();
  check(p.rituais.length===1&&p.rituais[0].desc.includes('Discente')&&p.rituais[0].custo==='1','importa campos e melhorias');
@@ -46,9 +52,23 @@ function input(bind,value){const el=document.querySelector('[data-bind="'+bind+'
  check(document.querySelector('[data-bind="rituais.1.alcance"]').value==='extremo','alcance especial preservado');
  check(document.querySelector('[data-bind="rituais.1.elemento"]').value==='sangue/conhecimento','elemento duplo preservado');
  const itens=Catalogo.corrigirGrupos([]);check(itens.length===4&&itens.every(i=>i.categoria===0&&i.espacos===1&&i.grupo==='Itens paranormais'),'componentes');
- Catalogo.itens=itens;await Ficha.abrirCatalogo();document.querySelector('[data-cat="0"]').click();await Modal.aoConfirmar();
+ Catalogo.itens=itens;await Ficha.abrirCatalogo();
+ check(document.querySelectorAll('.catalogo-descricao').length===4,'descrições acessíveis sem hover');
+ document.querySelector('.catalogo-descricao summary').click();check(Ficha.catalogo.escolhidos.length===0,'consultar descrição não seleciona item');
+ document.querySelector('[data-cat="0"]').click();await Modal.aoConfirmar();
  check(p.inventario.itens[0].nome===itens[0].nome&&p.inventario.itens[0].espacos==='1','componente adicionado');
+ check(p.inventario.itens[0].descricao===itens[0].descricao,'descrição salva junto do item');
+ check(document.querySelector('[data-bind="inventario.itens.0.descricao"]').value===itens[0].descricao,'descrição na ficha');
+ document.querySelector('[data-editar-item]').click();
+ check(document.querySelector('.item-descricao').classList.contains('editando'),'lápis abre edição');
+ input('inventario.itens.0.descricao','Efeito específico do personagem');
+ check(p.inventario.itens[0].descricao==='Efeito específico do personagem','salva descrição individual');
+ check(Catalogo.itens[0].descricao!=='Efeito específico do personagem','preserva catálogo');
+ check(document.querySelector('.item-descricao-texto').textContent==='Efeito específico do personagem','atualiza prévia');
+ p.inventario.itens[0].descricao='';Ficha.abrir(p.id);await Ficha.carregarDescricoesInventario(p);
+ check(document.querySelector('[data-bind="inventario.itens.0.descricao"]').value===itens[0].descricao,'consulta para item antigo');
  Store.podeEditar=()=>false;p.historiaPublica=false;Ficha.abrir(p.id);
+ check(!document.querySelector('[data-editar-item]'),'visitante não edita descrição');
  check(!document.querySelector('[data-catalogo-rituais]'),'catálogo bloqueado para visitante');
  check(document.querySelector('[data-bind="dtRituaisBonus"]').disabled,'ajuste bloqueado');
  for(const campo of ['historico','personalidade','objetivo'])check(!document.querySelector('[data-bind="descricao.'+campo+'"]'),'campo privado '+campo);
@@ -71,4 +91,3 @@ try {
  assert.match(output, /<p id="resultado">PASSOU:/);
  console.log('Ficha: DT automática, migração, catálogo, filtros, duplicatas, componentes e privacidade passaram.');
 } finally { fs.rmSync(dir,{recursive:true,force:true}); }
-

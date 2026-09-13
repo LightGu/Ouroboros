@@ -53,81 +53,20 @@ const Catalogo = {
   /* Corrige também catálogos já cadastrados, antes da migração v17. */
   corrigirGrupos(lista) {
     const paranormais = new Map([
-  [
-    "Amarras elementais",
-    "Livro Básico"
-  ],
-  [
-    "Ampliador",
-    "Sobrevivendo ao Horror"
-  ],
-  [
-    "Catalisador Sofisticado e Horrorizado",
-    "Arquivos Secretos 2"
-  ],
-  [
-    "Conhecimento",
-    "Sobrevivendo ao Horror"
-  ],
-  [
-    "Crânio Dominador",
-    "Arquivos Secretos 3"
-  ],
-  [
-    "Energia",
-    "Sobrevivendo ao Horror"
-  ],
-  [
-    "Gaiola do Corvo",
-    "Arquivos Secretos 3"
-  ],
-  [
-    "Ligação Direta Infernal",
-    "Sobrevivendo ao Horror"
-  ],
-  [
-    "Medidor de Condição Vertebral",
-    "Sobrevivendo ao Horror"
-  ],
-  [
-    "Medo",
-    "Sobrevivendo ao Horror"
-  ],
-  [
-    "Morte",
-    "Sobrevivendo ao Horror"
-  ],
-  [
-    "Pendrive selado",
-    "Sobrevivendo ao Horror"
-  ],
-  [
-    "Perturbador",
-    "Sobrevivendo ao Horror"
-  ],
-  [
-    "Potencializador",
-    "Sobrevivendo ao Horror"
-  ],
-  [
-    "Prolongador",
-    "Sobrevivendo ao Horror"
-  ],
-  [
-    "Pé de Morto",
-    "Sobrevivendo ao Horror"
-  ],
-  [
-    "Sangue",
-    "Sobrevivendo ao Horror"
-  ],
-  [
-    "Valete da Salvação",
-    "Sobrevivendo ao Horror"
-  ]
-]);
-    const corrigida = lista.map(i => paranormais.get(i.nome) === i.livro
-      ? { ...i, grupo: 'Itens paranormais' } : i);
+      ['Amarras elementais', 'Livro Básico'], ['Crânio Dominador', 'Arquivos Secretos 3'],
+      ['Gaiola do Corvo', 'Arquivos Secretos 3'],
+      ...['Ligação Direta Infernal', 'Medidor de Condição Vertebral', 'Pendrive selado', 'Pé de Morto', 'Valete da Salvação']
+        .map(nome => [nome, 'Sobrevivendo ao Horror'])
+    ]);
+    const catalisadores = new Map([
+      ...['Ampliador', 'Perturbador', 'Potencializador', 'Prolongador'].map(nome => [nome, 'Sobrevivendo ao Horror']),
+      ['Catalisador Sofisticado e Horrorizado', 'Arquivos Secretos 2']
+    ]);
+    const elementosExtraidos = ['Sangue', 'Morte', 'Conhecimento', 'Energia', 'Medo'];
+    const corrigida = lista.filter(i => !(i.livro === 'Sobrevivendo ao Horror' && elementosExtraidos.includes(i.nome)))
+      .map(i => catalisadores.get(i.nome) === i.livro ? { ...i, grupo: 'Catalisadores' }
+        : paranormais.get(i.nome) === i.livro ? { ...i, grupo: 'Itens paranormais' }
+        : i.grupo === 'Catalisador' ? { ...i, grupo: 'Catalisadores' } : i);
     for (const item of this.componentes()) {
       if (!corrigida.some(i => i.nome === item.nome && i.livro === item.livro)) corrigida.push(item);
     }
@@ -154,11 +93,21 @@ const Catalogo = {
     return String(n);
   },
 
+  descricaoItem(item) {
+    if (item.descricao) return item.descricao;
+    const candidatos = (this.itens || []).filter(i => this.normal(i.nome).trim() === this.normal(item.nome).trim()
+      && (!item.livro || item.livro === i.livro));
+    return candidatos.length === 1 ? candidatos[0].descricao || '' : '';
+  },
+
   paraItemDaFicha(i) {
     return {
       nome: i.nome,
       categoria: this.categoriaTexto(i.categoria),
-      espacos: this.espacosTexto(i.espacos)
+      espacos: this.espacosTexto(i.espacos),
+      descricao: i.descricao || '',
+      livro: i.livro || '',
+      pagina: i.pagina || ''
     };
   },
 

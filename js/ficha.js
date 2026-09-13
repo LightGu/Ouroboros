@@ -37,6 +37,7 @@ const Ficha = {
 
     this.ligar();
     if (!Store.podeEditar(this.atual)) this.travar();
+    this.carregarDescricoesInventario(this.atual);
   },
 
   /* Jogador abrindo ficha que não é dele: dá pra consultar, não dá pra mexer. */
@@ -251,13 +252,12 @@ const Ficha = {
         <h2 class="titulo-bloco"${dica(AJUDA.campos.habilidade)}>Habilidades
           <button class="btn btn-ghost btn-peq" data-add="habilidades">+ Habilidade</button></h2>
         <div class="tabela tabela-habilidades">
-          <div class="tabela-cab">${[['nome', 'Nome'], ['custo', 'Custo'], ['pagina', 'Página'], ['desc', 'Descritivo']].map(([chave, titulo]) => this.cabecalhoOrdem('habilidades', chave, titulo)).join('')}<span></span></div>
+          <div class="tabela-cab">${[['nome', 'Nome'], ['custo', 'Custo'], ['desc', 'Descritivo']].map(([chave, titulo]) => this.cabecalhoOrdem('habilidades', chave, titulo)).join('')}<span></span></div>
           ${p.habilidades.length ? p.habilidades.map((h, i) => `
             <div class="tabela-linha">
               <input data-bind="habilidades.${i}.nome"   value="${esc(h.nome)}"   placeholder="Nome">
               <input data-bind="habilidades.${i}.custo"  value="${esc(h.custo)}"  placeholder="1 PE">
-              <input data-bind="habilidades.${i}.pagina" value="${esc(h.pagina)}" placeholder="p. 00">
-              <input data-bind="habilidades.${i}.desc"   value="${esc(h.desc)}"   placeholder="O que faz">
+              <textarea class="habilidade-desc" data-bind="habilidades.${i}.desc" rows="3" placeholder="O que faz">${esc(h.desc)}</textarea>
               <button class="btn-mini" data-virar-ritual="${i}" title="Mover pra Rituais">⇩</button>
               <button class="btn-mini perigo" data-del="habilidades:${i}" title="Remover">✕</button>
             </div>`).join('') : '<p class="vazio-linha">Nenhum poder de classe, origem ou trilha.</p>'}
@@ -281,7 +281,7 @@ const Ficha = {
             <input type="number" data-bind="dtRituaisBonus" value="${num(p.dtRituaisBonus)}" step="1">
             <small>Inclua aqui os bônus das habilidades de trilha, poderes e itens em uso.</small></label>
         </div>
-        <div class="rituais-ordenacao" aria-label="Ordenar rituais"><span>Ordenar por:</span>${[['nome', 'Nome'], ['elemento', 'Elemento'], ['circulo', 'Círculo'], ['custo', 'Custo'], ['pagina', 'Página']].map(([chave, titulo]) => this.cabecalhoOrdem('rituais', chave, titulo)).join('')}</div>
+        <div class="rituais-ordenacao" aria-label="Ordenar rituais"><span>Ordenar por:</span>${[['nome', 'Nome'], ['elemento', 'Elemento'], ['circulo', 'Círculo'], ['custo', 'Custo']].map(([chave, titulo]) => this.cabecalhoOrdem('rituais', chave, titulo)).join('')}</div>
         ${p.rituais.length ? p.rituais.map((r, i) => this.cartaoRitual(p, r, i)).join('')
           : '<p class="vazio-linha">Nenhum ritual conhecido.</p>'}
       </section>
@@ -318,6 +318,21 @@ const Ficha = {
      por categoria ("o que eu tenho de III?"). O filtro é só de tela: não vai
      pro banco, e a linha continua editando o item pelo índice real da lista,
      por isso o `map` guarda o `i` ANTES de filtrar. */
+  async carregarDescricoesInventario(p) {
+    if (typeof Catalogo === 'undefined' || !p.inventario.itens.some(i => !i.descricao)) return;
+    try {
+      await Catalogo.carregar();
+      if (this.atual?.id !== p.id) return;
+      p.inventario.itens.forEach((item, i) => {
+        const el = $(`[data-bind="inventario.itens.${i}.descricao"]`);
+        if (el && !el.value && document.activeElement !== el) {
+          el.value = Catalogo.descricaoItem(item);
+          el.closest('.item-descricao').querySelector('.item-descricao-texto').textContent = el.value || 'Sem descrição.';
+        }
+      });
+    } catch (e) { /* A consulta não impede editar o inventário offline. */ }
+  },
+
   blocoInventario(p) {
     const itens = p.inventario.itens;
     const f = this.filtroItem;
@@ -364,6 +379,15 @@ const Ficha = {
               </select>
               <input data-bind="inventario.itens.${i}.espacos" value="${esc(it.espacos)}" placeholder="1">
               <button class="btn-mini perigo" data-del="itens:${i}" title="Remover">✕</button>
+              <div class="item-descricao">
+                <div class="item-descricao-acoes"><button type="button" class="btn-mini" data-ver-item aria-expanded="false">Descrição</button>
+                ${Store.podeEditar(p) ? '<button type="button" class="btn-mini" data-editar-item title="Editar descrição deste item" aria-label="Editar descrição deste item" aria-expanded="false">✎</button>' : ''}</div>
+                <div class="item-descricao-corpo">
+                <p class="item-descricao-texto">${esc(typeof Catalogo !== 'undefined' ? Catalogo.descricaoItem(it) || 'Sem descrição.' : it.descricao || 'Sem descrição.')}</p>
+                <label class="campo item-descricao-editor"><span>Descrição deste item · salva automaticamente</span><textarea data-bind="inventario.itens.${i}.descricao" rows="4" placeholder="Descrição do item">${esc(typeof Catalogo !== 'undefined' ? Catalogo.descricaoItem(it) : it.descricao || '')}</textarea></label>
+                ${it.livro ? `<small>${esc(it.livro)}${it.pagina ? ', p. ' + esc(it.pagina) : ''}</small>` : ''}
+                </div>
+              </div>
             </div>`).join('')
             : `<p class="vazio-linha">${itens.length ? 'Nenhum item nessa categoria.' : 'Mochila vazia.'}</p>`}
         </div>
@@ -485,10 +509,9 @@ const Ficha = {
           <label${dica(AJUDA.campos.ritualAlvo)}><span>Alvo / Área</span><input data-bind="rituais.${i}.alvo" value="${esc(r.alvo)}" placeholder="1 ser"></label>
           <label><span>Duração</span><input data-bind="rituais.${i}.duracao" value="${esc(r.duracao)}" placeholder="cena" list="lista-duracoes"></label>
           <label${dica(AJUDA.campos.ritualResist)}><span>Resistência</span><input data-bind="rituais.${i}.resistencia" value="${esc(r.resistencia)}" placeholder="Vontade evita" list="lista-resist"></label>
-          <label><span>Página</span><input data-bind="rituais.${i}.pagina" value="${esc(r.pagina)}" placeholder="p. 00"></label>
         </div>
 
-        <textarea class="ritual-desc" data-bind="rituais.${i}.desc" rows="2" placeholder="O que o ritual faz. Aprimoramentos (+PE) também entram aqui.">${esc(r.desc)}</textarea>
+        <textarea class="ritual-desc" data-bind="rituais.${i}.desc" rows="5" placeholder="O que o ritual faz. Aprimoramentos (+PE) também entram aqui.">${esc(r.desc)}</textarea>
       </div>`;
   },
 
@@ -552,6 +575,9 @@ const Ficha = {
       if (!caminho || !Store.podeEditar(this.atual)) return;
       const valor = caminho === 'historiaPublica' ? e.target.value === 'true' : e.target.type === 'number' ? num(e.target.value) : e.target.value;
       setPath(this.atual, caminho, valor);
+      if (/^inventario\.itens\.\d+\.descricao$/.test(caminho)) {
+        e.target.closest('.item-descricao').querySelector('.item-descricao-texto').textContent = valor || 'Sem descrição.';
+      }
       this.salvarDepois();
       this.atualizarDerivados(e.target);
     });
@@ -599,6 +625,22 @@ const Ficha = {
     });
 
     raiz.addEventListener('click', e => {
+      const consulta = e.target.closest('[data-ver-item]');
+      if (consulta) {
+        const aberta = consulta.closest('.item-descricao').classList.toggle('aberta');
+        consulta.setAttribute('aria-expanded', String(aberta));
+        return;
+      }
+      const editarItem = e.target.closest('[data-editar-item]');
+      if (editarItem) {
+        if (!Store.podeEditar(this.atual)) return;
+        const caixa = editarItem.closest('.item-descricao');
+        const editando = caixa.classList.toggle('editando');
+        editarItem.setAttribute('aria-expanded', String(editando));
+        if (editando) caixa.querySelector('textarea').focus();
+        return;
+      }
+
       const ordem = e.target.closest('[data-ordenar]');
       if (ordem) return this.ordenarLista(...ordem.dataset.ordenar.split(':'));
       if (e.target.closest('[data-revisar-guia]')) return this.abrir(this.atual.id);
@@ -751,6 +793,7 @@ const Ficha = {
       const fonte = [i.livro, i.pagina ? 'p. ' + i.pagina : ''].filter(Boolean).join(', ');
       const texto = i.descricao ? (i.descricao.length > 260 ? i.descricao.slice(0, 260) + '…' : i.descricao) : '';
       return `
+        <div class="catalogo-item">
         <button type="button" class="cat-item ${marcado ? 'ativo' : ''}" data-cat="${idx}"${dica(texto)}>
           <span class="cat-marca">${marcado ? '✓' : '+'}</span>
           <span class="cat-nome">${esc(i.nome)}${
@@ -762,7 +805,9 @@ const Ficha = {
               i.critico ? `<span>crít. ${esc(i.critico)}</span>` : ''}` : ''}
             ${fonte ? `<span class="cat-livro">${esc(fonte)}</span>` : ''}
           </span>
-        </button>`;
+        </button>
+        <details class="catalogo-descricao"><summary>Descrição</summary><p>${esc(i.descricao || 'Descrição ainda não disponível.')}</p></details>
+        </div>`;
     }).join('');
   },
 
@@ -857,7 +902,7 @@ const Ficha = {
       habilidades: { nome: '', custo: '', pagina: '', desc: '' },
       rituais:     { nome: '', elemento: '', circulo: '', custo: '', execucao: '', alcance: '',
                      alvo: '', duracao: '', resistencia: '', pagina: '', desc: '' },
-      itens:       { nome: '', categoria: '', espacos: '' },
+      itens:       { nome: '', categoria: '', espacos: '', descricao: '' },
       municoes:    { nome: '', atual: 0, max: 0 },
       aliados:     { nome: '', tipo: '', foto: '', descricao: '', bonus: [], habilidades: [] }
     };

@@ -2401,7 +2401,76 @@ button, .aba, .chip, select, label { touch-action: manipulation; }
 .barrao > button.barrao-zona:hover { background: transparent; }
 
 /* Consulta de rituais no catálogo do personagem. */
-.ritual-catalogo-item { border-bottom: 1px solid var(--linha); padding-bottom: 10px; }
-.ritual-catalogo-item details { padding: 0 12px; font-size: 12px; }
-.ritual-catalogo-item summary { cursor: pointer; }
-.ritual-catalogo-desc { white-space: pre-wrap; line-height: 1.6; }
+#rit-lista { gap: 10px; }
+.ritual-catalogo-item {
+  border: 1px solid var(--linha); border-left: 3px solid var(--elem);
+  border-radius: 12px; background: var(--painel); overflow: hidden; min-width: 0; flex-shrink: 0;
+}
+.ritual-catalogo-item.ativo { border-color: var(--roxo); background: rgba(139,92,246,.08); }
+.ritual-catalogo-selecao {
+  display: grid; grid-template-columns: 28px minmax(0, 1fr); align-items: start; gap: 12px;
+  width: 100%; padding: 16px; text-align: left; background: transparent;
+  border: 0; color: var(--texto); cursor: pointer; font: inherit;
+}
+.ritual-catalogo-selecao:hover:not(:disabled) { background: rgba(139,92,246,.06); }
+.ritual-catalogo-selecao:disabled { cursor: default; opacity: .75; }
+.ritual-catalogo-selecao:focus-visible, .ritual-catalogo-detalhes summary:focus-visible { outline: 2px solid var(--roxo-cl); outline-offset: -3px; }
+.ritual-catalogo-marca {
+  display: grid; place-items: center; width: 26px; height: 26px;
+  border: 1px solid var(--linha-2); border-radius: 8px; color: var(--texto-2); font-size: 17px;
+}
+.ritual-catalogo-item.ativo .ritual-catalogo-marca { background: var(--roxo); border-color: var(--roxo); color: white; }
+.ritual-catalogo-info { display: flex; flex-direction: column; gap: 9px; min-width: 0; overflow-wrap: anywhere; }
+.ritual-catalogo-titulo { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; font-size: 15px; font-weight: 600; line-height: 1.4; }
+.ritual-catalogo-conhecido { font-size: 11px; color: var(--texto-3); font-weight: 400; }
+.ritual-catalogo-tags { display: flex; flex-wrap: wrap; gap: 6px; }
+.ritual-catalogo-tags > span { padding: 3px 8px; border-radius: 5px; background: var(--bg-2); color: var(--texto-2); font-size: 11px; line-height: 1.4; }
+.ritual-catalogo-fonte, .ritual-catalogo-aviso { font-size: 11.5px; line-height: 1.5; color: var(--texto-3); }
+.ritual-catalogo-aviso { color: var(--texto-2); }
+.ritual-catalogo-detalhes { border-top: 1px solid var(--linha); }
+.ritual-catalogo-detalhes summary {
+  display: flex; justify-content: space-between; align-items: center; gap: 10px;
+  padding: 11px 16px; font-size: 12px; color: var(--texto-2); cursor: pointer; list-style: none;
+}
+.ritual-catalogo-detalhes summary::-webkit-details-marker { display: none; }
+.ritual-catalogo-detalhes[open] summary > span { transform: rotate(180deg); }
+.ritual-catalogo-conteudo { padding: 0 16px 16px; }
+.ritual-catalogo-atributos { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin: 6px 0 16px; }
+.ritual-catalogo-atributos dt { color: var(--texto-3); font-size: 10px; margin-bottom: 4px; }
+.ritual-catalogo-atributos dd { margin: 0; font-size: 12px; color: var(--texto-2); overflow-wrap: anywhere; }
+.ritual-catalogo-desc { white-space: pre-wrap; overflow-wrap: anywhere; line-height: 1.7; font-size: 13px; margin: 0; }
+@media (max-width: 520px) {
+  .ritual-catalogo-selecao { padding: 13px; gap: 10px; }
+  .ritual-catalogo-atributos { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+.catalogo-descricao { padding: 0 12px 10px; font-size: 12px; }
+.catalogo-descricao summary, .item-descricao summary { cursor: pointer; }
+.catalogo-descricao p { white-space: pre-wrap; overflow-wrap: anywhere; line-height: 1.6; }
+.item-descricao { grid-column: 1 / -1; width: 100%; min-width: 0; font-size: 12px; }
+.item-descricao textarea { width: 100%; box-sizing: border-box; }
+
+/* Descrições da ficha: leitura rápida e edição por personagem. */
+.tabela-habilidades .tabela-cab, .tabela-habilidades .tabela-linha {
+  grid-template-columns: minmax(120px, 1fr) 75px minmax(180px, 2fr) 30px 30px;
+}
+.habilidade-desc { width: 100%; min-height: 76px; resize: vertical; line-height: 1.6; }
+.ritual-desc { min-height: 130px; padding: 12px; font-size: 13px; line-height: 1.7; }
+.item-descricao-acoes { display: flex; align-items: center; gap: 8px; }
+.item-descricao-acoes [data-ver-item] { width: auto; font-size: 11px; }
+.item-descricao-corpo { display: none; padding: 12px; margin-top: 6px; background: var(--painel-2); border: 1px solid var(--linha); border-radius: 8px; }
+.item-descricao.aberta .item-descricao-corpo,
+.item-descricao.editando .item-descricao-corpo,
+.item-descricao:focus-within .item-descricao-corpo { display: block; }
+@media (hover: hover) {
+  .tabela-itens .tabela-linha:hover .item-descricao-corpo { display: block; }
+}
+.item-descricao-texto { white-space: pre-wrap; overflow-wrap: anywhere; line-height: 1.65; margin: 0 0 8px; font-size: 13px; }
+.item-descricao .item-descricao-editor { display: none; }
+.item-descricao.editando .item-descricao-editor { display: flex; }
+.item-descricao.editando .item-descricao-texto { display: none; }
+@media (max-width: 760px) {
+  .tabela-habilidades .tabela-cab { display: none; }
+  .tabela-habilidades .tabela-linha { grid-template-columns: minmax(0, 1fr) 70px 30px 30px; }
+  .tabela-habilidades .habilidade-desc { grid-column: 1 / -1; grid-row: 2; }
+}

@@ -59,7 +59,11 @@ const CatalogoRituais = {
       if (!botao) return;
       const id = Number(botao.dataset.ritEscolher);
       if (estado.escolhidos.has(id)) estado.escolhidos.delete(id); else estado.escolhidos.add(id);
-      this.render();
+      const on = estado.escolhidos.has(id);
+      botao.setAttribute('aria-pressed', String(on));
+      botao.closest('.ritual-catalogo-item').classList.toggle('ativo', on);
+      $('.ritual-catalogo-marca', botao).textContent = on ? '✓' : '+';
+      this.atualizarContagem();
     });
     this.render();
     $('#rit-busca').focus();
@@ -71,17 +75,32 @@ const CatalogoRituais = {
     $('#rit-lista').innerHTML = lista.map(r => {
       const id = this.itens.indexOf(r), ja = conhecidos.has(this.chave(r)), on = s.escolhidos.has(id);
       const cedo = num(s.personagem.nex) < circuloInfo(r.circulo).nex;
-      return `<div class="ritual-catalogo-item">
-        <button class="cat-item ${on?'ativo':''}" data-rit-escolher="${id}" ${ja?'disabled':''} aria-pressed="${on}">
-          <span class="cat-marca">${ja || on?'✓':'+'}</span><span class="cat-nome">${esc(r.nome)}${ja?'<i class="cat-ja">já conhecido</i>':''}</span>
-          <span class="cat-meta">${esc((r.elementos || [r.elemento]).map(e => ELEMENTOS.find(x=>x.id===e)?.nome || e).join(r.elemento === 'varia' ? ' / ' : ' + '))} · ${esc(r.circulo)}º círculo · ${circuloInfo(r.circulo).pe} PE</span>
-          <span class="cat-meta">${esc(r.livro)}, p. ${esc(r.pagina)}${cedo?' · acima do NEX de acesso de ocultista':''}</span>
+      return `<article class="ritual-catalogo-item ${on ? 'ativo' : ''}" style="--elem:${corDoElemento(r.elemento)}">
+        <button type="button" class="ritual-catalogo-selecao" data-rit-escolher="${id}" ${ja?'disabled':''} aria-pressed="${on}">
+          <span class="ritual-catalogo-marca" aria-hidden="true">${ja || on?'✓':'+'}</span>
+          <span class="ritual-catalogo-info">
+            <span class="ritual-catalogo-titulo">${esc(r.nome)}${ja?'<span class="ritual-catalogo-conhecido">Já conhecido</span>':''}</span>
+            <span class="ritual-catalogo-tags">
+              <span>${esc((r.elementos || [r.elemento]).map(e => ELEMENTOS.find(x=>x.id===e)?.nome || e).join(r.elemento === 'varia' ? ' / ' : ' + '))}</span>
+              <span>${esc(r.circulo)}º círculo</span><span>${circuloInfo(r.circulo).pe} PE</span>
+            </span>
+            <span class="ritual-catalogo-fonte">${esc(r.livro)} · p. ${esc(r.pagina)}</span>
+            ${cedo ? `<span class="ritual-catalogo-aviso">Acesso de ocultista a partir de NEX ${circuloInfo(r.circulo).nex}%</span>` : ''}
+          </span>
         </button>
-        <details><summary>Ver ritual e aprimoramentos</summary><p>${esc(r.execucao)} · ${esc(r.alcance)} · ${esc(r.duracao)}</p>
-          <p>Alvo/área: ${esc(r.alvo || '—')} · Resistência: ${esc(r.resistencia || '—')}</p><p class="ritual-catalogo-desc">${esc(r.desc)}</p></details>
-      </div>`;
+        <details class="ritual-catalogo-detalhes"><summary>Descrição e aprimoramentos<span aria-hidden="true">⌄</span></summary>
+          <div class="ritual-catalogo-conteudo">
+            <dl class="ritual-catalogo-atributos">${[['Execução',r.execucao],['Alcance',r.alcance],['Duração',r.duracao],['Alvo / área',r.alvo],['Resistência',r.resistencia]].map(([nome,valor])=>`<div><dt>${nome}</dt><dd>${esc(valor || '—')}</dd></div>`).join('')}</dl>
+            <p class="ritual-catalogo-desc">${esc(r.desc)}</p>
+          </div>
+        </details>
+      </article>`;
     }).join('') || '<p class="vazio-linha">Nenhum ritual encontrado.</p>';
-    $('#rit-contagem').textContent = `${lista.length} rituais · ${s.escolhidos.size} selecionados`;
+    this.atualizarContagem();
+  },
+  atualizarContagem() {
+    const s = this.estado;
+    $('#rit-contagem').textContent = `${this.filtrar(s).length} rituais · ${s.escolhidos.size} selecionados`;
     $('[data-modal-ok]').textContent = s.escolhidos.size ? `Adicionar ${s.escolhidos.size}` : 'Adicionar';
   },
   adicionar(s) {

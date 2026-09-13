@@ -588,3 +588,22 @@ páginas (numeração do arquivo, não necessariamente a impressa).
 ela contém o índice revisado e o lote. Para regenerar as imagens a partir desse
 índice e dos PDFs, rode `python3 sql/gerar-bestiario.py` (Poppler + Pillow).
 Teste da importação: `node tests/bestiario-lote.test.cjs`.
+
+
+### Descrições de equipamentos e catalisadores (v20)
+
+Execute `sql/v20-catalisadores.sql` e depois `catalogo/seed-itens.sql` para atualizar
+as descrições no banco. O catálogo local contém 158 itens com descrição e mantém
+cinco catalisadores em uma aba própria. As células soltas Sangue, Morte,
+Conhecimento, Energia e Medo da extração do suplemento foram removidas do catálogo:
+eram valores da coluna Elemento, não nomes de equipamentos.
+
+As descrições completas podem ser abertas no catálogo, inclusive no celular. Itens
+adicionados à ficha levam a descrição e a fonte; itens antigos consultam a descrição
+pelo nome quando há uma correspondência única no catálogo. Textos já personalizados
+na ficha são preservados.
+
+`python3 sql/gerar-catalogo.py` aplica `catalogo/descricoes-itens.json` à extração
+original e impede gerar o seed com descrições vazias. Os textos são extrações e
+resumos dos PDFs locais, com referências por página ou seção. Os arquivos de dados
+continuam em `catalogo/`, fora do git e da publicação.

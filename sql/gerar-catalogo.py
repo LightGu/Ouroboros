@@ -60,6 +60,8 @@ MEDICAMENTO = {'Anti-inflamatório', 'Antibiótico', 'Antiemético', 'Antihistam
                'Antitérmico', 'Antídoto', 'Broncodilatador', 'Coagulante',
                'Cicatrizante', 'Bandagem', 'Aplicador de medicamentos',
                'Aplicador de Adrenalina'}
+CATALISADORES = {'Ampliador', 'Perturbador', 'Potencializador', 'Prolongador', 'Catalisador Sofisticado e Horrorizado'}
+ELEMENTOS_EXTRAIDOS = {'Sangue', 'Morte', 'Conhecimento', 'Energia', 'Medo'}
 PROTECAO = {'Traje hazmat', 'Traje de mergulho', 'Traje espacial', 'Máscara de gás',
             'Paraquedas', 'Vestimenta'}
 
@@ -68,9 +70,11 @@ def grupo(x):
     """Bucket do item. A ordem importa: um item amaldiçoado que é granada
        continua sendo amaldiçoado, que é o que interessa na hora de achar."""
     nome, tipo, sub = x['nome'], x.get('tipo', ''), x.get('subtipo', '')
+    if nome in CATALISADORES: return 'Catalisadores'
     if tipo == 'Item Paranormal' or nome == 'Amarras elementais': return 'Itens paranormais'
     if tipo.startswith('Item Amaldiçoado'): return 'Amaldiçoado'
-    if tipo.startswith('Catalisadores ritual'): return 'Itens paranormais'
+    # O cabeçalho de catalisadores vazou para outros itens; só a lista acima decide esse grupo.
+    if nome in {'Ligação Direta Infernal', 'Medidor de Condição Vertebral', 'Pendrive selado', 'Pé de Morto', 'Valete da Salvação'}: return 'Itens paranormais'
     # munição antes de arma: balas e flechas moram na tabela das armas e
     # herdaram o subtipo delas ("Armas de Fogo – Leves"), mas não são armas
     if nome in MUNICAO:                                                  return 'Munição'
@@ -83,8 +87,12 @@ def grupo(x):
 
 def limpar(bruto):
     saida, vistos = [], set()
+    arquivo = os.path.join(RAIZ, 'catalogo', 'descricoes-itens.json')
+    revisoes = {(r['nome'], r['livro']): r for r in json.load(open(arquivo, encoding='utf-8'))} if os.path.exists(arquivo) else {}
     for x in bruto:
         nome = NOMES.get(x['nome'], x['nome']).strip()
+        if x.get('livro') == 'Sobrevivendo ao Horror' and nome in ELEMENTOS_EXTRAIDOS:
+            continue
         if nome in LIXO or len(nome) < 2:
             continue
         # sobra de parágrafo que ninguém mapeou: começa em minúscula ou tem
@@ -108,6 +116,11 @@ def limpar(bruto):
             'livro': (x.get('livro') or '').strip(),
             'pagina': str(x.get('pagina') or '').strip(),
         })
+    for item in saida:
+        revisao = revisoes.get((item['nome'], item['livro']))
+        if revisao:
+            item['descricao'] = revisao['descricao']
+            item['pagina'] = revisao.get('pagina') or item['pagina']
     for elemento in ['Sangue', 'Morte', 'Conhecimento', 'Energia']:
         nome = f'Componentes ritualísticos de {elemento}'
         if any(i['nome'] == nome and i['livro'] == 'Livro Básico' for i in saida):
@@ -146,6 +159,8 @@ def sql(itens):
 if __name__ == '__main__':
     bruto = json.load(open(ENTRADA, encoding='utf-8'))
     itens = limpar(bruto)
+    if any(not i['descricao'].strip() for i in itens):
+        raise ValueError('Há itens sem descrição; revise catalogo/descricoes-itens.json.')
     json.dump(itens, open(SAIDA_JSON, 'w', encoding='utf-8'), ensure_ascii=False, indent=1)
     open(SAIDA_SQL, 'w', encoding='utf-8').write(sql(itens))
     contagem = {}
