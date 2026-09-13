@@ -21,8 +21,9 @@ const Mesa = {
     const naVez = c.ativo && c.indice === i;
     const morto = p.pv.max > 0 && num(p.pv.atual) <= 0;
 
-    const retrato = p.imagem
-      ? `<img src="${esc(p.imagem)}" alt="">`
+    const imagem = imagemPorVida(p);
+    const retrato = imagem
+      ? `<img src="${esc(imagem)}" alt="">`
       : `<div class="retrato-vazio" style="--h:${corDoNome(p.nome)}">${esc(iniciais(p.nome))}</div>`;
 
     const sub = p.rapido
@@ -379,49 +380,83 @@ const Mesa = {
 
   trocarImagem(id) {
     const p = Store.obter(id);
+    if (!p || !Store.podeEditar(p)) return;
+    const mesaId = Store.mesaId;
+    const estados = [['imagem', 'Normal — acima de 50%'], ['imagemFerido', 'Ferido — acima de 20% até 50%'], ['imagemCritica', 'Crítico — 20% ou menos']];
+    const valores = Object.fromEntries(estados.map(([k]) => [k, p[k] || '']));
+    const leituras = {};
+    let salvando = false, lendo = 0;
     Modal.abrir({
-      titulo: 'Imagem do personagem',
-      corpo: `
-        <label class="campo">
-          <span>Enviar arquivo</span>
-          <input type="file" id="img-arquivo" accept="image/*">
-        </label>
-        <label class="campo">
-          <span>Ou colar um link (URL)</span>
-          <input type="url" id="img-url" placeholder="https://..." value="${p.imagem?.startsWith('http') ? esc(p.imagem) : ''}">
-        </label>
-        <div class="previa" id="img-previa">${p.imagem ? `<img src="${esc(p.imagem)}" alt="">` : '<span class="fraco">sem imagem</span>'}</div>
-        <button class="btn btn-ghost" id="img-limpar" type="button">Remover imagem</button>`,
+      titulo: 'Imagens por pontos de vida', largo: true,
+      corpo: `<div id="retratos-vida"><p class="dialogo">A imagem muda automaticamente com os PV. Sem uma imagem de ferido, usamos a normal; sem a crítica, usamos a de ferido ou a normal.</p>
+        ${estados.map(([k, nome]) => `<section class="bloco" data-retrato-estado="${k}"><h3>${nome}</h3>
+          <label class="campo"><span>Enviar imagem</span><input type="file" accept="image/*" data-retrato-arquivo="${k}"></label>
+          <label class="campo"><span>Ou colar um link</span><input type="url" data-retrato-url="${k}" placeholder="https://..." value="${valores[k].startsWith('http') ? esc(valores[k]) : ''}"></label>
+          <div class="previa" data-retrato-previa="${k}">${valores[k] ? `<img src="${esc(valores[k])}" alt="${nome}">` : '<span class="fraco">Sem imagem cadastrada</span>'}</div>
+          <button type="button" class="btn btn-ghost" data-retrato-limpar="${k}">Remover imagem</button>
+        </section>`).join('')}<p role="alert" id="retratos-erro"></p></div>`,
       confirmar: 'Salvar',
       onConfirmar: async () => {
-        const url = $('#img-url').value.trim();
-        const pendente = Modal._imagemPendente;
-        delete Modal._imagemPendente;
-        try {
-          if (pendente) p.imagem = await Nuvem.enviarRetrato(pendente, Store.mesaId, p.id);
-          else if (pendente === '') p.imagem = '';
-          else if (url) p.imagem = url;
-        } catch (e) {
-          toast('Falhou o envio da imagem: ' + (e.message || e), 'erro');
-          return;
+        if (salvando || lendo) return false;
+        for (const input of $$('[data-retrato-url]', $('#retratos-vida'))) {
+          const url = input.value.trim();
+          if (!input.reportValidity() || (url && !/^https?:\/\//i.test(url))) {
+            $('#retratos-erro').textContent = 'Use um link http ou https válido.'; return false;
+          }
         }
-        Store.salvar(p);
-        Mesa.render();
-        if (Ficha.atual && Ficha.atual.id === id) Ficha.abrir(id);
+        if (Store.mesaId !== mesaId || !Store.podeEditar(p)) return false;
+        salvando = true;
+        const raiz = $('#retratos-vida'), botao = $('[data-modal-ok]');
+        botao.disabled = true;
+        raiz.querySelectorAll('input, button').forEach(el => el.disabled = true);
+        const anteriores = Object.fromEntries(estados.map(([k]) => [k, p[k] || '']));
+        try {
+          for (const [k] of estados) {
+            if (valores[k].startsWith('data:')) valores[k] = await Nuvem.enviarRetrato(valores[k], mesaId, p.id);
+          }
+          if (Store.mesaId !== mesaId || !Store.podeEditar(p)) throw new Error('A mesa foi alterada. Abra as imagens novamente.');
+          Object.assign(p, valores);
+          await Store.salvarAgora(p);
+          Store.guardarCache();
+          Mesa.render();
+          if (Ficha.atual?.id === id) Ficha.abrir(id);
+          return $('#retratos-vida') === raiz;
+        } catch (e) {
+          Object.assign(p, anteriores);
+          if ($('#retratos-vida') === raiz) $('#retratos-erro').textContent = 'Não consegui salvar: ' + (e.message || e);
+          return false;
+        } finally {
+          salvando = false; botao.disabled = false;
+          raiz.querySelectorAll('input, button').forEach(el => el.disabled = false);
+        }
       }
     });
-
-    $('#img-arquivo').addEventListener('change', async e => {
+    const raiz = $('#retratos-vida');
+    const previa = k => {
+      const el = $(`[data-retrato-previa="${k}"]`, raiz);
+      el.innerHTML = valores[k] ? `<img src="${esc(valores[k])}" alt="Prévia">` : '<span class="fraco">Sem imagem cadastrada</span>';
+    };
+    $$('[data-retrato-arquivo]', raiz).forEach(input => input.onchange = async () => {
+      const k = input.dataset.retratoArquivo, versao = leituras[k] = (leituras[k] || 0) + 1;
+      if (!input.files[0]) return;
+      lendo++;
       try {
-        const dados = await lerImagem(e.target.files[0]);
-        Modal._imagemPendente = dados;
-        $('#img-previa').innerHTML = `<img src="${dados}" alt="">`;
-      } catch (err) { toast('Não consegui ler essa imagem.', 'erro'); }
+        const dados = await lerImagem(input.files[0]);
+        if ($('#retratos-vida') !== raiz || leituras[k] !== versao) return;
+        valores[k] = dados; $(`[data-retrato-url="${k}"]`, raiz).value = ''; previa(k);
+      } catch { if ($('#retratos-vida') === raiz) $('#retratos-erro').textContent = 'Não consegui ler essa imagem.'; }
+      finally { lendo--; }
     });
-    $('#img-limpar').addEventListener('click', () => {
-      Modal._imagemPendente = '';
-      $('#img-url').value = '';
-      $('#img-previa').innerHTML = '<span class="fraco">sem imagem</span>';
+    $$('[data-retrato-url]', raiz).forEach(input => input.onchange = () => {
+      const k = input.dataset.retratoUrl, url = input.value.trim();
+      if (url && !/^https?:\/\//i.test(url)) { $('#retratos-erro').textContent = 'Use um link http ou https.'; return; }
+      leituras[k] = (leituras[k] || 0) + 1; valores[k] = url; previa(k);
+    });
+    $$('[data-retrato-limpar]', raiz).forEach(botao => botao.onclick = () => {
+      const k = botao.dataset.retratoLimpar;
+      leituras[k] = (leituras[k] || 0) + 1; valores[k] = '';
+      $(`[data-retrato-url="${k}"]`, raiz).value = '';
+      $(`[data-retrato-arquivo="${k}"]`, raiz).value = ''; previa(k);
     });
   },
 

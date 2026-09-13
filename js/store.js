@@ -201,6 +201,8 @@ const Store = {
       jogador: '',
       idade: '',
       imagem: '',
+      imagemFerido: '',
+      imagemCritica: '',
       origem: '',
       classe: '',
       patente: '',

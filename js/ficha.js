@@ -76,7 +76,7 @@ const Ficha = {
       <!-- IDENTIDADE -->
       <section class="bloco bloco-identidade">
         <div class="retrato-ficha" data-trocar-img title="Clique para trocar a imagem">
-          ${p.imagem ? `<img src="${esc(p.imagem)}" alt="">`
+          ${imagemPorVida(p) ? `<img src="${esc(imagemPorVida(p))}" alt="">`
                      : `<div class="retrato-vazio" style="--h:${corDoNome(p.nome)}">${esc(iniciais(p.nome))}</div>`}
           <span class="retrato-acao">trocar imagem</span>
         </div>
@@ -860,6 +860,12 @@ const Ficha = {
   atualizarDerivados(alvo) {
     const p = this.atual;
     const raiz = $('#view-ficha');
+
+    const retrato = $('.retrato-ficha', raiz), imagem = imagemPorVida(p);
+    if (retrato && retrato.dataset.imagemAtual !== imagem) {
+      retrato.dataset.imagemAtual = imagem;
+      retrato.innerHTML = (imagem ? `<img src="${esc(imagem)}" alt="">` : `<div class="retrato-vazio" style="--h:${corDoNome(p.nome)}">${esc(iniciais(p.nome))}</div>`) + '<span class="retrato-acao">trocar imagem</span>';
+    }
 
     const defTotal = $('#defesa-total', raiz);
     if (defTotal) {

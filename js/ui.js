@@ -176,3 +176,13 @@ function ligarArrasto({ raiz, itens, alca, aoMover }) {
     if (e.target.closest(alca)) { e.preventDefault(); e.stopPropagation(); }
   }, true);
 }
+
+
+function imagemPorVida(p) {
+  const max = Number(p.pv?.max), atual = Number(p.pv?.atual);
+  if (max > 0 && Number.isFinite(atual)) {
+    if (atual <= max * 0.2) return p.imagemCritica || p.imagemFerido || p.imagem || '';
+    if (atual <= max * 0.5) return p.imagemFerido || p.imagem || '';
+  }
+  return p.imagem || '';
+}
