@@ -14,7 +14,7 @@ Mesa.render=()=>{};
 function check(v,msg){if(!v)throw Error(msg);}
 (async()=>{
  p.imagemFerido='https://example.com/ferido.jpg';p.imagemCritica='https://example.com/critico.jpg';
- for(const [pv,img] of [[100,p.imagem],[51,p.imagem],[50,p.imagemFerido],[21,p.imagemFerido],[20,p.imagemCritica],[0,p.imagemCritica],[80,p.imagem]]){
+ for(const [pv,img] of [[100,p.imagem],[81,p.imagem],[80,p.imagemFerido],[50,p.imagemFerido],[21,p.imagemFerido],[20,p.imagemCritica],[0,p.imagemCritica],[90,p.imagem]]){
   p.pv.atual=pv;check(imagemPorVida(p)===img,'limite PV '+pv);
  }
  p.pv.max=0;check(imagemPorVida(p)===p.imagem,'PV máximo ausente');p.pv.max=100;p.pv.atual=10;

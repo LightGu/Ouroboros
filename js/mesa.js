@@ -105,8 +105,8 @@ const Mesa = {
         ? `<button class="barrao-valor" data-editar="${chave}" title="Clique para digitar">${atual}<i>/${max}</i></button>`
         : `<span class="barrao-valor">${atual}<i>/${max}</i></span>`;
 
-    const zona = (lado, passo, dica, sinal) => pode && !editando
-      ? `<button class="barrao-zona ${lado}" data-ajuste="${chave}:${passo}" title="${dica}" aria-label="${dica} de ${rotulo}"><span>${sinal}</span></button>`
+    const zona = (lado, passo, dica, sinal) => pode
+      ? `<button type="button" class="barrao-zona ${lado}" data-ajuste="${chave}:${passo}" title="${dica}" aria-label="${dica} de ${rotulo}">${sinal}</button>`
       : '<span class="barrao-zona"></span>';
 
     return `
@@ -214,6 +214,7 @@ const Mesa = {
     const p = Store.obter(id);
     if (!p) return;
     if (!Store.podeEditar(p)) return toast('Essa ficha não é sua.', 'erro');
+    this.editando = null;
     const max = num(p[chave].max);
     let novo = num(p[chave].atual) + delta;
     if (max > 0) novo = Math.min(max, novo);
@@ -382,7 +383,7 @@ const Mesa = {
     const p = Store.obter(id);
     if (!p || !Store.podeEditar(p)) return;
     const mesaId = Store.mesaId;
-    const estados = [['imagem', 'Normal — acima de 50%'], ['imagemFerido', 'Ferido — acima de 20% até 50%'], ['imagemCritica', 'Crítico — 20% ou menos']];
+    const estados = [['imagem', 'Normal — acima de 80%'], ['imagemFerido', 'Ferido — acima de 20% até 80%'], ['imagemCritica', 'Crítico — 20% ou menos']];
     const valores = Object.fromEntries(estados.map(([k]) => [k, p[k] || '']));
     const leituras = {};
     let salvando = false, lendo = 0;
@@ -708,7 +709,7 @@ document.addEventListener('change', e => {
 
 /* fecha o campo de digitar valor ao clicar fora ou apertar Esc */
 document.addEventListener('pointerdown', e => {
-  if (Mesa.editando && !e.target.closest('.barrao-edit')) { Mesa.editando = null; Mesa.render(); }
+  if (Mesa.editando && !e.target.closest('.barrao-edit, [data-ajuste]')) { Mesa.editando = null; Mesa.render(); }
 }, true);
 
 document.addEventListener('keydown', e => {

@@ -19,9 +19,12 @@ try {
   const r=barra.getBoundingClientRect(),a=menos.getBoundingClientRect(),b=mais.getBoundingClientRect();
   check(Math.abs(a.left-r.left-2)<1,'menos no início');check(Math.abs(r.right-b.right-2)<1,'mais no final');
   check(document.elementFromPoint(b.x+b.width/2,b.y+b.height/2).closest('[data-ajuste]')===mais,'mais recebe clique');
-  check(getComputedStyle(mais.firstChild).opacity==='1','mais visível');
+  check(getComputedStyle(mais).opacity==='1' && mais.textContent.trim()==='+' && menos.textContent.trim()==='−','mais visível');
   const pos=[a.x,b.x];if(referencia)check(JSON.stringify(pos)===JSON.stringify(referencia),'posição estável');referencia=pos;
  }
+ Mesa.editando='teste:pv';
+ document.querySelector('#teste').innerHTML=Mesa.barra({id:'teste',pv:{atual:3,max:100}},'pv','PV');
+ check(document.querySelectorAll('[data-ajuste]').length===2,'símbolos durante edição');
  document.body.innerHTML='<p id="resultado">PASSOU: controles fixos.</p>';
 } catch(e){document.body.innerHTML='<p id="resultado">FALHOU: '+e.message+'</p>';}
 `;
