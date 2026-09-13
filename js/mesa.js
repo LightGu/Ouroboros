@@ -56,7 +56,7 @@ const Mesa = {
       </div>
 
       <div class="retrato" data-abrir>
-        ${retrato}
+        <div class="retrato-moldura">${retrato}</div>
         ${naVez ? '<span class="selo-vez">NA VEZ</span>' : ''}
         ${morto ? '<span class="selo-morto">CAÍDO</span>' : ''}
         ${p.oculto ? '<span class="selo-oculto" title="Os jogadores não veem esta ficha">OCULTO</span>' : ''}
@@ -106,7 +106,7 @@ const Mesa = {
         : `<span class="barrao-valor">${atual}<i>/${max}</i></span>`;
 
     const zona = (lado, passo, dica, sinal) => pode && !editando
-      ? `<button class="barrao-zona ${lado}" data-ajuste="${chave}:${passo}" title="${dica}"><span>${sinal}</span></button>`
+      ? `<button class="barrao-zona ${lado}" data-ajuste="${chave}:${passo}" title="${dica}" aria-label="${dica} de ${rotulo}"><span>${sinal}</span></button>`
       : '<span class="barrao-zona"></span>';
 
     return `
@@ -388,7 +388,7 @@ const Mesa = {
     let salvando = false, lendo = 0;
     Modal.abrir({
       titulo: 'Imagens por pontos de vida', largo: true,
-      corpo: `<div id="retratos-vida"><p class="dialogo">A imagem muda automaticamente com os PV. Sem uma imagem de ferido, usamos a normal; sem a crítica, usamos a de ferido ou a normal.</p>
+      corpo: `<div id="retratos-vida"><p class="dialogo">A imagem é centralizada e ajustada sem esticar nem cortar, em um retrato quadrado. Ela muda automaticamente com os PV. Sem uma imagem de ferido, usamos a normal; sem a crítica, usamos a de ferido ou a normal.</p>
         ${estados.map(([k, nome]) => `<section class="bloco" data-retrato-estado="${k}"><h3>${nome}</h3>
           <label class="campo"><span>Enviar imagem</span><input type="file" accept="image/*" data-retrato-arquivo="${k}"></label>
           <label class="campo"><span>Ou colar um link</span><input type="url" data-retrato-url="${k}" placeholder="https://..." value="${valores[k].startsWith('http') ? esc(valores[k]) : ''}"></label>
