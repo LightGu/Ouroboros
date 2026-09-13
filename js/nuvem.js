@@ -189,6 +189,49 @@ const Nuvem = {
     if (falha) throw falha.error;
   },
 
+  /* ---------------- bestiário privado ---------------- */
+
+  async bestiario() {
+    const lista = [];
+    for (let inicio = 0; ; inicio += 500) {
+      const { data, error } = await this.cliente.from('bestiary').select('*')
+        .order('name').order('id').range(inicio, inicio + 499);
+      if (error) throw error;
+      lista.push(...(data || []));
+      if (!data || data.length < 500) return lista;
+    }
+  },
+
+  async criarCriatura(campos, arquivo) {
+    const extensoes = { 'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp' };
+    if (!arquivo || !extensoes[arquivo.type]) throw new Error('Escolha uma imagem PNG, JPG ou WebP.');
+    if (!arquivo.size || arquivo.size > 20 * 1024 * 1024) throw new Error('A imagem deve ter até 20 MB e não pode estar vazia.');
+    const owner_id = App.sessao.user.id;
+    const image_path = `${owner_id}/${crypto.randomUUID()}.${extensoes[arquivo.type]}`;
+    const bucket = this.cliente.storage.from('bestiary-images');
+    const { error: uploadError } = await bucket.upload(image_path, arquivo, { contentType: arquivo.type, upsert: false });
+    if (uploadError) throw uploadError;
+    const { data, error } = await this.cliente.from('bestiary')
+      .insert({ ...campos, owner_id, image_path }).select().single();
+    if (error) {
+      // Uma resposta perdida pode esconder um INSERT que foi concluído.
+      const ver = await this.cliente.from('bestiary').select('*').eq('image_path', image_path).maybeSingle();
+      if (ver.data) return ver.data;
+      if (!ver.error) {
+        const limpeza = await bucket.remove([image_path]);
+        if (limpeza.error) console.error('Upload pendente de limpeza:', image_path, limpeza.error);
+      }
+      throw error;
+    }
+    return data;
+  },
+
+  async imagemCriatura(caminho) {
+    const { data, error } = await this.cliente.storage.from('bestiary-images').download(caminho);
+    if (error) throw error;
+    return data;
+  },
+
   /* ---------------- retratos ---------------- */
 
   async enviarRetrato(dataUrl, mesaId, personagemId) {

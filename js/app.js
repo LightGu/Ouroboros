@@ -61,6 +61,7 @@ const App = {
     $('#aba-campanha').hidden = false;
     $('#aba-campanha').textContent = this.ehMestre ? 'Campanha' : 'Anotações';
     $('#aba-interludio').hidden = !this.ehMestre;
+    $('#aba-bestiario').hidden = !this.ehMestre;
     $('#aba-mensagens').hidden = !this.ehMestre;
     $('#celular').hidden = false;
     $('#btn-rapido').hidden = !this.ehMestre;   /* NPC é coisa de mestre */
@@ -200,8 +201,10 @@ const App = {
   /* ---------------- navegação ---------------- */
 
   mostrar(tela) {
+    if (tela === 'bestiario' && !this.ehMestre) return;
+    if (tela !== 'bestiario') Bestiario.limpar();
     this.telaAtual = tela;
-    ['auth', 'mesas', 'mesa', 'ficha', 'mapa', 'sons', 'campanha', 'interludio', 'mensagens', 'logs'].forEach(t => {
+    ['auth', 'mesas', 'mesa', 'ficha', 'mapa', 'sons', 'campanha', 'interludio', 'bestiario', 'mensagens', 'logs'].forEach(t => {
       $('#view-' + t).hidden = t !== tela;
     });
     $('#topbar').hidden = tela === 'auth' || tela === 'mesas';
@@ -211,6 +214,7 @@ const App = {
     if (tela === 'sons') Sons.render();
     if (tela === 'campanha') Campanha.render();
     if (tela === 'interludio') Interludio.render();
+    if (tela === 'bestiario') Bestiario.carregar();
     if (tela === 'mensagens') Mensagens.render();
     if (tela !== 'campanha') $('#painel-nota').hidden = true;
   },

@@ -2302,3 +2302,20 @@ button, .aba, .chip, select, label { touch-action: manipulation; }
   .guia-tabela th[scope="row"] { width: 105px; }
   .guia-conteudo { padding: 0 10px 12px; }
 }
+
+/* Bestiário privado */
+.best-topo { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; margin-bottom: 20px; }
+.best-topo h1 { margin: 12px 0 6px; }
+.best-topo p, .best-card > span, .best-card small { color: var(--texto-2); }
+.best-filtros { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; align-items: end; margin-bottom: 16px; }
+.best-grade { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(250px, 100%), 1fr)); gap: 14px; margin-top: 14px; }
+.best-card { display: flex; flex-direction: column; align-items: start; gap: 10px; text-align: left; padding: 20px; background: var(--painel); border: 1px solid var(--linha); border-radius: var(--raio-g); cursor: pointer; overflow-wrap: anywhere; }
+.best-card:hover, .best-card:focus-visible { border-color: var(--roxo); }
+.best-card b { font-size: 19px; }
+.best-tags { display: flex; flex-wrap: wrap; gap: 6px; }
+.best-notas { white-space: pre-wrap; line-height: 1.65; margin: 16px 0; overflow-wrap: anywhere; }
+.best-imagem { overflow: auto; margin-top: 16px; }
+.best-imagem img { display: block; max-width: 100%; height: auto; margin: auto; }
+.best-imagem.original img { max-width: none; margin: 0; }
+#best-form { display: grid; gap: 14px; }
+#best-form-erro { color: #ef8878; }

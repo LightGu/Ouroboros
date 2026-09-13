@@ -501,3 +501,34 @@ ver a ficha. Aparência, personalidade e objetivo continuam na ficha pública.
 As histórias não são armazenadas no cache offline; é preciso conexão para lê-las.
 
 Verificação local: `node tests/historias.test.cjs`.
+
+### Bestiário privado (v14)
+
+Execute `sql/v14-bestiary.sql` no SQL Editor do Supabase antes de publicar esta
+versão. Em instalações novas, a migração também está no final de `sql/schema.sql`.
+Ela cria `bestiary` e o bucket **privado** `bestiary-images`. Não torne o bucket
+público. A migração é transacional: um erro nas policies impede a conclusão.
+
+A aba **Bestiário** aparece para o mestre. O acervo é pessoal: `owner_id` identifica
+quem cadastrou a criatura, que pode consultá-la nas mesas em que é mestre.
+Jogadores e outros mestres não podem ler seu acervo. No banco, as policies exigem
+que a conta seja dona do registro e mestre de alguma mesa; no Storage, os arquivos
+ficam em `<owner_id>/<uuid>.<extensão>` com acesso restrito ao próprio usuário.
+Não há compartilhamento nem cadastro público nesta versão.
+
+Use **+ Criatura** para preencher os metadados e enviar PNG, JPG ou WebP de até
+20 MB. A imagem original é preservada. A busca ignora acentos e pesquisa apenas
+`name`; os filtros de elemento, VD exato (incluindo zero), tipo e tag podem ser
+combinados. Não há OCR. A listagem carrega metadados paginados; imagens só são
+baixadas ao abrir uma criatura, com autenticação, e exibidas via URL de Blob
+liberada ao sair. A opção **Tamanho original** permite ler e rolar a ficha inteira.
+
+Segurança segue o padrão de [policies RLS do Supabase Storage](https://supabase.com/docs/guides/storage/security/access-control).
+Após aplicar, valide com duas contas: o dono deve conseguir cadastrar e abrir;
+a outra conta e uma requisição sem login não devem conseguir ler o registro nem
+baixar seu arquivo. Uma URL pública para o bucket não deve servir a imagem.
+Essas verificações no Supabase real dependem da aplicação da migração.
+
+Testes locais: `node tests/bestiario.test.cjs` e
+`node tests/bestiario-interface.cjs` (Chrome instalado; `CHROME_PATH` opcional).
+O teste de interface usa dados simulados e não acessa o Supabase.
