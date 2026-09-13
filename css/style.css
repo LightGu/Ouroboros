@@ -257,7 +257,7 @@ textarea { resize: vertical; }
 .stat-barra { display: flex; align-items: center; gap: 8px; }
 .stat-rot {
   flex: 0 0 auto; padding: 3px 7px 2px;
-  background: #05060a; color: #e7e9ee;
+  background: transparent; color: #e7e9ee;
   font-family: var(--display); font-size: 12px; font-weight: 600; letter-spacing: .08em;
   /* canto irregular: o bloco de rótulo da ficha é pincelada, não retângulo */
   clip-path: polygon(0 6%, 100% 0, 99% 94%, 2% 100%);
@@ -2401,9 +2401,7 @@ button, .aba, .chip, select, label { touch-action: manipulation; }
   display: flex; align-items: center; justify-content: center;
   font-family: Arial, sans-serif; font-size: 20px; font-weight: 700;
   line-height: 1; color: #fff; opacity: 1; visibility: visible;
-  background: #101218b3; border-radius: 0; z-index: 3;
+  background: transparent; border: 0; border-radius: 0; box-shadow: none; z-index: 3;
   text-shadow: 0 1px 2px #000;
 }
-.barrao > .barrao-zona.esq { border-right: 1px solid #ffffff30; }
-.barrao > .barrao-zona.dir { border-left: 1px solid #ffffff30; }
-.barrao > button.barrao-zona:hover { background: #303540; }
+.barrao > button.barrao-zona:hover { background: transparent; }
