@@ -129,7 +129,7 @@ const Regras = {
     return avisos;
   },
   guia(p) {
-    const o=ORIGEM_INFO[p.origem], trilhas=this.trilhas[p.classe] || [];
+    const o=ORIGEM_INFO[p.origem];
     const avisos=this.pendencias(p);
     return `<section class="bloco guia-ficha"><h2 class="titulo-bloco">Guia do personagem <span class="legenda">Leia no seu ritmo • dicas também ao focar os campos</span></h2>
       <div class="guia-grade"><div><b>Como fazer um teste</b><p>O mestre pede uma perícia e uma dificuldade (DT). Role tantos d20 quanto o atributo, escolha o maior e some treino e outros bônus. Com atributo 0, role dois e escolha o menor. Ex.: AGI 2 e Pontaria treinada = maior de 2d20 + 5.</p>
@@ -139,7 +139,6 @@ const Regras = {
       <div><b>Confira antes de jogar</b><ul>${avisos.length?avisos.map(a=>`<li>${esc(a)}</li>`).join(''):'<li>Nenhuma pendência básica detectada. Confira poderes, pré-requisitos e escolhas da campanha com o mestre.</li>'}</ul>
       <button class="btn btn-ghost btn-peq" data-revisar-guia>Atualizar conferência</button>
       <p>Os avisos orientam a revisão; não certificam todas as combinações de regras.</p></div></div>
-      ${trilhas.length?`<label class="campo"><span>Trilha — especialização da classe</span><select data-bind="trilha" data-recarrega><option value="">Escolha ao alcançar ${p.classe==='Sobrevivente'?'estágio 2':'NEX 10%'}</option>${trilhas.map(([nome,desc,fonte])=>`<option value="${esc(nome)}" ${p.trilha===nome?'selected':''}>${esc(nome)} — ${esc(desc)} (${esc(fonte)})</option>`).join('')}${p.trilha&&!trilhas.some(t=>t[0]===p.trilha)?`<option selected value="${esc(p.trilha)}">${esc(p.trilha)} (personalizada)</option>`:''}</select></label>`:''}
       <p class="dica-passo">Trocar a trilha registra a escolha. Adicione seus poderes e ajustes em Habilidades; eles não são inseridos só por selecionar o nome.</p>
     </section>`;
   }

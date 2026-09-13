@@ -91,9 +91,12 @@ const Ficha = {
             <label class="campo"${dica(AJUDA.campos.origem)}><span>Origem</span>
               <input data-bind="origem" value="${esc(p.origem)}" list="dl-origens">
               <datalist id="dl-origens">${ORIGENS.map(o => `<option value="${esc(o)}">`).join('')}</datalist></label>
-            <label class="campo"${dica(AJUDA.campos.classe)}><span>Classe</span>
-              <input data-bind="classe" value="${esc(p.classe)}" list="dl-classes">
-              <datalist id="dl-classes">${CLASSES.map(o => `<option value="${esc(o)}">`).join('')}</datalist></label>
+            <div class="campo"><span>Classe/Trilha</span>
+              <input aria-label="Classe" data-bind="classe" data-recarrega value="${esc(p.classe)}" list="dl-classes">
+              <datalist id="dl-classes">${CLASSES.map(o => `<option value="${esc(o)}">`).join('')}</datalist>
+              <input aria-label="Trilha" data-bind="trilha" data-recarrega value="${esc(p.trilha)}" list="dl-trilhas" placeholder="Escolha ou digite a trilha">
+              <datalist id="dl-trilhas">${(Regras.trilhas[p.classe] || []).map(([nome, desc]) => `<option value="${esc(nome)}">${esc(desc)}</option>`).join('')}</datalist>
+            </div>
           </div>
           <div class="grade-4">
             <label class="campo"${dica(AJUDA.campos.nex)}><span>NEX %</span><input type="number" data-bind="nex" value="${num(p.nex)}" min="0" max="99" step="5"></label>
