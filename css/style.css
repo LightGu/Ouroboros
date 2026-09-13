@@ -2375,29 +2375,25 @@ button, .aba, .chip, select, label { touch-action: manipulation; }
 .barrao-valor { justify-content: center; min-width: 0; padding: 0; }
 .barrao-edit { min-width: 0; }
 
-/* Retrato quadrado com encaixe proporcional e ornamentos nas laterais. */
+/* Retrato circular sobre um cenário do livro, sem elementos sobre a foto. */
 .card .retrato {
-  aspect-ratio: auto; display: grid; grid-template-columns: 1fr minmax(0, 168px) 1fr;
-  align-items: center; gap: 14px; padding: 18px 14px;
-  background: radial-gradient(ellipse at center, #25222f 0%, #131419 72%);
+  aspect-ratio: auto; display: flex; justify-content: center;
+  align-items: center; padding: 18px 14px;
+  background: linear-gradient(#10111766, #101117b3), url('../img/fundo-retratos.jpg') center / cover no-repeat;
 }
-.card .retrato::before, .card .retrato::after {
-  content: ''; height: 68px; width: 100%; min-width: 0; pointer-events: none;
-  border-top: 1px solid #62516e66; border-bottom: 1px solid #62516e66;
-  background: linear-gradient(#62516e66, #62516e66) center / 100% 1px no-repeat;
-}
+.card .retrato::before, .card .retrato::after { content: none; }
 .retrato-moldura {
-  aspect-ratio: 1; width: 100%; min-width: 0; overflow: hidden;
-  border: 1px solid #74647d80; border-radius: 4px; background: #15161a;
-  box-shadow: 0 4px 16px #0005;
+  aspect-ratio: 1; width: min(100%, 168px); flex: 0 1 168px; min-width: 0; overflow: hidden;
+  border: 2px solid #95879f; border-radius: 50%; background: #15161a;
+  box-shadow: 0 4px 18px #000a;
 }
 .card .retrato-moldura img, .retrato-ficha img {
   width: 100%; height: 100%; object-fit: contain; object-position: center; display: block;
 }
-.retrato-ficha { align-self: start; }
+.retrato-ficha { align-self: start; border-radius: 50%; }
 #retratos-vida .previa {
   width: min(100%, 168px); height: auto; aspect-ratio: 1; margin: 12px auto;
-  border: 1px solid #74647d80; border-radius: 4px; background: #15161a;
+  border: 2px solid #95879f; border-radius: 50%; background: #15161a;
 }
 #retratos-vida .previa img { width: 100%; height: 100%; object-fit: contain; object-position: center; }
 

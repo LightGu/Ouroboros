@@ -389,7 +389,7 @@ const Mesa = {
     let salvando = false, lendo = 0;
     Modal.abrir({
       titulo: 'Imagens por pontos de vida', largo: true,
-      corpo: `<div id="retratos-vida"><p class="dialogo">A imagem é centralizada e ajustada sem esticar nem cortar, em um retrato quadrado. Ela muda automaticamente com os PV. Sem uma imagem de ferido, usamos a normal; sem a crítica, usamos a de ferido ou a normal.</p>
+      corpo: `<div id="retratos-vida"><p class="dialogo">A imagem é centralizada e ajustada sem esticar, dentro de uma moldura circular. Confira o enquadramento na prévia. Ela muda automaticamente com os PV. Sem uma imagem de ferido, usamos a normal; sem a crítica, usamos a de ferido ou a normal.</p>
         ${estados.map(([k, nome]) => `<section class="bloco" data-retrato-estado="${k}"><h3>${nome}</h3>
           <label class="campo"><span>Enviar imagem</span><input type="file" accept="image/*" data-retrato-arquivo="${k}"></label>
           <label class="campo"><span>Ou colar um link</span><input type="url" data-retrato-url="${k}" placeholder="https://..." value="${valores[k].startsWith('http') ? esc(valores[k]) : ''}"></label>
