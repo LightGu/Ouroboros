@@ -22,6 +22,7 @@ const Ficha = {
     if (!this.atual) return;
     if (!mesma) { this.filtroItem = ''; this.ordenacao = {}; }
     App.mostrar('ficha');
+    this.aplicarCor($('#view-ficha'), this.atual.cor);
     $('#view-ficha').innerHTML = this.html(this.atual);
     Paineis.montar(this.atual);
 
@@ -38,6 +39,15 @@ const Ficha = {
     this.ligar();
     if (!Store.podeEditar(this.atual)) this.travar();
     this.carregarDescricoesInventario(this.atual);
+  },
+
+  aplicarCor(raiz, cor) {
+    const hex = hexDaCor(cor);
+    for (const chave of ['--roxo', '--roxo-cl']) raiz.style.removeProperty(chave);
+    if (hex) {
+      raiz.style.setProperty('--roxo', hex);
+      raiz.style.setProperty('--roxo-cl', `color-mix(in srgb, ${hex}, white 30%)`);
+    }
   },
 
   /* Jogador abrindo ficha que não é dele: dá pra consultar, não dá pra mexer. */
@@ -480,14 +490,13 @@ const Ficha = {
      mesma do bloco impresso no livro, pra dar pra copiar de cima pra baixo. */
   cartaoRitual(p, r, i) {
     const info  = circuloInfo(r.circulo);
-    const cor   = corDoElemento(r.elemento);
     const nex   = num(p.nex);
     const cedo  = p.classe === 'Ocultista' && info.nex && nex < info.nex;
     const opt   = (lista, val) => [...new Set([...lista, r[val] || ''])].map(o =>
       `<option value="${esc(o)}" ${o === (r[val] || '') ? 'selected' : ''}>${esc(o || '—')}</option>`).join('');
 
     return `
-      <div class="ritual" style="--elem: ${cor}">
+      <div class="ritual" style="--elem: var(--roxo)">
         <div class="ritual-cab">
           <input class="ritual-nome" data-bind="rituais.${i}.nome" value="${esc(r.nome)}" placeholder="Nome do ritual">
           <select class="ritual-elem" data-bind="rituais.${i}.elemento" data-recarrega${dica(AJUDA.campos.ritualElemento)}>

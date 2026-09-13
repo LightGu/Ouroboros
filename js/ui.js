@@ -42,8 +42,15 @@ function toast(msg, tipo = 'ok') {
 const Modal = {
   aoConfirmar: null,
 
-  abrir({ titulo, corpo, confirmar = 'Salvar', cancelar = 'Cancelar', perigo = false, largo = false, onConfirmar }) {
+  abrir({ titulo, corpo, confirmar = 'Salvar', cancelar = 'Cancelar', perigo = false, largo = false, cor = '', onConfirmar }) {
     delete Modal._imagemPendente;
+    const hex = hexDaCor(cor);
+    $('#modal').style.removeProperty('--roxo');
+    $('#modal').style.removeProperty('--roxo-cl');
+    if (hex) {
+      $('#modal').style.setProperty('--roxo', hex);
+      $('#modal').style.setProperty('--roxo-cl', `color-mix(in srgb, ${hex}, white 30%)`);
+    }
     /* `largo` é do passo a passo de criação: 560px não cabe a grade de perícias.
        Sempre com toggle, pra um modal largo não deixar o próximo largo também. */
     $('#modal .modal').classList.toggle('modal-largo', largo);

@@ -2406,13 +2406,13 @@ button, .aba, .chip, select, label { touch-action: manipulation; }
   border: 1px solid var(--linha); border-left: 3px solid var(--elem);
   border-radius: 12px; background: var(--painel); overflow: hidden; min-width: 0; flex-shrink: 0;
 }
-.ritual-catalogo-item.ativo { border-color: var(--roxo); background: rgba(139,92,246,.08); }
+.ritual-catalogo-item.ativo { border-color: var(--roxo); background: color-mix(in srgb, var(--roxo) 8%, transparent); }
 .ritual-catalogo-selecao {
   display: grid; grid-template-columns: 28px minmax(0, 1fr); align-items: start; gap: 12px;
   width: 100%; padding: 16px; text-align: left; background: transparent;
   border: 0; color: var(--texto); cursor: pointer; font: inherit;
 }
-.ritual-catalogo-selecao:hover:not(:disabled) { background: rgba(139,92,246,.06); }
+.ritual-catalogo-selecao:hover:not(:disabled) { background: color-mix(in srgb, var(--roxo) 6%, transparent); }
 .ritual-catalogo-selecao:disabled { cursor: default; opacity: .75; }
 .ritual-catalogo-selecao:focus-visible, .ritual-catalogo-detalhes summary:focus-visible { outline: 2px solid var(--roxo-cl); outline-offset: -3px; }
 .ritual-catalogo-marca {

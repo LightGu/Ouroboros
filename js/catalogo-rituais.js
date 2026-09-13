@@ -36,7 +36,7 @@ const CatalogoRituais = {
     if (!Store.podeEditar(p)) return;
     const estado = {personagem:p, busca:'', elemento:'', circulo:'', livro:'', escolhidos:new Set()};
     this.estado = estado;
-    Modal.abrir({titulo:'Catálogo de rituais', corpo:'<p class="dialogo">Carregando rituais…</p>',
+    Modal.abrir({cor:p.cor, titulo:'Catálogo de rituais', corpo:'<p class="dialogo">Carregando rituais…</p>',
       confirmar:'Adicionar', largo:true, onConfirmar:() => this.adicionar(estado)});
     const itens = await this.carregar();
     if (this.estado !== estado || $('#modal').hidden || $('#modal-titulo').textContent !== 'Catálogo de rituais') return;
@@ -75,7 +75,7 @@ const CatalogoRituais = {
     $('#rit-lista').innerHTML = lista.map(r => {
       const id = this.itens.indexOf(r), ja = conhecidos.has(this.chave(r)), on = s.escolhidos.has(id);
       const cedo = num(s.personagem.nex) < circuloInfo(r.circulo).nex;
-      return `<article class="ritual-catalogo-item ${on ? 'ativo' : ''}" style="--elem:${corDoElemento(r.elemento)}">
+      return `<article class="ritual-catalogo-item ${on ? 'ativo' : ''}" style="--elem:var(--roxo)">
         <button type="button" class="ritual-catalogo-selecao" data-rit-escolher="${id}" ${ja?'disabled':''} aria-pressed="${on}">
           <span class="ritual-catalogo-marca" aria-hidden="true">${ja || on?'✓':'+'}</span>
           <span class="ritual-catalogo-info">
