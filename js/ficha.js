@@ -2,6 +2,7 @@
 
 const Ficha = {
   atual: null,
+  ordenacao: {},
   filtroItem: '',   // categoria escolhida no inventário; só de tela, não salva
 
   /* `abrir` serve para dois casos diferentes: entrar na ficha (deve ir pro
@@ -19,7 +20,7 @@ const Ficha = {
 
     this.atual = Store.obter(id);
     if (!this.atual) return;
-    if (!mesma) this.filtroItem = '';
+    if (!mesma) { this.filtroItem = ''; this.ordenacao = {}; }
     App.mostrar('ficha');
     $('#view-ficha').innerHTML = this.html(this.atual);
     Paineis.montar(this.atual);
@@ -247,7 +248,7 @@ const Ficha = {
         <h2 class="titulo-bloco"${dica(AJUDA.campos.habilidade)}>Habilidades
           <button class="btn btn-ghost btn-peq" data-add="habilidades">+ Habilidade</button></h2>
         <div class="tabela tabela-habilidades">
-          <div class="tabela-cab"><span>Nome</span><span>Custo</span><span>Página</span><span>Descritivo</span><span></span></div>
+          <div class="tabela-cab">${[['nome', 'Nome'], ['custo', 'Custo'], ['pagina', 'Página'], ['desc', 'Descritivo']].map(([chave, titulo]) => this.cabecalhoOrdem('habilidades', chave, titulo)).join('')}<span></span></div>
           ${p.habilidades.length ? p.habilidades.map((h, i) => `
             <div class="tabela-linha">
               <input data-bind="habilidades.${i}.nome"   value="${esc(h.nome)}"   placeholder="Nome">
@@ -269,6 +270,7 @@ const Ficha = {
           <span class="legenda">${p.rituais.length ? p.rituais.length + (p.rituais.length === 1 ? ' conhecido' : ' conhecidos') : ''}</span>
           <button class="btn btn-ghost btn-peq" data-add="rituais">+ Ritual</button></h2>
         <label class="campo campo-curto"${dica(AJUDA.campos.dtRituais)}><span>DT de rituais</span><input data-bind="dtRituais" value="${esc(p.dtRituais)}" placeholder="Ex.: 15"></label>
+        <div class="rituais-ordenacao" aria-label="Ordenar rituais"><span>Ordenar por:</span>${[['nome', 'Nome'], ['elemento', 'Elemento'], ['circulo', 'Círculo'], ['custo', 'Custo'], ['pagina', 'Página']].map(([chave, titulo]) => this.cabecalhoOrdem('rituais', chave, titulo)).join('')}</div>
         ${p.rituais.length ? p.rituais.map((r, i) => this.cartaoRitual(p, r, i)).join('')
           : '<p class="vazio-linha">Nenhum ritual conhecido.</p>'}
       </section>
@@ -340,7 +342,7 @@ const Ficha = {
           ${semCat ? chip('sem', 'sem categoria', semCat) : ''}
         </div>` : ''}
         <div class="tabela tabela-itens">
-          <div class="tabela-cab"><span>Item</span><span>Categoria</span><span>Espaços</span><span></span></div>
+          <div class="tabela-cab">${this.cabecalhoOrdem('itens', 'nome', 'Item')}${this.cabecalhoOrdem('itens', 'categoria', 'Categoria')}${this.cabecalhoOrdem('itens', 'espacos', 'Espaços')}<span></span></div>
           ${visiveis.length ? visiveis.map(({ it, i }) => `
             <div class="tabela-linha">
               <input data-bind="inventario.itens.${i}.nome" value="${esc(it.nome)}" placeholder="Nome do item">
@@ -477,6 +479,52 @@ const Ficha = {
       </div>`;
   },
 
+  cabecalhoOrdem(lista, chave, titulo) {
+    const ordem = this.ordenacao[lista];
+    const ativa = ordem?.chave === chave;
+    const direcao = ativa && ordem.direcao === 1 ? 'decrescente' : 'crescente';
+    return `<button type="button" class="ordenar-coluna" data-ordenar="${lista}:${chave}"
+      ${this.atual && Store.podeEditar(this.atual) ? '' : 'disabled'}
+      aria-label="Ordenar por ${titulo}, ordem ${direcao}" title="Ordenar por ${titulo} (${direcao})">${titulo}${ativa ? `<span aria-hidden="true"> ${ordem.direcao === 1 ? '↑' : '↓'}</span>` : ''}</button>`;
+  },
+
+  ordenarLista(lista, chave) {
+    if (!Store.podeEditar(this.atual)) return;
+    const permitidas = {
+      itens: ['nome', 'categoria', 'espacos'],
+      habilidades: ['nome', 'custo', 'pagina', 'desc'],
+      rituais: ['nome', 'elemento', 'circulo', 'custo', 'pagina']
+    };
+    if (!permitidas[lista]?.includes(chave)) return;
+    const anterior = this.ordenacao[lista];
+    const direcao = anterior?.chave === chave ? -anterior.direcao : 1;
+    this.ordenacao[lista] = { chave, direcao };
+    this.listaDe(lista).sort((a, b) => this.compararOrdem(a[chave], b[chave], chave, direcao));
+    Store.salvar(this.atual);
+    this.abrir(this.atual.id);
+    $(`[data-ordenar="${lista}:${chave}"]`)?.focus({ preventScroll: true });
+  },
+
+  compararOrdem(a, b, chave, direcao) {
+    const texto = v => String(v ?? '').trim();
+    a = texto(a); b = texto(b);
+    // Campos sem valor ficam no fim em ambas as direções.
+    if (!a || !b) return a ? -1 : b ? 1 : 0;
+    const numero = v => {
+      if (chave === 'categoria') {
+        const romana = { I: 1, II: 2, III: 3, IV: 4, V: 5 };
+        if (romana[v.toUpperCase()] !== undefined) return romana[v.toUpperCase()];
+      }
+      const n = v.replace(',', '.').match(/-?\d+(?:\.\d+)?/);
+      return n ? Number(n[0]) : null;
+    };
+    if (['categoria', 'espacos', 'custo', 'pagina', 'circulo'].includes(chave)) {
+      const na = numero(a), nb = numero(b);
+      if (na !== null && nb !== null && na !== nb) return (na - nb) * direcao;
+    }
+    return a.localeCompare(b, 'pt-BR', { numeric: true, sensitivity: 'base' }) * direcao;
+  },
+
   /* ---------------- comportamento ---------------- */
 
   ligar() {
@@ -538,6 +586,8 @@ const Ficha = {
     });
 
     raiz.addEventListener('click', e => {
+      const ordem = e.target.closest('[data-ordenar]');
+      if (ordem) return this.ordenarLista(...ordem.dataset.ordenar.split(':'));
       if (e.target.closest('[data-revisar-guia]')) return this.abrir(this.atual.id);
       if (e.target.closest('[data-voltar]'))     return this.voltar();
       if (e.target.closest('[data-excluir]'))    return this.excluir();

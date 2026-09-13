@@ -24,7 +24,7 @@ dos livros ou de todas as combinações possíveis.
 | Equipamento | Fora do assistente e sem preenchimento de limites | Catálogo no assistente; patente/crédito, carga por FOR (FOR 0 = 2 espaços), limites por categoria e regra de civis | Básico 52–53; Horror 31 |
 | Trilhas | Não havia campo próprio | Seleção por classe com resumos e fontes, incluindo trilhas do suplemento; habilidades de agentes permanecem editáveis | Básico 26–35; Horror 15–32 |
 | Iniciantes | Dicas com conceitos incorretos e sem roteiro de conferência | Guia de testes, recursos, origem, proficiências, evolução e pendências; SAN 0 explicado como enlouquecendo; limite de PE identificado por turno | Básico 23 e regras de insanidade |
-| Painéis | Ordem fixa e sempre abertos | Arraste, setas, recolher/expandir, ocultar/mostrar, cascata, restauração e persistência local | Interface |
+| Painéis | Ordem fixa e sempre abertos | Arraste, recolher/expandir, ocultar/mostrar, cascata, restauração e persistência local | Interface |
 
 ## Como usar
 

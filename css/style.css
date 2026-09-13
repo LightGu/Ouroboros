@@ -2319,3 +2319,11 @@ button, .aba, .chip, select, label { touch-action: manipulation; }
 .best-imagem.original img { max-width: none; margin: 0; }
 #best-form { display: grid; gap: 14px; }
 #best-form-erro { color: #ef8878; }
+
+.ordenar-coluna { font: inherit; color: inherit; text-align: left; background: none; border: 0; padding: 4px 0; cursor: pointer; }
+.ordenar-coluna:hover, .ordenar-coluna:focus-visible { color: var(--roxo); text-decoration: underline; }
+.ordenar-coluna:disabled { cursor: default; }
+.rituais-ordenacao { display: flex; align-items: center; flex-wrap: wrap; gap: 16px; margin: 12px 0; color: var(--texto-2); font-size: 13px; }
+@media (max-width: 900px) {
+  .tabela-habilidades .tabela-cab { display: grid; }
+}

@@ -17,7 +17,7 @@ const Paineis = {
     const barra = document.createElement('section');
     barra.className = 'bloco organizar-paineis';
     barra.setAttribute('aria-label', 'Organizar ficha');
-    barra.innerHTML = `<b>Opção de visibilidade</b><p>Arraste pela alça ⠿ ou use as setas. Recolher mantém o título; ocultar tira o painel da tela.</p>
+    barra.innerHTML = `<b>Opção de visibilidade</b><p>Arraste pela alça ⠿ para mudar a ordem. Recolher mantém o título; ocultar tira o painel da tela.</p>
       <div class="painel-acoes"><button class="btn btn-ghost" data-layout="lista">Lista</button><button class="btn btn-ghost" data-layout="cascata">Cascata</button>
       <button class="btn btn-ghost" data-todos="abrir">Expandir todos</button><button class="btn btn-ghost" data-todos="fechar">Recolher todos</button>
       <button class="btn btn-ghost" data-restaurar>Restaurar organização</button></div>
@@ -38,8 +38,6 @@ const Paineis = {
         const toggle = el.querySelector('[data-recolher]');
         toggle.textContent = fechados.has(id) ? 'Expandir' : 'Recolher';
         toggle.setAttribute('aria-expanded', String(!fechados.has(id)));
-        el.querySelector('[data-mover="-1"]').disabled = i === 0;
-        el.querySelector('[data-mover="1"]').disabled = i === itens.length - 1;
       });
       $$('[data-layout]', barra).forEach(b => b.setAttribute('aria-pressed', String(b.dataset.layout === (prefs.modo || 'lista'))));
       $$('[data-visibilidade]', barra).forEach(b => b.setAttribute('aria-pressed', String(!ocultos.has(b.dataset.visibilidade))));
@@ -61,14 +59,11 @@ const Paineis = {
       el.appendChild(corpo);
       const ctrl = document.createElement('span'); ctrl.className = 'painel-controles';
       ctrl.innerHTML = `<button class="btn-mini painel-alca" draggable="true" aria-label="Arrastar ${esc(item.nome)}" title="Arrastar painel">⠿</button>
-        <button class="btn-mini" data-mover="-1" aria-label="Mover ${esc(item.nome)} para cima">↑</button>
-        <button class="btn-mini" data-mover="1" aria-label="Mover ${esc(item.nome)} para baixo">↓</button>
         <button class="btn btn-ghost btn-peq" data-recolher aria-controls="${corpo.id}">Recolher</button>
         <button class="btn-mini" data-ocultar aria-label="Ocultar ${esc(item.nome)}">×</button>`;
       titulo.appendChild(ctrl);
       ctrl.addEventListener('click', e => {
         const b = e.target.closest('button'); if (!b) return;
-        if (b.hasAttribute('data-mover')) { mover(id, itens.findIndex(i=>i.id===id)+Number(b.dataset.mover)); b.focus(); return; }
         if (b.hasAttribute('data-recolher')) { fechados.has(id) ? fechados.delete(id) : fechados.add(id); }
         if (b.hasAttribute('data-ocultar')) { ocultos.add(id); barra.querySelector('summary').focus(); }
         pintar(); salvar(); if (!ocultos.has(id)) b.focus();
