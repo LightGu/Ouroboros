@@ -226,6 +226,19 @@ const Nuvem = {
     return data;
   },
 
+  async importarCriatura(registro, arquivo) {
+    // Identidade estável por dono e fonte: repetir o lote não duplica cadastros.
+    const dono = App.sessao.user.id;
+    const hash = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(dono + '|' + registro.source_key));
+    const hex = Array.from(new Uint8Array(hash), b => b.toString(16).padStart(2, '0')).join('');
+    const id = `${hex.slice(0, 8)}-${hex.slice(8, 12)}-5${hex.slice(13, 16)}-a${hex.slice(17, 20)}-${hex.slice(20, 32)}`;
+    const { data, error } = await this.cliente.from('bestiary').select('*').eq('id', id).maybeSingle();
+    if (error) throw error;
+    if (data) return { criatura: data, existente: true };
+    const { name, element, vd, type, tags, notes } = registro;
+    return { criatura: await this.criarCriatura({ id, name, element, vd, type, tags, notes }, arquivo), existente: false };
+  },
+
   async imagemCriatura(caminho) {
     const { data, error } = await this.cliente.storage.from('bestiary-images').download(caminho);
     if (error) throw error;

@@ -532,3 +532,48 @@ Essas verificações no Supabase real dependem da aplicação da migração.
 Testes locais: `node tests/bestiario.test.cjs` e
 `node tests/bestiario-interface.cjs` (Chrome instalado; `CHROME_PATH` opcional).
 O teste de interface usa dados simulados e não acessa o Supabase.
+
+### Popular o bestiário com os livros locais
+
+O SQL v14 cria a estrutura vazia. O conteúdo dos PDFs é importado separadamente.
+Foi preparado um lote local em `bestiario/lote/` com **174 fichas** (aprox. 189 MB):
+
+| Fonte disponível no projeto | Fichas |
+| --- | ---: |
+| Ordem Paranormal v1.1 | 67 |
+| Sobrevivendo ao Horror v1.2 | 30 |
+| Arquivos Secretos 01 — arquivo Corrigido | 11 |
+| Arquivos Secretos 02 | 23 |
+| Arquivos Secretos 03 | 18 |
+| Arquivos Secretos 04 v1.1 | 4 |
+| Arquivos Secretos 05 v1.1 | 10 |
+| Arquivos Secretos 06 v1.1 | 11 |
+
+Inclui fichas de criaturas, animais e pessoas; versões com VD diferente têm
+cadastros próprios. O segundo PDF do AS01 foi excluído como edição duplicada.
+O AS07 disponível é uma HQ de nove páginas sem fichas de combate. Referências
+narrativas e variantes sem ficha própria não geram estatísticas inventadas.
+A cobertura se limita aos PDFs disponíveis nesta pasta, não a livros ausentes.
+
+Para enviar ao Supabase:
+
+1. Abra o site atualizado e entre como mestre.
+2. Em **Bestiário → Importar lote dos livros**, selecione a pasta `bestiario/lote`.
+3. Confira a quantidade e clique em **Importar**. Aguarde o progresso terminar.
+
+Nenhum novo SQL é necessário depois do v14. O envio usa sua sessão autenticada e
+as mesmas permissões do cadastro individual. Se houver falhas, tente novamente;
+a identidade por fonte e dono impede duplicatas ao retomar o lote. Fechar a tela
+interrompe o lote após a requisição em andamento. Não envie credenciais em chat.
+
+As páginas foram renderizadas como imagens, sem OCR, usando um índice de nomes,
+VD, tipo e elemento. Elemento indica o principal/primeiro elemento da ficha;
+a imagem contém os demais detalhes. Fichas extensas juntam suas páginas numa
+imagem vertical. Páginas compartilhadas preservam também as outras fichas da
+página para evitar recortes incompletos. As observações registram o PDF e suas
+páginas (numeração do arquivo, não necessariamente a impressa).
+
+`bestiario/` está fora do Git e do deploy. Guarde uma cópia local dessa pasta:
+ela contém o índice revisado e o lote. Para regenerar as imagens a partir desse
+índice e dos PDFs, rode `python3 sql/gerar-bestiario.py` (Poppler + Pillow).
+Teste da importação: `node tests/bestiario-lote.test.cjs`.

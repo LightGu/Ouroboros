@@ -12,3 +12,6 @@ catalogo/
 preview-barras.html
 exemplos/
 __pycache__/
+
+# Fichas extraídas dos livros: importação local para o bucket privado.
+bestiario/

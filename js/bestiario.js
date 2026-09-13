@@ -55,7 +55,7 @@ const Bestiario = {
       return `<label class="campo"><span>${titulo}</span><select data-best-filtro="${chave}"><option value="">Todos</option>${valores.map(v => `<option value="${esc(v)}" ${this.filtros[chave] === v ? 'selected' : ''}>${esc(v)}</option>`).join('')}</select></label>`;
     };
     $('#view-bestiario').innerHTML = `
-      <header class="best-topo"><div><h1>Bestiário</h1><p>Seu acervo privado de criaturas.</p></div><button class="btn btn-primary" id="best-novo">+ Criatura</button></header>
+      <header class="best-topo"><div><h1>Bestiário</h1><p>Seu acervo privado de criaturas.</p></div><div class="best-tags"><button class="btn" id="best-importar">Importar lote dos livros</button><button class="btn btn-primary" id="best-novo">+ Criatura</button></div></header>
       <div class="best-filtros">
         <label class="campo"><span>Buscar por nome</span><input type="search" data-best-filtro="name" value="${esc(this.filtros.name || '')}" placeholder="Nome da criatura"></label>
         ${filtro('element', 'Elemento')}${filtro('vd', 'VD')}${filtro('type', 'Tipo')}${filtro('tags', 'Tag')}
@@ -63,6 +63,7 @@ const Bestiario = {
       </div>
       <p id="best-contagem" class="fraco" role="status"></p><div id="best-lista" class="best-grade"></div>`;
     $('#best-novo').onclick = () => this.cadastrar();
+    $('#best-importar').onclick = () => this.importarLote();
     $('#best-limpar').onclick = () => { this.filtros = {}; this.render(); };
     $$('[data-best-filtro]').forEach(el => el.addEventListener(el.tagName === 'INPUT' ? 'input' : 'change', () => {
       this.filtros[el.dataset.bestFiltro] = el.value;
@@ -113,6 +114,98 @@ const Bestiario = {
       if (versao === this.versao) $('#best-imagem').innerHTML = `<p role="alert">Não consegui abrir a imagem: ${esc(e.message || e)}</p><button class="btn" id="best-imagem-repetir">Tentar novamente</button>`;
       $('#best-imagem-repetir')?.addEventListener('click', () => this.abrir(id));
     }
+  },
+
+  prepararLote(arquivos, manifesto) {
+    if (manifesto.version !== 1 || !Array.isArray(manifesto.creatures) || !manifesto.creatures.length)
+      throw new Error('Manifesto de importação inválido.');
+    const mapa = new Map();
+    for (const arquivo of arquivos) {
+      if (mapa.has(arquivo.name)) throw new Error('Há arquivos com nomes repetidos na pasta.');
+      mapa.set(arquivo.name, arquivo);
+    }
+    const chaves = new Set();
+    return manifesto.creatures.map(r => {
+      if (!r || typeof r.source_key !== 'string' || !/^[a-zA-Z0-9_-]{1,100}$/.test(r.source_key) || chaves.has(r.source_key))
+        throw new Error('Identificador de origem inválido ou repetido.');
+      chaves.add(r.source_key);
+      if (typeof r.name !== 'string' || !r.name.trim() || r.name.length > 200 ||
+          !Number.isInteger(r.vd) || r.vd < 0 || r.vd > 2147483647 ||
+          !Array.isArray(r.tags) || r.tags.some(t => typeof t !== 'string') ||
+          [r.element, r.type, r.notes].some(v => v != null && typeof v !== 'string'))
+        throw new Error('Metadados inválidos para ' + (r.name || 'uma criatura') + '.');
+      const arquivo = mapa.get(r.image_file);
+      if (!arquivo || !/\.(jpg|jpeg|png|webp)$/i.test(arquivo.name) || !arquivo.size || arquivo.size > 20 * 1024 * 1024)
+        throw new Error('Imagem ausente ou inválida: ' + r.image_file);
+      return { registro: r, arquivo };
+    });
+  },
+
+  importarLote() {
+    if (!App.ehMestre) return;
+    let lote = null, executando = false;
+    Modal.abrir({
+      titulo: 'Importar fichas dos livros', confirmar: 'Importar', largo: true,
+      corpo: `<div id="best-lote">
+        <p class="dialogo">Selecione a pasta do lote preparado com as imagens e o arquivo manifest.json.</p>
+        <label class="campo"><span>Pasta do lote</span><input id="best-lote-pasta" type="file" webkitdirectory multiple></label>
+        <p class="fraco">As fichas serão enviadas ao seu bestiário privado. Cadastros deste lote já importados serão pulados. Se interromper, selecione a mesma pasta para continuar.</p>
+        <p id="best-lote-status" role="status" aria-live="polite">Nenhuma pasta selecionada.</p>
+        <progress id="best-lote-progresso" hidden></progress>
+        <div id="best-lote-erros" role="alert"></div>
+      </div>`,
+      onConfirmar: async () => {
+        if (!lote || executando) return false;
+        executando = true;
+        const raiz = $('#best-lote'), status = $('#best-lote-status'), progresso = $('#best-lote-progresso');
+        const botao = $('[data-modal-ok]'), input = $('#best-lote-pasta');
+        const versao = this.versao, dono = App.sessao.user.id;
+        botao.disabled = true; input.disabled = true;
+        progresso.hidden = false; progresso.max = lote.length; progresso.value = 0;
+        let novos = 0, existentes = 0;
+        const erros = [];
+        for (let i = 0; i < lote.length; i++) {
+          if (this.versao !== versao || App.sessao?.user?.id !== dono || $('#best-lote') !== raiz || $('#modal').hidden) break;
+          const { registro, arquivo } = lote[i];
+          status.textContent = `${i + 1}/${lote.length} — ${registro.name}`;
+          try {
+            const resultado = await Nuvem.importarCriatura(registro, arquivo);
+            if (resultado.existente) existentes++; else novos++;
+            if (this.versao === versao && !this.lista.some(c => c.id === resultado.criatura.id)) this.lista.push(resultado.criatura);
+          } catch (e) { erros.push(registro.name + ': ' + (e.message || e)); }
+          progresso.value = i + 1;
+        }
+        if (this.versao === versao) { this.lista.sort((a, b) => a.name.localeCompare(b.name, 'pt-BR')); this.render(); }
+        if ($('#best-lote') === raiz) {
+          status.textContent = `${novos} importadas · ${existentes} já existentes · ${erros.length} falhas.`;
+          $('#best-lote-erros').textContent = erros.join('\n');
+          botao.disabled = false; botao.textContent = erros.length ? 'Tentar novamente' : 'Concluir';
+          input.disabled = !erros.length;
+          if (!erros.length) Modal.aoConfirmar = null;
+        }
+        executando = false;
+        return false;
+      }
+    });
+    const input = $('#best-lote-pasta');
+    $('[data-modal-ok]').disabled = true;
+    input.addEventListener('change', async () => {
+      lote = null;
+      const arquivos = Array.from(input.files);
+      const manifestos = arquivos.filter(f => f.name === 'manifest.json');
+      try {
+        if (manifestos.length !== 1 || manifestos[0].size > 5 * 1024 * 1024) throw new Error('Selecione a pasta que contém um único manifest.json.');
+        const texto = await manifestos[0].text();
+        if ($('#best-lote-pasta') !== input) return;
+        lote = this.prepararLote(arquivos, JSON.parse(texto));
+        $('#best-lote-status').textContent = `${lote.length} fichas prontas para importar (${Math.ceil(lote.reduce((n, e) => n + e.arquivo.size, 0) / 1024 / 1024)} MB).`;
+        $('[data-modal-ok]').disabled = false;
+      } catch (e) {
+        if ($('#best-lote-pasta') !== input) return;
+        $('#best-lote-status').textContent = e.message || String(e);
+        $('[data-modal-ok]').disabled = true;
+      }
+    });
   },
 
   cadastrar() {

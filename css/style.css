@@ -2327,3 +2327,5 @@ button, .aba, .chip, select, label { touch-action: manipulation; }
 @media (max-width: 900px) {
   .tabela-habilidades .tabela-cab { display: grid; }
 }
+#best-lote-progresso { width: 100%; margin: 12px 0; }
+#best-lote-erros { white-space: pre-wrap; color: #ef8878; max-height: 200px; overflow: auto; }

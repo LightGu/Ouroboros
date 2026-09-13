@@ -12,3 +12,6 @@ catalogo/
 preview-barras.html
 exemplos/
 __pycache__/
+
+# Fichas dos livros ficam exclusivamente no bucket privado.
+bestiario/
