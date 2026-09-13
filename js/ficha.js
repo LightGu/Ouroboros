@@ -100,7 +100,7 @@ const Ficha = {
           </div>
           <div class="grade-4">
             <label class="campo"${dica(AJUDA.campos.nex)}><span>NEX %</span><input type="number" data-bind="nex" value="${num(p.nex)}" min="0" max="99" step="5"></label>
-            <label class="campo"${dica(AJUDA.campos.desl)}><span>Deslocamento</span><input type="number" data-bind="desl" value="${num(p.desl)}"></label>
+            <label class="campo"${dica(AJUDA.campos.desl)}><span>Deslocamento</span><input type="number" data-bind="desl" step="1.5" value="${num(p.desl)}"></label>
             <label class="campo"${dica(AJUDA.campos.peRodada)}><span>PE / turno</span><input data-bind="peRodada" value="${esc(p.peRodada)}"></label>
             <label class="campo"${dica(AJUDA.campos.patente)}><span>Patente</span>
               <input data-bind="patente" value="${esc(p.patente)}" list="dl-patentes">
