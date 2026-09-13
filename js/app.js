@@ -104,6 +104,10 @@ const App = {
   /* O mestre mexeu nos turnos: todo mundo acompanha. */
   mesaMudou(nova) {
     if (!this.mesa) return;
+    if (nova.logs_limpos_em !== this.mesa.logs_limpos_em && this.ehMestre) { Logs.limparBadge(); Logs.carregar(); }
+    if (nova.rolagens_limpas_em !== this.mesa.rolagens_limpas_em) Rolagem.carregar();
+    this.mesa.logs_limpos_em = nova.logs_limpos_em;
+    this.mesa.rolagens_limpas_em = nova.rolagens_limpas_em;
     this.mesa.combate = nova.combate;
     this.mesa.nome = nova.nome;
     Store.estado.combate = nova.combate || Store.estado.combate;
@@ -277,6 +281,7 @@ const App = {
     $('#file-importar').addEventListener('change', e => this.importarArquivo(e));
 
     $('#logs-busca').addEventListener('input', () => Logs.render());
+    $('#btn-logs-limpar').addEventListener('click', () => Logs.confirmarLimpeza());
     $('#btn-logs-atualizar').addEventListener('click', () => Logs.carregar());
   },
 

@@ -86,7 +86,13 @@ const Rolagem = {
   /* ---------------- painel ---------------- */
 
   async carregar() {
-    try { this.itens = await Nuvem.rolagens(App.mesa.id); this.render(); }
+    const mesaId = App.mesa?.id;
+    const carga = this.carga = (this.carga || 0) + 1;
+    try {
+      const itens = await Nuvem.rolagens(mesaId);
+      if (App.mesa?.id !== mesaId || this.carga !== carga) return;
+      this.itens = itens; this.render();
+    }
     catch (e) { console.error(e); }
   },
 
@@ -135,9 +141,11 @@ const Rolagem = {
 
   ligar() {
     $('#linha-secreta').hidden = !App.ehMestre;
+    $('#rolagens-limpar').hidden = !App.ehMestre;
     if (this._ligado) return;      /* trocar de mesa não pode empilhar listener */
     this._ligado = true;
     $('#btn-rolagens').addEventListener('click', () => this.alternar());
+    $('#rolagens-limpar').addEventListener('click', () => Logs.confirmarLimpeza('rolagens'));
     $('#rolagens-fechar').addEventListener('click', () => this.fechar());
     $('#btn-rolar-livre').addEventListener('click', () => {
       const t = $('#rolagem-livre').value.trim();

@@ -264,6 +264,11 @@ const Nuvem = {
 
   /* ---------------- logs ---------------- */
 
+  async limparHistorico(mesaId, tipo) {
+    const { error } = await this.cliente.rpc('limpar_historico', { p_mesa: mesaId, p_tipo: tipo });
+    if (error) throw error;
+  },
+
   async logs(mesaId, limite = 200) {
     const { data, error } = await this.cliente
       .from('logs').select('*').eq('mesa_id', mesaId)

@@ -1820,16 +1820,10 @@ body.com-painel .view { padding-right: 352px; }
    DONO DO PERSONAGEM
    =========================================================== */
 
-/* a borda colorida diz de quem é a ficha num relance */
-.card.tem-dono {
+/* A cor escolhida identifica o personagem pelo contorno do retrato. */
+.card.tem-dono .retrato-moldura {
   border-color: var(--dono);
-  box-shadow: inset 3px 0 0 var(--dono);
-}
-.card.tem-dono:hover { box-shadow: inset 3px 0 0 var(--dono), 0 0 18px -6px var(--dono); }
-/* quem está na vez continua tendo prioridade visual */
-.card.na-vez.tem-dono {
-  border-color: var(--roxo);
-  box-shadow: inset 3px 0 0 var(--dono), 0 0 0 1px var(--roxo), 0 0 30px rgba(124,58,237,.34);
+  box-shadow: 0 0 0 1px var(--dono), 0 4px 18px #000a;
 }
 
 .btn-assumir {

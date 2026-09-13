@@ -4,12 +4,44 @@ const Logs = {
   itens: [],
   naoLidos: 0,
 
+  confirmarLimpeza(tipo = 'logs') {
+    if (!App.ehMestre || !App.mesa || !['logs', 'rolagens'].includes(tipo)) return;
+    const mesaId = App.mesa.id;
+    let limpando = false;
+    Modal.abrir({
+      titulo: tipo === 'logs' ? 'Limpar logs gerais' : 'Limpar rolagens',
+      corpo: `<p>Apagar todo o histórico de ${tipo === 'logs' ? 'logs gerais' : 'rolagens, incluindo as secretas'} desta mesa? Esta ação não pode ser desfeita.</p><p id="limpar-historico-erro" role="alert"></p>`,
+      confirmar: 'Apagar histórico',
+      onConfirmar: async () => {
+        if (limpando || App.mesa?.id !== mesaId || !App.ehMestre) return false;
+        limpando = true;
+        const botao = $('[data-modal-ok]'), erro = $('#limpar-historico-erro');
+        botao.disabled = true;
+        try {
+          await Nuvem.limparHistorico(mesaId, tipo);
+          if (App.mesa?.id === mesaId) {
+            if (tipo === 'logs') { this.limparBadge(); await this.carregar(); }
+            else await Rolagem.carregar();
+            toast('Histórico apagado.');
+          }
+          return $('#limpar-historico-erro') === erro;
+        } catch (e) { erro.textContent = 'Não consegui limpar: ' + (e.message || e); return false; }
+        finally { limpando = false; botao.disabled = false; }
+      }
+    });
+  },
+
   async carregar() {
     if (!App.ehMestre) return;
+    const mesaId = App.mesa?.id;
+    const carga = this.carga = (this.carga || 0) + 1;
     try {
-      this.itens = await Nuvem.logs(App.mesa.id);
+      const itens = await Nuvem.logs(mesaId);
+      if (App.mesa?.id !== mesaId || this.carga !== carga) return;
+      this.itens = itens;
       this.render();
     } catch (e) {
+      if (App.mesa?.id !== mesaId || this.carga !== carga) return;
       $('#logs-lista').innerHTML = `<p class="vazio-linha">Não consegui carregar: ${esc(e.message || e)}</p>`;
     }
   },
