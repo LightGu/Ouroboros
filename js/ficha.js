@@ -627,7 +627,12 @@ const Ficha = {
     raiz.addEventListener('click', e => {
       const consulta = e.target.closest('[data-ver-item]');
       if (consulta) {
-        const aberta = consulta.closest('.item-descricao').classList.toggle('aberta');
+        const caixa = consulta.closest('.item-descricao');
+        const aberta = caixa.classList.toggle('aberta');
+        if (!aberta) {
+          caixa.classList.remove('editando');
+          caixa.querySelector('[data-editar-item]')?.setAttribute('aria-expanded', 'false');
+        }
         consulta.setAttribute('aria-expanded', String(aberta));
         return;
       }
@@ -636,6 +641,8 @@ const Ficha = {
         if (!Store.podeEditar(this.atual)) return;
         const caixa = editarItem.closest('.item-descricao');
         const editando = caixa.classList.toggle('editando');
+        caixa.classList.add('aberta');
+        caixa.querySelector('[data-ver-item]').setAttribute('aria-expanded', 'true');
         editarItem.setAttribute('aria-expanded', String(editando));
         if (editando) caixa.querySelector('textarea').focus();
         return;

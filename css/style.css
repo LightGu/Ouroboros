@@ -509,14 +509,14 @@ textarea { resize: vertical; }
 
 .campo { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
 .campo > span { font-size: 10.5px; letter-spacing: .13em; text-transform: uppercase; color: var(--texto-3); font-weight: 600; }
-.campo input, .campo select, .campo textarea, .tabela input, .tabela select {
+.campo input, .campo select, .campo textarea, .tabela input, .tabela select, .tabela textarea {
   width: 100%; padding: 8px 10px;
   background: var(--bg-2); border: 1px solid var(--linha); border-radius: 8px;
   transition: border-color .15s, background .15s;
 }
 .campo input:focus, .campo select:focus, .campo textarea:focus,
-.tabela input:focus, .tabela select:focus { outline: none; border-color: var(--roxo); background: #0f1014; }
-.campo input::placeholder, .campo textarea::placeholder, .tabela input::placeholder { color: #4b515d; }
+.tabela input:focus, .tabela select:focus, .tabela textarea:focus { outline: none; border-color: var(--roxo); background: #0f1014; }
+.campo input::placeholder, .campo textarea::placeholder, .tabela input::placeholder, .tabela textarea::placeholder { color: #4b515d; }
 .campo-destaque input { font-family: var(--display); font-size: 22px; padding: 10px 12px; }
 .campo-curto { max-width: 180px; margin-bottom: 14px; }
 
@@ -2459,12 +2459,7 @@ button, .aba, .chip, select, label { touch-action: manipulation; }
 .item-descricao-acoes { display: flex; align-items: center; gap: 8px; }
 .item-descricao-acoes [data-ver-item] { width: auto; font-size: 11px; }
 .item-descricao-corpo { display: none; padding: 12px; margin-top: 6px; background: var(--painel-2); border: 1px solid var(--linha); border-radius: 8px; }
-.item-descricao.aberta .item-descricao-corpo,
-.item-descricao.editando .item-descricao-corpo,
-.item-descricao:focus-within .item-descricao-corpo { display: block; }
-@media (hover: hover) {
-  .tabela-itens .tabela-linha:hover .item-descricao-corpo { display: block; }
-}
+.item-descricao.aberta .item-descricao-corpo { display: block; }
 .item-descricao-texto { white-space: pre-wrap; overflow-wrap: anywhere; line-height: 1.65; margin: 0 0 8px; font-size: 13px; }
 .item-descricao .item-descricao-editor { display: none; }
 .item-descricao.editando .item-descricao-editor { display: flex; }
