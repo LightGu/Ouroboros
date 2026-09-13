@@ -1,4 +1,4 @@
-/* Cena de interlúdio: marca as ações de cada agente e aplica a recuperação */
+/* Guia de consulta e cena de interlúdio com recuperação dos agentes. */
 
 const CONFORTOS = [
   { id: 'precario',    nome: 'Precário',    mult: 0.5, ex: 'dentro do carro, barraca' },
@@ -83,6 +83,8 @@ const Interludio = {
 
   render() {
     if (!App.ehMestre) return;
+    const consultas = $('#guia-consultas');
+    if (!consultas.childElementCount) consultas.innerHTML = this.guia();
     this.renderBarra();
     const alvo = $('#interludio-corpo');
     const lista = this.elegíveis();
@@ -105,6 +107,44 @@ const Interludio = {
       </div>`;
 
     this.ligarCartoes();
+  },
+
+  guia() {
+    return `
+      <details class="guia-secao" open>
+        <summary>Atributos e perícias <span>Qual atributo usar no teste</span></summary>
+        <div class="guia-conteudo">
+          <table class="guia-tabela">
+            <caption>Perícias normalmente associadas a cada atributo</caption>
+            <thead><tr><th scope="col">Atributo</th><th scope="col">Perícias</th></tr></thead>
+            <tbody>${ATRIBUTOS.map(a => `<tr>
+              <th scope="row">${esc(a.key)} — ${esc(a.nome)}</th>
+              <td>${PERICIAS.filter(p => p.attr === a.key).map(p => esc(p.nome) + (p.treinada ? '*' : '')).join(', ')}</td>
+            </tr>`).join('')}</tbody>
+          </table>
+          <p class="guia-nota">* Perícias que exigem treinamento, conforme a ficha.</p>
+        </div>
+      </details>
+      <details class="guia-secao">
+        <summary>Testes e bônus <span>Lembretes da rolagem da ficha</span></summary>
+        <div class="guia-conteudo guia-dicas">
+          <p><b>Dados do atributo.</b> A ficha rola tantos d20 quanto o valor do atributo e usa o maior. Com atributo 0, rola 2d20 e usa o menor.</p>
+          <p><b>Bônus de treinamento.</b> ${TREINO.map(t => `${esc(t.label)}: +${t.v}`).join(' · ')}.</p>
+          <p><b>Antes de rolar.</b> Confira o atributo, o treinamento, os bônus de aliados e o campo “Outros” da perícia.</p>
+          <p><b>Defesa na ficha.</b> 10 + Agilidade + equipamento + outros bônus de Defesa.</p>
+        </div>
+      </details>
+      <details class="guia-secao">
+        <summary>Conduzir a cena <span>Sugestões de narração para você validar</span></summary>
+        <div class="guia-conteudo guia-dicas">
+          <p class="guia-nota">Dicas de condução, para adaptar ao estilo da sua mesa.</p>
+          <p><b>Antes do teste.</b> Pergunte o que o personagem quer conseguir e como vai tentar. Deixe claro o risco antes da rolagem.</p>
+          <p><b>Quando pedir dados.</b> Se não há incerteza ou consequência interessante, considere deixar a ação acontecer e seguir a cena.</p>
+          <p><b>Investigação sem travar.</b> Pense em mais de um caminho até a pista essencial. Uma falha pode custar tempo, chamar atenção ou entregar só parte da informação.</p>
+          <p><b>Divida os holofotes.</b> Depois de uma ação importante, convide quem falou menos a dizer o que está fazendo.</p>
+          <p><b>Fechamento da sessão.</b> Anote pistas encontradas, perguntas em aberto, nomes improvisados e consequências que precisam voltar na próxima sessão.</p>
+        </div>
+      </details>`;
   },
 
   cartao(p) {
