@@ -8,12 +8,16 @@ let html=fs.readFileSync(root+'/index.html','utf8').replace(/<script[\s\S]*?<\/s
 const code=['dados','ui','bestiario'].map(f=>fs.readFileSync(root+'/js/'+f+'.js','utf8')).join('\n');
 const checks=`
 window.App={ehMestre:true,sessao:{user:{id:'dono'}}};
+window.Store={mesaId:'mesa',criarDoBestiario:async c=>{window.adicionada=c.id;}};
 window.Nuvem={bestiario:async()=>[{id:'a',name:'Criatura Ágil',element:'Sangue',vd:0,type:'Animal',tags:['floresta'],notes:'Teste',image_path:'a.png'}],imagemCriatura:async()=>new Blob(['teste'],{type:'image/png'})};
 function check(v,msg){if(!v)throw new Error(msg);}
 (async()=>{
  document.querySelector('#view-bestiario').hidden=false;
  await Bestiario.carregar();
  check(document.querySelectorAll('.best-card').length===1,'card');
+ await Bestiario.adicionar('a',document.querySelector('[data-best-adicionar]'));
+ check(window.adicionada==='a','adicionar aos turnos');
+ check(!document.querySelector('button button'),'sem botões aninhados');
  const busca=document.querySelector('[data-best-filtro="name"]');
  busca.value='agil';busca.dispatchEvent(new Event('input'));
  check(document.querySelectorAll('.best-card').length===1,'busca sem acento');

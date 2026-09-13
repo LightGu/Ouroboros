@@ -200,7 +200,7 @@ const App = {
 
   /* ---------------- navegação ---------------- */
 
-  mostrar(tela) {
+  mostrar(tela, bestiarioId) {
     if (tela === 'bestiario' && !this.ehMestre) return;
     if (tela !== 'bestiario') Bestiario.limpar();
     this.telaAtual = tela;
@@ -209,12 +209,13 @@ const App = {
     });
     $('#topbar').hidden = tela === 'auth' || tela === 'mesas';
     $$('.aba').forEach(a => a.classList.toggle('ativa', a.dataset.aba === tela));
+    if (tela === 'mesa') Mesa.render();
     if (tela === 'logs') { Logs.limparBadge(); Logs.render(); }
     if (tela === 'mapa') Mapa.render();
     if (tela === 'sons') Sons.render();
     if (tela === 'campanha') Campanha.render();
     if (tela === 'interludio') Interludio.render();
-    if (tela === 'bestiario') Bestiario.carregar();
+    if (tela === 'bestiario') Bestiario.carregar(bestiarioId);
     if (tela === 'mensagens') Mensagens.render();
     if (tela !== 'campanha') $('#painel-nota').hidden = true;
   },

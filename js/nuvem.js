@@ -202,7 +202,7 @@ const Nuvem = {
     }
   },
 
-  async criarCriatura(campos, arquivo) {
+  async criarCriatura(campos, arquivo, atualizar = false) {
     const extensoes = { 'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp' };
     if (!arquivo || !extensoes[arquivo.type]) throw new Error('Escolha uma imagem PNG, JPG ou WebP.');
     if (!arquivo.size || arquivo.size > 20 * 1024 * 1024) throw new Error('A imagem deve ter até 20 MB e não pode estar vazia.');
@@ -211,10 +211,13 @@ const Nuvem = {
     const bucket = this.cliente.storage.from('bestiary-images');
     const { error: uploadError } = await bucket.upload(image_path, arquivo, { contentType: arquivo.type, upsert: false });
     if (uploadError) throw uploadError;
-    const { data, error } = await this.cliente.from('bestiary')
-      .insert({ ...campos, owner_id, image_path }).select().single();
+    const tabela = this.cliente.from('bestiary');
+    const gravacao = atualizar
+      ? tabela.update({ image_path, image_revision: campos.image_revision, notes: campos.notes }).eq('id', campos.id).eq('owner_id', owner_id)
+      : tabela.insert({ ...campos, owner_id, image_path });
+    const { data, error } = await gravacao.select().single();
     if (error) {
-      // Uma resposta perdida pode esconder um INSERT que foi concluído.
+      // Uma resposta perdida pode esconder uma gravação que foi concluída.
       const ver = await this.cliente.from('bestiary').select('*').eq('image_path', image_path).maybeSingle();
       if (ver.data) return ver.data;
       if (!ver.error) {
@@ -234,9 +237,11 @@ const Nuvem = {
     const id = `${hex.slice(0, 8)}-${hex.slice(8, 12)}-5${hex.slice(13, 16)}-a${hex.slice(17, 20)}-${hex.slice(20, 32)}`;
     const { data, error } = await this.cliente.from('bestiary').select('*').eq('id', id).maybeSingle();
     if (error) throw error;
-    if (data) return { criatura: data, existente: true };
+    if (data && (data.image_revision || 1) >= (registro.image_revision || 1)) return { criatura: data, existente: true };
     const { name, element, vd, type, tags, notes } = registro;
-    return { criatura: await this.criarCriatura({ id, name, element, vd, type, tags, notes }, arquivo), existente: false };
+    const campos = { id, name, element, vd, type, tags, notes };
+    if (registro.image_revision) campos.image_revision = registro.image_revision;
+    return { criatura: await this.criarCriatura(campos, arquivo, !!data), existente: !!data, atualizado: !!data };
   },
 
   async imagemCriatura(caminho) {

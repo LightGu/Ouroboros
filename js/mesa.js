@@ -74,7 +74,8 @@ const Mesa = {
         ${this.municoes(p)}
         ${this.condicoes(p)}
 
-        ${this.barra(p, 'pv', 'PV')}
+        ${p.bestiarioId && !p.pv.max ? '<p class="fraco">PV não informado — consulte a ficha e edite.</p>' : this.barra(p, 'pv', 'PV')}
+        ${p.bestiarioId && Store.ehMestre ? '<button class="btn" data-bestiario-ficha>Ficha do inimigo</button>' : ''}
 
         ${pode ? '' : '<p class="aviso-leitura">Só quem é dono da ficha (ou o mestre) pode mexer.</p>'}
 
@@ -674,6 +675,8 @@ document.addEventListener('click', e => {
     p.condicoes.splice(Number(rem.dataset.remcond), 1);
     Store.salvar(p); return Mesa.render();
   }
+
+  if (e.target.closest('[data-bestiario-ficha]') && Store.ehMestre) return App.mostrar('bestiario', Store.obter(id).bestiarioId);
 
   if (e.target.closest('[data-abrir]')) {
     const p = Store.obter(id);

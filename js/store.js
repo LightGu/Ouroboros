@@ -82,6 +82,21 @@ const Store = {
     return p;
   },
 
+  async criarDoBestiario(criatura) {
+    if (!this.ehMestre || !this.mesaId) throw new Error('Abra uma mesa como mestre.');
+    const mesaId = this.mesaId, donoId = App.sessao.user.id;
+    const p = this.fichaVazia();
+    Object.assign(p, { rapido: true, oculto: true, donoId,
+      nome: criatura.name, classe: [criatura.type, criatura.element, criatura.vd == null ? '' : 'VD ' + criatura.vd].filter(Boolean).join(' · '),
+      bestiarioId: criatura.id, ordem: Math.max(-1, ...this.estado.personagens.map(p => Number(p.ordem) || 0)) + 1 });
+    p.id = await Nuvem.criarPersonagem(p, mesaId);
+    if (this.mesaId === mesaId && App.sessao?.user?.id === donoId) {
+      if (!this.obter(p.id)) this.estado.personagens.push(p);
+      this.guardarCache();
+    }
+    return p;
+  },
+
   obter(id) {
     return this.estado.personagens.find(p => p.id === id);
   },

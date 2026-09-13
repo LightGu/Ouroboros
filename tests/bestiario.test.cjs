@@ -39,6 +39,18 @@ B.filtros.tags = 'chefe'; assert.equal(B.filtrar().length, 0);
   });
   assert.equal((await N.criarCriatura({ name:'A' }, file)).id, 'salvo');
   assert.equal(removes, 1); // Não apaga imagem de cadastro confirmado.
+  const filtros = [];
+  N.cliente.from = () => ({ update: p => {
+    payload = p;
+    const query = { eq: (k,v) => { filtros.push([k,v]); return query; },
+      select: () => ({ single: async () => ({data:{id:'c',...p}}) }) };
+    return query;
+  }});
+  const atualizada = await N.criarCriatura({id:'c',name:'Não substituir',image_revision:2,notes:'Nova fonte'},file,true);
+  assert.equal(atualizada.image_revision,2);
+  assert.deepEqual(filtros,[['id','c'],['owner_id','mestre']]);
+  assert.equal(payload.name,undefined); // Mantém os metadados editados pelo dono.
+  assert.equal(removes,1); // A revisão não apaga o arquivo antigo.
   let paginas = 0;
   N.cliente.from = () => ({ select: () => ({ order() { return this; }, range: async () => ({ data: ++paginas === 1 ? Array(500).fill({ id:'c' }) : [{ id:'fim' }] }) }) });
   assert.equal((await N.bestiario()).length, 501);

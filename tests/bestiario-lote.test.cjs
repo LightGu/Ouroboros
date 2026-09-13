@@ -21,9 +21,13 @@ assert.throws(()=>B.prepararLote([arquivo],{version:1,creatures:[{...registro,so
  assert.match(a.criatura.id,/^[0-9a-f]{8}-[0-9a-f]{4}-5[0-9a-f]{3}-a[0-9a-f]{3}-[0-9a-f]{12}$/);
  assert.equal((await N.importarCriatura(registro,arquivo)).existente,true);
  assert.equal(uploads,1);
+ const revisado=await N.importarCriatura({...registro,image_revision:2},arquivo);
+ assert.equal(revisado.atualizado,true);assert.equal(revisado.criatura.id,a.criatura.id);
+ assert.equal((await N.importarCriatura({...registro,image_revision:2},arquivo)).atualizado,undefined);
+ assert.equal(uploads,2);
  ctx.App.sessao.user.id='dono-b';
  const b=await N.importarCriatura(registro,arquivo);
  assert.notEqual(a.criatura.id,b.criatura.id);
- assert.equal(uploads,2);
+ assert.equal(uploads,3);
  console.log('Lote: validação de arquivos, metadados, retomada sem duplicatas e separação por dono passaram.');
 })().catch(e=>{console.error(e);process.exitCode=1;});

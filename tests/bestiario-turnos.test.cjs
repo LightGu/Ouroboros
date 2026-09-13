@@ -1,0 +1,26 @@
+const fs = require('node:fs');
+const vm = require('node:vm');
+const assert = require('node:assert/strict');
+const ctx = vm.createContext({console, App:{sessao:{user:{id:'mestre'}}}, Nuvem:{}});
+vm.runInContext(fs.readFileSync('js/store.js','utf8')+'\nglobalThis.store=Store;',ctx);
+const S=ctx.store;
+S.guardarCache=()=>{};
+S.ehMestre=true; S.mesaId='mesa';
+S.estado.personagens=[{id:'jogador',ordem:4}];
+S.estado.combate={ativo:true,indice:0,rodada:6};
+const combate=JSON.stringify(S.estado.combate);
+let n=0;
+ctx.Nuvem.criarPersonagem=async(p,mesa)=>{assert.equal(mesa,'mesa');assert.equal(p.nome,'Nidere');assert.equal(p.oculto,true);assert.equal(p.rapido,true);return 'inimigo-'+ ++n;};
+(async()=>{
+ const c={id:'best-1',name:'Nidere',vd:320,type:'Criatura',element:'Morte'};
+ const p=await S.criarDoBestiario(c);
+ assert.equal(p.bestiarioId,c.id);assert.equal(p.ordem,5);assert.equal(p.pv.max,0);
+ assert.equal(S.estado.personagens[1].id,p.id);
+ assert.equal(JSON.stringify(S.estado.combate),combate);
+ await S.criarDoBestiario(c);assert.equal(S.estado.personagens.length,3);
+ assert.notEqual(S.estado.personagens[1].id,S.estado.personagens[2].id);
+ ctx.Nuvem.criarPersonagem=async()=>{throw Error('offline');};
+ await assert.rejects(()=>S.criarDoBestiario(c),/offline/);assert.equal(S.estado.personagens.length,3);
+ S.ehMestre=false;await assert.rejects(()=>S.criarDoBestiario(c),/mestre/);
+ console.log('Bestiário → turnos: persistência, cópias, permissões, falha e combate preservado passaram.');
+})().catch(e=>{console.error(e);process.exitCode=1;});

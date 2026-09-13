@@ -2329,3 +2329,7 @@ button, .aba, .chip, select, label { touch-action: manipulation; }
 }
 #best-lote-progresso { width: 100%; margin: 12px 0; }
 #best-lote-erros { white-space: pre-wrap; color: #ef8878; max-height: 200px; overflow: auto; }
+
+.best-card > [data-best-id] { display: flex; flex-direction: column; align-items: flex-start; gap: 10px; text-align: left; width: 100%; white-space: normal; padding: 0; }
+.best-card > [data-best-id] > span { color: var(--texto-2); }
+.best-card > [data-best-adicionar] { margin-top: auto; }

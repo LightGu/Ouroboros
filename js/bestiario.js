@@ -13,7 +13,7 @@ const Bestiario = {
     $('#view-bestiario').innerHTML = '';
   },
 
-  async carregar() {
+  async carregar(id) {
     if (!App.ehMestre) return;
     this.limpar();
     const versao = this.versao;
@@ -23,6 +23,7 @@ const Bestiario = {
       if (versao !== this.versao) return;
       this.lista = lista;
       this.render();
+      if (id) this.abrir(id);
     } catch (e) {
       if (versao !== this.versao) return;
       $('#view-bestiario').innerHTML = `<p class="vazio-linha" role="alert">Não consegui carregar o bestiário: ${esc(e.message || e)}</p><button class="btn" id="best-repetir">Tentar novamente</button>`;
@@ -76,12 +77,26 @@ const Bestiario = {
     const lista = this.filtrar();
     $('#best-contagem').textContent = `${lista.length} de ${this.lista.length} criatura(s)`;
     $('#best-lista').innerHTML = lista.length ? lista.map(c => `
-      <button class="best-card" data-best-id="${esc(c.id)}"><b>${esc(c.name)}</b>
+      <article class="best-card"><button class="btn btn-ghost" data-best-id="${esc(c.id)}"><b>${esc(c.name)}</b>
         <span>${esc(c.element || 'Sem elemento')} · VD ${c.vd ?? '—'}</span>
         <small>${esc(c.type || '')}</small>
         <span class="best-tags">${(c.tags || []).map(t => `<span class="chip-cat">${esc(t)}</span>`).join('')}</span>
-      </button>`).join('') : `<p class="vazio-linha">${this.lista.length ? 'Nenhuma criatura corresponde aos filtros.' : 'Nenhuma criatura cadastrada. Use “+ Criatura” para começar.'}</p>`;
+      </button><button class="btn" data-best-adicionar="${esc(c.id)}">+ Adicionar à mesa</button></article>`).join('') : `<p class="vazio-linha">${this.lista.length ? 'Nenhuma criatura corresponde aos filtros.' : 'Nenhuma criatura cadastrada. Use “+ Criatura” para começar.'}</p>`;
     $$('[data-best-id]').forEach(b => b.onclick = () => this.abrir(b.dataset.bestId));
+    $$('[data-best-adicionar]').forEach(b => b.onclick = () => this.adicionar(b.dataset.bestAdicionar, b));
+  },
+
+  async adicionar(id, botao) {
+    if (!App.ehMestre || !Store.mesaId || this.adicionando) return;
+    const criatura = this.lista.find(c => c.id === id);
+    if (!criatura) return;
+    this.adicionando = true;
+    botao.disabled = true;
+    try {
+      await Store.criarDoBestiario(criatura);
+      toast(criatura.name + ' adicionado aos turnos, oculto dos jogadores.');
+    } catch (e) { toast('Não consegui adicionar: ' + (e.message || e), 'erro'); }
+    finally { this.adicionando = false; botao.disabled = false; }
   },
 
   async abrir(id) {
@@ -93,8 +108,10 @@ const Bestiario = {
       <header class="best-topo"><div><h1>${esc(c.name)}</h1><p>${esc(c.element || 'Sem elemento')} · VD ${c.vd ?? '—'} · ${esc(c.type || 'Sem tipo')}</p></div></header>
       <p class="best-tags">${(c.tags || []).map(t => `<span class="chip-cat">${esc(t)}</span>`).join('')}</p>
       ${c.notes ? `<p class="best-notas">${esc(c.notes)}</p>` : ''}
+      <button class="btn btn-primary" id="best-adicionar">+ Adicionar à mesa</button>
       <button class="btn" id="best-zoom" hidden>Tamanho original</button>
       <div id="best-imagem" class="best-imagem"><p role="status">Carregando ficha…</p></div>`;
+    $('#best-adicionar').onclick = e => this.adicionar(id, e.currentTarget);
     $('#best-voltar').onclick = () => { this.versao++; this.render(); };
     try {
       const blob = await Nuvem.imagemCriatura(c.image_path);
@@ -134,6 +151,7 @@ const Bestiario = {
           !Array.isArray(r.tags) || r.tags.some(t => typeof t !== 'string') ||
           [r.element, r.type, r.notes].some(v => v != null && typeof v !== 'string'))
         throw new Error('Metadados inválidos para ' + (r.name || 'uma criatura') + '.');
+      if (r.image_revision != null && (!Number.isInteger(r.image_revision) || r.image_revision < 1)) throw new Error('Revisão inválida.');
       const arquivo = mapa.get(r.image_file);
       if (!arquivo || !/\.(jpg|jpeg|png|webp)$/i.test(arquivo.name) || !arquivo.size || arquivo.size > 20 * 1024 * 1024)
         throw new Error('Imagem ausente ou inválida: ' + r.image_file);
@@ -149,7 +167,7 @@ const Bestiario = {
       corpo: `<div id="best-lote">
         <p class="dialogo">Selecione a pasta do lote preparado com as imagens e o arquivo manifest.json.</p>
         <label class="campo"><span>Pasta do lote</span><input id="best-lote-pasta" type="file" webkitdirectory multiple></label>
-        <p class="fraco">As fichas serão enviadas ao seu bestiário privado. Cadastros deste lote já importados serão pulados. Se interromper, selecione a mesma pasta para continuar.</p>
+        <p class="fraco">As fichas serão enviadas ao seu bestiário privado. Fichas com novas ilustrações serão atualizadas; as demais serão puladas. Se interromper, selecione a mesma pasta para continuar.</p>
         <p id="best-lote-status" role="status" aria-live="polite">Nenhuma pasta selecionada.</p>
         <progress id="best-lote-progresso" hidden></progress>
         <div id="best-lote-erros" role="alert"></div>
@@ -162,7 +180,7 @@ const Bestiario = {
         const versao = this.versao, dono = App.sessao.user.id;
         botao.disabled = true; input.disabled = true;
         progresso.hidden = false; progresso.max = lote.length; progresso.value = 0;
-        let novos = 0, existentes = 0;
+        let novos = 0, existentes = 0, atualizados = 0;
         const erros = [];
         for (let i = 0; i < lote.length; i++) {
           if (this.versao !== versao || App.sessao?.user?.id !== dono || $('#best-lote') !== raiz || $('#modal').hidden) break;
@@ -170,14 +188,17 @@ const Bestiario = {
           status.textContent = `${i + 1}/${lote.length} — ${registro.name}`;
           try {
             const resultado = await Nuvem.importarCriatura(registro, arquivo);
-            if (resultado.existente) existentes++; else novos++;
-            if (this.versao === versao && !this.lista.some(c => c.id === resultado.criatura.id)) this.lista.push(resultado.criatura);
+            if (resultado.atualizado) atualizados++; else if (resultado.existente) existentes++; else novos++;
+            if (this.versao === versao) {
+              const pos = this.lista.findIndex(c => c.id === resultado.criatura.id);
+              if (pos < 0) this.lista.push(resultado.criatura); else this.lista[pos] = resultado.criatura;
+            }
           } catch (e) { erros.push(registro.name + ': ' + (e.message || e)); }
           progresso.value = i + 1;
         }
         if (this.versao === versao) { this.lista.sort((a, b) => a.name.localeCompare(b.name, 'pt-BR')); this.render(); }
         if ($('#best-lote') === raiz) {
-          status.textContent = `${novos} importadas · ${existentes} já existentes · ${erros.length} falhas.`;
+          status.textContent = `${novos} importadas · ${atualizados} atualizadas · ${existentes} já existentes · ${erros.length} falhas.`;
           $('#best-lote-erros').textContent = erros.join('\n');
           botao.disabled = false; botao.textContent = erros.length ? 'Tentar novamente' : 'Concluir';
           input.disabled = !erros.length;

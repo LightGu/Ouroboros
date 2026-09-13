@@ -9,11 +9,15 @@ import json
 from pathlib import Path
 import subprocess
 import tempfile
+import argparse
 from PIL import Image
 
 ROOT = Path(__file__).resolve().parent.parent
 
 def gerar():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--only", nargs="+", help="Regenerar apenas estas source_keys; exige lote prévio completo")
+    selecionados = set(parser.parse_args().only or [])
     indice = json.loads((ROOT / 'bestiario/indice.json').read_text())
     fontes = {p.name: p for p in ROOT.glob('arquivos secretos*') for p in p.rglob('*.pdf')}
     destino = ROOT / 'bestiario/lote'
@@ -22,33 +26,36 @@ def gerar():
     with tempfile.TemporaryDirectory(prefix='rpg-fichas-') as tmp:
         cache = {}
         for i, entrada in enumerate(indice, 1):
-            imagens = []
-            for pagina in entrada['pages']:
-                chave = (entrada['source'], pagina)
-                if chave not in cache:
-                    prefixo = Path(tmp) / hashlib.sha256(str(chave).encode()).hexdigest()[:20]
-                    subprocess.run(['pdftoppm', '-f', str(pagina), '-l', str(pagina),
-                                    '-singlefile', '-scale-to', '2600', '-jpeg', '-jpegopt', 'quality=92',
-                                    str(fontes[entrada['source']]), str(prefixo)],
-                                   check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-                    cache[chave] = prefixo.with_suffix('.jpg')
-                with Image.open(cache[chave]) as im:
-                    imagens.append(im.convert('RGB'))
-            largura = max(im.width for im in imagens)
-            altura = sum(im.height for im in imagens)
-            ficha = Image.new('RGB', (largura, altura), 'white')
-            y = 0
-            for im in imagens:
-                ficha.paste(im, (0, y)); y += im.height; im.close()
+            paginas = list(dict.fromkeys(entrada.get('appearance_pages', []) + entrada['pages']))
             nome = entrada['source_key'] + '.jpg'
-            ficha.save(destino / nome, quality=92, optimize=True)
-            ficha.close()
+            if not selecionados or entrada['source_key'] in selecionados:
+                imagens = []
+                for pagina in paginas:
+                    chave = (entrada['source'], pagina)
+                    if chave not in cache:
+                        prefixo = Path(tmp) / hashlib.sha256(str(chave).encode()).hexdigest()[:20]
+                        subprocess.run(['pdftoppm', '-f', str(pagina), '-l', str(pagina),
+                                        '-singlefile', '-scale-to', '2600', '-jpeg', '-jpegopt', 'quality=92',
+                                        str(fontes[entrada['source']]), str(prefixo)],
+                                       check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                        cache[chave] = prefixo.with_suffix('.jpg')
+                    with Image.open(cache[chave]) as im:
+                        imagens.append(im.convert('RGB'))
+                largura = max(im.width for im in imagens)
+                altura = sum(im.height for im in imagens)
+                ficha = Image.new('RGB', (largura, altura), 'white')
+                y = 0
+                for im in imagens:
+                    ficha.paste(im, (0, y)); y += im.height; im.close()
+                ficha.save(destino / nome, quality=92, optimize=True)
+                ficha.close()
             if (destino / nome).stat().st_size > 20 * 1024 * 1024:
                 raise ValueError('Ficha excede 20 MB: ' + entrada['name'])
             registro = {k: entrada[k] for k in ['source_key', 'name', 'element', 'vd', 'type', 'tags']}
             registro['image_file'] = nome
+            registro['image_revision'] = 2
             registro['notes'] = ('Fonte: ' + entrada['source'] + '\nPáginas do PDF: '
-                                 + ', '.join(map(str, entrada['pages']))
+                                 + ', '.join(map(str, paginas))
                                  + '\nImagem das páginas originais; algumas páginas contêm outras fichas.' )
             manifesto.append(registro)
             if i % 20 == 0 or i == len(indice):
