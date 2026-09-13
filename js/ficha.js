@@ -43,7 +43,7 @@ const Ficha = {
   travar() {
     const raiz = $('#view-ficha');
     $$('input, select, textarea', raiz).forEach(el => { el.disabled = true; });
-    $$('[data-add], [data-del], [data-attr], [data-excluir], [data-calcular], [data-catalogo], [data-subirnex], [data-desv-idade], [data-aliado-pronto], [data-virar-ritual], [data-add-bonus], [data-add-hab], [data-foto-aliado]', raiz)
+    $$('[data-add], [data-del], [data-attr], [data-excluir], [data-calcular], [data-catalogo], [data-subirnex], [data-aliado-pronto], [data-virar-ritual], [data-add-bonus], [data-add-hab], [data-foto-aliado]', raiz)
       .forEach(el => el.remove());
     $('[data-trocar-img]', raiz)?.removeAttribute('data-trocar-img');
     const ind = $('#indicador-salvo', raiz);
@@ -657,6 +657,7 @@ const Ficha = {
 
       const desv = e.target.closest('[data-desv-idade]');
       if (desv) {
+        if (!Store.podeEditar(this.atual)) return;
         const id = desv.dataset.desvIdade;
         const lista = this.atual.desvantagensIdade;
         const i = lista.indexOf(id);
