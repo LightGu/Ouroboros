@@ -22,6 +22,9 @@ function check(v,msg){if(!v)throw Error(msg);}
 function input(bind,value){const el=document.querySelector('[data-bind="'+bind+'"]');el.value=value;el.dispatchEvent(new Event('input',{bubbles:true}));}
 (async()=>{
  Ficha.abrir(p.id);
+ input('pe.max','14');input('pe.atual','7');
+ check(document.querySelector('[data-barra-numero="pe"]').textContent==='7/14','valor de PE na barra');
+ check(document.querySelector('[data-barra="pe"]').style.width==='50%','preenchimento de PE');
  check(!document.querySelector('[data-bind$=".pagina"]'),'sem campos de página');
  check(document.querySelector('#dt-rituais').textContent==='14','DT inicial');
  input('nex','25');check(document.querySelector('#dt-rituais').textContent==='18','DT muda com NEX');

@@ -413,7 +413,7 @@ const Ficha = {
           <i>/</i>
           <label><span>Máx.</span><input type="number" data-bind="${chave}.max" data-status="${chave}" value="${num(p[chave].max)}"></label>
         </div>
-        <div class="barra ${chave === 'pe' ? '' : 'barra-modelo'}"><div class="barra-fill ${chave}" data-barra="${chave}" style="width:${pct(p[chave].atual, p[chave].max)}%"></div>${chave !== 'pe' ? `<span class="barra-numero" data-barra-numero="${chave}">${num(p[chave].atual)}/${num(p[chave].max)}</span>` : ''}</div>
+        <div class="barra barra-modelo"><div class="barra-fill ${chave}" data-barra="${chave}" style="width:${pct(p[chave].atual, p[chave].max)}%"></div><span class="barra-numero" data-barra-numero="${chave}">${num(p[chave].atual)}/${num(p[chave].max)}</span></div>
       </div>`;
   },
 
