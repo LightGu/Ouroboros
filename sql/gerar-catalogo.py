@@ -108,6 +108,13 @@ def limpar(bruto):
             'livro': (x.get('livro') or '').strip(),
             'pagina': str(x.get('pagina') or '').strip(),
         })
+    for elemento in ['Sangue', 'Morte', 'Conhecimento', 'Energia']:
+        nome = f'Componentes ritualísticos de {elemento}'
+        if any(i['nome'] == nome and i['livro'] == 'Livro Básico' for i in saida):
+            continue
+        saida.append(dict(nome=nome, grupo='Itens paranormais', categoria=0, espacos=1,
+                          dano='', critico='', alcance='', tipo_dano='', livro='Livro Básico', pagina='66–67',
+                          descricao=f'Conjunto de componentes para conjurar rituais de {elemento}. Medo não utiliza componentes ritualísticos.'))
     saida.sort(key=lambda i: i['nome'].lower())
     return saida
 

@@ -2399,3 +2399,9 @@ button, .aba, .chip, select, label { touch-action: manipulation; }
   text-shadow: 0 1px 2px #000;
 }
 .barrao > button.barrao-zona:hover { background: transparent; }
+
+/* Consulta de rituais no catálogo do personagem. */
+.ritual-catalogo-item { border-bottom: 1px solid var(--linha); padding-bottom: 10px; }
+.ritual-catalogo-item details { padding: 0 12px; font-size: 12px; }
+.ritual-catalogo-item summary { cursor: pointer; }
+.ritual-catalogo-desc { white-space: pre-wrap; line-height: 1.6; }

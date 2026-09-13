@@ -42,6 +42,14 @@ const Catalogo = {
     return (this.itens = []);
   },
 
+  componentes() {
+    return ['Sangue', 'Morte', 'Conhecimento', 'Energia'].map(elemento => ({
+      nome: `Componentes ritualísticos de ${elemento}`, grupo: 'Itens paranormais',
+      categoria: 0, espacos: 1, livro: 'Livro Básico', pagina: '66–67',
+      descricao: `Conjunto de componentes para conjurar rituais de ${elemento}. Medo não utiliza componentes ritualísticos.`
+    }));
+  },
+
   /* Corrige também catálogos já cadastrados, antes da migração v17. */
   corrigirGrupos(lista) {
     const paranormais = new Map([
@@ -118,8 +126,12 @@ const Catalogo = {
     "Sobrevivendo ao Horror"
   ]
 ]);
-    return lista.map(i => paranormais.get(i.nome) === i.livro
+    const corrigida = lista.map(i => paranormais.get(i.nome) === i.livro
       ? { ...i, grupo: 'Itens paranormais' } : i);
+    for (const item of this.componentes()) {
+      if (!corrigida.some(i => i.nome === item.nome && i.livro === item.livro)) corrigida.push(item);
+    }
+    return corrigida;
   },
 
   grupos() {

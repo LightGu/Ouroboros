@@ -490,17 +490,28 @@ tabela da classe (Combatente VIG 3 sobe +7 PV por NEX, mas com Frágil mostra
 +5). Se calcular uma vez só, a conta mente.
 
 
-### Privacidade das histórias (v13)
+### Privacidade da descrição (v19)
 
-Antes de publicar esta versão, execute `sql/v13-historias-privadas.sql` no SQL
-Editor do Supabase (instalações novas podem usar `sql/schema.sql`). A migração
-preserva os históricos existentes em uma tabela protegida por RLS e os deixa
-escondidos. Na ficha, em Descrição, o dono ou mestre pode escolher a visibilidade
-da história. Escondida: somente dono e mestre; compartilhada: membros que podem
-ver a ficha. Aparência, personalidade e objetivo continuam na ficha pública.
-As histórias não são armazenadas no cache offline; é preciso conexão para lê-las.
+Para instalações que já usam a v13, execute `sql/v19-descricao-privada.sql` antes
+de publicar o frontend. Instalações novas podem usar `sql/schema.sql`.
+A opção de visibilidade controla **história, personalidade e objetivo** juntos:
+escondidos, somente dono e mestre podem ler; compartilhados, membros que podem
+ver a ficha. Aparência permanece pública. Os três campos privados não ficam no
+cache offline. A migração preserva os textos e a escolha de visibilidade atual.
 
 Verificação local: `node tests/historias.test.cjs`.
+
+### DT automática e catálogo de rituais (v18)
+
+A DT acompanha NEX e Presença, com ajuste editável para poderes e equipamentos.
+O botão **Do catálogo** na seção Rituais oferece busca por nome, elemento,
+círculo e livro. A seleção preenche a ficha com os campos e aprimoramentos.
+
+Execute `sql/v18-catalogo-rituais.sql` e, depois, `catalogo/seed-rituais.sql`.
+A migração também inclui os quatro conjuntos de componentes ritualísticos na
+aba **Itens paranormais** do catálogo de inventário. O seed é gerado por
+`python3 sql/gerar-rituais.py` a partir do lote local, mantido fora da publicação.
+Fontes, cobertura e observações de transcrição: [revisão dos rituais](docs/revisao-rituais.md).
 
 ### Bestiário privado (v14)
 

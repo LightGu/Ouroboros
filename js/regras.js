@@ -3,6 +3,8 @@
 const Regras = {
   civil: p => ['Sobrevivente', 'Mundano'].includes(p.classe),
   nivel: nex => Number(nex) === 99 ? 20 : Math.max(0, Math.floor(num(nex) / 5)),
+  dtRituaisBase(p) { return 10 + this.nivel(p.nex) + num(p.atributos?.PRE); },
+  dtRituais(p) { return this.dtRituaisBase(p) + num(p.dtRituaisBonus); },
   patentes: {
     'Recruta': [2,0,0,0,'Baixo'], 'Operador': [3,1,0,0,'Médio'],
     'Agente Especial': [3,2,1,0,'Médio'], 'Oficial de Operações': [3,3,2,1,'Alto'],

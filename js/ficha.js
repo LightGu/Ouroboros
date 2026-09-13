@@ -43,7 +43,7 @@ const Ficha = {
   travar() {
     const raiz = $('#view-ficha');
     $$('input, select, textarea', raiz).forEach(el => { el.disabled = true; });
-    $$('[data-add], [data-del], [data-attr], [data-excluir], [data-calcular], [data-catalogo], [data-subirnex], [data-aliado-pronto], [data-virar-ritual], [data-add-bonus], [data-add-hab], [data-foto-aliado]', raiz)
+    $$('[data-add], [data-del], [data-attr], [data-excluir], [data-calcular], [data-catalogo], [data-catalogo-rituais], [data-subirnex], [data-aliado-pronto], [data-virar-ritual], [data-add-bonus], [data-add-hab], [data-foto-aliado]', raiz)
       .forEach(el => el.remove());
     $('[data-trocar-img]', raiz)?.removeAttribute('data-trocar-img');
     const ind = $('#indicador-salvo', raiz);
@@ -271,8 +271,16 @@ const Ficha = {
       <section class="bloco">
         <h2 class="titulo-bloco"${dica(AJUDA.campos.ritual)}>Rituais
           <span class="legenda">${p.rituais.length ? p.rituais.length + (p.rituais.length === 1 ? ' conhecido' : ' conhecidos') : ''}</span>
+          <button class="btn btn-ghost btn-peq" data-catalogo-rituais>Do catálogo</button>
           <button class="btn btn-ghost btn-peq" data-add="rituais">+ Ritual</button></h2>
-        <label class="campo campo-curto"${dica(AJUDA.campos.dtRituais)}><span>DT de rituais</span><input data-bind="dtRituais" value="${esc(p.dtRituais)}" placeholder="Ex.: 15"></label>
+        <div class="grade-2">
+          <div class="campo"${dica(AJUDA.campos.dtRituais)}><span>DT de rituais automática</span>
+            <output id="dt-rituais" class="defesa-total">${Regras.dtRituais(p)}</output>
+            <small id="dt-rituais-formula">${this.formulaDtRituais(p)}</small></div>
+          <label class="campo"><span>Ajuste de DT (poderes e equipamentos)</span>
+            <input type="number" data-bind="dtRituaisBonus" value="${num(p.dtRituaisBonus)}" step="1">
+            <small>Inclua aqui os bônus das habilidades de trilha, poderes e itens em uso.</small></label>
+        </div>
         <div class="rituais-ordenacao" aria-label="Ordenar rituais"><span>Ordenar por:</span>${[['nome', 'Nome'], ['elemento', 'Elemento'], ['circulo', 'Círculo'], ['custo', 'Custo'], ['pagina', 'Página']].map(([chave, titulo]) => this.cabecalhoOrdem('rituais', chave, titulo)).join('')}</div>
         ${p.rituais.length ? p.rituais.map((r, i) => this.cartaoRitual(p, r, i)).join('')
           : '<p class="vazio-linha">Nenhum ritual conhecido.</p>'}
@@ -286,14 +294,15 @@ const Ficha = {
         <h2 class="titulo-bloco">Descrição</h2>
         <div class="grade-2">
           <label class="campo"${dica(AJUDA.campos.aparencia)}><span>Aparência</span><textarea data-bind="descricao.aparencia" rows="4">${esc(p.descricao.aparencia)}</textarea></label>
+          ${p.historiaCarregada === false ? '<p class="vazio-linha">Conecte-se novamente para carregar história, personalidade e objetivo.</p>' : Store.podeVerHistoria(p) ? `
           <label class="campo"${dica(AJUDA.campos.personalidade)}><span>Personalidade</span><textarea data-bind="descricao.personalidade" rows="4">${esc(p.descricao.personalidade)}</textarea></label>
-          ${p.historiaCarregada === false ? '<p class="vazio-linha">Conecte-se novamente para carregar a história.</p>' : Store.podeVerHistoria(p) ? `<label class="campo"${dica(AJUDA.campos.historico)}><span>Histórico</span><textarea data-bind="descricao.historico" rows="4">${esc(p.descricao.historico)}</textarea></label>` : '<p class="vazio-linha">História escondida pelo jogador.</p>'}
-          ${Store.podeEditar(p) ? `<label class="campo"><span>Visibilidade da história</span>
+          <label class="campo"${dica(AJUDA.campos.historico)}><span>Histórico</span><textarea data-bind="descricao.historico" rows="4">${esc(p.descricao.historico)}</textarea></label>
+          <label class="campo"${dica(AJUDA.campos.objetivo)}><span>Objetivo</span><textarea data-bind="descricao.objetivo" rows="4">${esc(p.descricao.objetivo)}</textarea></label>` : '<p class="vazio-linha">História, personalidade e objetivo escondidos pelo jogador.</p>'}
+          ${Store.podeEditar(p) ? `<label class="campo"><span>Visibilidade da história, personalidade e objetivo</span>
             <select data-bind="historiaPublica">
-              <option value="false" ${p.historiaPublica !== true ? 'selected' : ''}>Escondida</option>
-              <option value="true" ${p.historiaPublica === true ? 'selected' : ''}>Visível para os outros jogadores</option>
-            </select><small class="ajuda">Quando escondida, só você e o mestre podem ler.</small></label>` : ''}
-          <label class="campo"${dica(AJUDA.campos.objetivo)}><span>Objetivo</span><textarea data-bind="descricao.objetivo" rows="4">${esc(p.descricao.objetivo)}</textarea></label>
+              <option value="false" ${p.historiaPublica !== true ? 'selected' : ''}>Escondidos</option>
+              <option value="true" ${p.historiaPublica === true ? 'selected' : ''}>Visíveis para os outros jogadores</option>
+            </select><small class="ajuda">Quando escondidos, só você e o mestre podem ler os três campos.</small></label>` : ''}
         </div>
         ${Store.ehMestre ? `
         <label class="campo campo-mestre"><span>Anotações do mestre 🔒</span>
@@ -450,7 +459,7 @@ const Ficha = {
     const cor   = corDoElemento(r.elemento);
     const nex   = num(p.nex);
     const cedo  = p.classe === 'Ocultista' && info.nex && nex < info.nex;
-    const opt   = (lista, val) => lista.map(o =>
+    const opt   = (lista, val) => [...new Set([...lista, r[val] || ''])].map(o =>
       `<option value="${esc(o)}" ${o === (r[val] || '') ? 'selected' : ''}>${esc(o || '—')}</option>`).join('');
 
     return `
@@ -458,6 +467,7 @@ const Ficha = {
         <div class="ritual-cab">
           <input class="ritual-nome" data-bind="rituais.${i}.nome" value="${esc(r.nome)}" placeholder="Nome do ritual">
           <select class="ritual-elem" data-bind="rituais.${i}.elemento" data-recarrega${dica(AJUDA.campos.ritualElemento)}>
+            ${r.elemento && !ELEMENTOS.some(e => e.id === r.elemento) ? `<option selected value="${esc(r.elemento)}">${esc(r.elemento)}</option>` : ''}
             ${ELEMENTOS.map(e => `<option value="${e.id}" ${e.id === (r.elemento || '') ? 'selected' : ''}>${e.nome}</option>`).join('')}
           </select>
           <select class="ritual-circ" data-circulo="${i}"${dica(AJUDA.campos.ritualCirculo)}>
@@ -595,6 +605,7 @@ const Ficha = {
       if (e.target.closest('[data-voltar]'))     return this.voltar();
       if (e.target.closest('[data-excluir]'))    return this.excluir();
       if (e.target.closest('[data-trocar-img]')) return Mesa.trocarImagem(this.atual.id);
+      if (e.target.closest('[data-catalogo-rituais]')) return CatalogoRituais.abrir(this.atual);
       if (e.target.closest('[data-calcular]'))   return this.calcular();
 
       const rolar = e.target.closest('[data-rolar]');
@@ -861,6 +872,10 @@ const Ficha = {
   },
 
   /* atualiza só os valores calculados, sem redesenhar (não perde o foco) */
+  formulaDtRituais(p) {
+    return `10 + ${Regras.nivel(p.nex)} (NEX) + ${num(p.atributos?.PRE)} (PRE) + ${num(p.dtRituaisBonus)} (ajustes)`;
+  },
+
   atualizarDerivados(alvo) {
     const p = this.atual;
     const raiz = $('#view-ficha');
@@ -870,6 +885,9 @@ const Ficha = {
       retrato.dataset.imagemAtual = imagem;
       retrato.innerHTML = (imagem ? `<img src="${esc(imagem)}" alt="">` : `<div class="retrato-vazio" style="--h:${corDoNome(p.nome)}">${esc(iniciais(p.nome))}</div>`) + '<span class="retrato-acao">trocar imagem</span>';
     }
+
+    const dt = $('#dt-rituais', raiz);
+    if (dt) { dt.textContent = Regras.dtRituais(p); $('#dt-rituais-formula', raiz).textContent = this.formulaDtRituais(p); }
 
     const defTotal = $('#defesa-total', raiz);
     if (defTotal) {

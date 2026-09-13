@@ -195,7 +195,7 @@ const App = {
         if (Store.mesaId !== mesaId) return;
         const p = Store.obter(id);
         if (p && !(Ficha.atual?.id === id && Store.podeEditar(p))) {
-          p.descricao.historico = historias[id] || '';
+          Nuvem.aplicarHistoria(p, historias[id] || {});
           if (Ficha.atual?.id === id) Ficha.abrir(id);
         }
       } catch (e) { console.error('Não consegui carregar a história', e); }

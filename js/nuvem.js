@@ -104,21 +104,31 @@ const Nuvem = {
   /* ---------------- personagens ---------------- */
 
   /* linha do banco -> objeto usado pela interface */
-  paraApp(linha, notas = '', historia = '') {
+  paraApp(linha, notas = '', historia = null) {
     const p = Store.normalizar(Object.assign({}, linha.dados, { id: linha.id }));
     p.rapido  = linha.rapido;
     p.oculto  = linha.oculto;
     p.donoId  = linha.dono_id;
     p.ordem   = linha.ordem;
     p.notas   = notas;
-    p.descricao.historico = historia;
+    this.aplicarHistoria(p, historia);
     return p;
+  },
+
+  aplicarHistoria(p, historia) {
+    const h = typeof historia === 'string' ? {texto: historia} : historia || {};
+    p.descricao.historico = h.texto || '';
+    p.descricao.personalidade = h.personalidade || '';
+    p.descricao.objetivo = h.objetivo || '';
+    p.historiaCarregada = historia !== null;
   },
 
   /* objeto da interface -> linha do banco (notas ficam de fora de propósito) */
   paraBanco(p, mesaId) {
     const dados = JSON.parse(JSON.stringify(p));
-    if (p.historiaCarregada === false) delete dados.descricao.historico;
+    if (p.historiaCarregada === false) {
+      for (const campo of ['historico', 'personalidade', 'objetivo']) delete dados.descricao[campo];
+    }
     delete dados.historiaCarregada;
     delete dados.notas;
     delete dados.donoId;
@@ -146,14 +156,14 @@ const Nuvem = {
       (n || []).forEach(x => { notas[x.personagem_id] = x.texto; });
     }
     const historias = await this.carregarHistorias(mesaId);
-    return (data || []).map(l => this.paraApp(l, notas[l.id] || '', historias[l.id] || ''));
+    return (data || []).map(l => this.paraApp(l, notas[l.id] || '', historias[l.id] || {}));
   },
 
   async carregarHistorias(mesaId) {
     const { data, error } = await this.cliente.from('historias_personagens')
-      .select('personagem_id, texto').eq('mesa_id', mesaId);
+      .select('personagem_id, texto, personalidade, objetivo').eq('mesa_id', mesaId);
     if (error) throw error;
-    return Object.fromEntries((data || []).map(h => [h.personagem_id, h.texto]));
+    return Object.fromEntries((data || []).map(h => [h.personagem_id, h]));
   },
 
   async criarPersonagem(p, mesaId) {
@@ -373,6 +383,17 @@ const Nuvem = {
 
   /* Tabela global, só leitura e só para quem está logado (v12). Traz tudo de
      uma vez: são ~160 linhas curtas e o popup filtra na mão. */
+  async catalogoRituais() {
+    const itens = [];
+    for (let inicio = 0; ; inicio += 500) {
+      const { data, error } = await this.cliente.from('rituais_catalogo').select('*')
+        .order('id').range(inicio, inicio + 499);
+      if (error) throw error;
+      itens.push(...(data || []));
+      if (!data || data.length < 500) return itens;
+    }
+  },
+
   async catalogoItens() {
     const { data, error } = await this.cliente.from('itens_catalogo')
       .select('nome, grupo, categoria, espacos, dano, critico, alcance, tipo_dano, descricao, livro, pagina')

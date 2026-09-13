@@ -13,7 +13,7 @@ const antigos = [
   {nome:'Crânio Dominador', livro:'Caseiro', grupo:'Equipamento'}
 ];
 catalogo.itens = catalogo.corrigirGrupos(antigos);
-assert.equal(catalogo.filtrar({grupo:'Itens paranormais'}).length, 3);
+assert.equal(catalogo.filtrar({grupo:'Itens paranormais'}).length, 7);
 assert.equal(catalogo.filtrar({grupo:'Amaldiçoado'})[0].nome, 'A Antena');
 assert.equal(catalogo.filtrar({grupo:'Equipamento'}).length, 2);
 assert.ok(catalogo.grupos().includes('Itens paranormais'));

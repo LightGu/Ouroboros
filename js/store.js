@@ -164,13 +164,15 @@ const Store = {
 
   guardarCache() {
     try {
-      localStorage.setItem('cache_v13_' + App.sessao?.user?.id + '_' + this.mesaId, JSON.stringify(this.estado.personagens.map(p => ({ ...p, historiaCarregada: false, descricao: { ...p.descricao, historico: '' } }))));
+      localStorage.removeItem?.('cache_v13_' + App.sessao?.user?.id + '_' + this.mesaId);
+      localStorage.setItem('cache_v19_' + App.sessao?.user?.id + '_' + this.mesaId, JSON.stringify(this.estado.personagens.map(p => ({ ...p, historiaCarregada: false, descricao: { ...p.descricao, historico: '', personalidade: '', objetivo: '' } }))));
     } catch (e) { /* cache é conveniência, não pode derrubar o app */ }
   },
 
   lerCache() {
     try {
-      const b = localStorage.getItem('cache_v13_' + App.sessao?.user?.id + '_' + this.mesaId);
+      localStorage.removeItem?.('cache_v13_' + App.sessao?.user?.id + '_' + this.mesaId);
+      const b = localStorage.getItem('cache_v19_' + App.sessao?.user?.id + '_' + this.mesaId);
       return b ? JSON.parse(b).map(p => this.normalizar(p)) : null;
     } catch { return null; }
   },
@@ -223,6 +225,7 @@ const Store = {
       rituais: [],
       desvantagensIdade: [],
       dtRituais: '',
+      dtRituaisBonus: 0,
       inventario: { limites: { I: '', II: '', III: '', IV: '' }, credito: '', cargaMax: '', itens: [] },
       prestigio: '',
       municoes: [],
@@ -239,6 +242,11 @@ const Store = {
     const base = this.fichaVazia();
     const out = Object.assign(base, p || {});
     out.atributos  = Object.assign(base.atributos, p?.atributos);
+    // Converte o total antigo em ajuste, preservando a DT já configurada.
+    if (p?.dtRituaisBonus === undefined && String(p?.dtRituais ?? '').trim() && Number.isFinite(Number(p.dtRituais))) {
+      const nivel = Number(out.nex) === 99 ? 20 : Math.max(0, Math.floor(Number(out.nex || 0) / 5));
+      out.dtRituaisBonus = Number(p.dtRituais) - (10 + nivel + Number(out.atributos.PRE || 0));
+    }
     out.pv         = Object.assign({ atual: 0, max: 0 }, p?.pv);
     out.pe         = Object.assign({ atual: 0, max: 0 }, p?.pe);
     out.san        = Object.assign({ atual: 0, max: 0 }, p?.san);
