@@ -68,8 +68,9 @@ def grupo(x):
     """Bucket do item. A ordem importa: um item amaldiçoado que é granada
        continua sendo amaldiçoado, que é o que interessa na hora de achar."""
     nome, tipo, sub = x['nome'], x.get('tipo', ''), x.get('subtipo', '')
-    if tipo.startswith('Item Amaldiçoado') or tipo == 'Item Paranormal': return 'Amaldiçoado'
-    if tipo.startswith('Catalisadores ritual'):                          return 'Catalisador'
+    if tipo == 'Item Paranormal' or nome == 'Amarras elementais': return 'Itens paranormais'
+    if tipo.startswith('Item Amaldiçoado'): return 'Amaldiçoado'
+    if tipo.startswith('Catalisadores ritual'): return 'Itens paranormais'
     # munição antes de arma: balas e flechas moram na tabela das armas e
     # herdaram o subtipo delas ("Armas de Fogo – Leves"), mas não são armas
     if nome in MUNICAO:                                                  return 'Munição'

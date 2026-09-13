@@ -28,7 +28,7 @@ const Catalogo = {
     try {
       if (Nuvem.cliente) {
         const lista = await Nuvem.catalogoItens();
-        if (lista.length) { this.origem = 'nuvem'; return (this.itens = lista); }
+        if (lista.length) { this.origem = 'nuvem'; return (this.itens = this.corrigirGrupos(lista)); }
       }
     } catch (e) {
       /* tabela ainda não criada, sem sessão, sem rede: tenta o arquivo local */
@@ -36,10 +36,90 @@ const Catalogo = {
     }
     try {
       const r = await fetch('catalogo/catalogo-limpo.json');
-      if (r.ok) { this.origem = 'local'; return (this.itens = await r.json()); }
+      if (r.ok) { this.origem = 'local'; return (this.itens = this.corrigirGrupos(await r.json())); }
     } catch (e) { /* sem arquivo local também: lista vazia, o popup avisa */ }
     this.origem = '';
     return (this.itens = []);
+  },
+
+  /* Corrige também catálogos já cadastrados, antes da migração v17. */
+  corrigirGrupos(lista) {
+    const paranormais = new Map([
+  [
+    "Amarras elementais",
+    "Livro Básico"
+  ],
+  [
+    "Ampliador",
+    "Sobrevivendo ao Horror"
+  ],
+  [
+    "Catalisador Sofisticado e Horrorizado",
+    "Arquivos Secretos 2"
+  ],
+  [
+    "Conhecimento",
+    "Sobrevivendo ao Horror"
+  ],
+  [
+    "Crânio Dominador",
+    "Arquivos Secretos 3"
+  ],
+  [
+    "Energia",
+    "Sobrevivendo ao Horror"
+  ],
+  [
+    "Gaiola do Corvo",
+    "Arquivos Secretos 3"
+  ],
+  [
+    "Ligação Direta Infernal",
+    "Sobrevivendo ao Horror"
+  ],
+  [
+    "Medidor de Condição Vertebral",
+    "Sobrevivendo ao Horror"
+  ],
+  [
+    "Medo",
+    "Sobrevivendo ao Horror"
+  ],
+  [
+    "Morte",
+    "Sobrevivendo ao Horror"
+  ],
+  [
+    "Pendrive selado",
+    "Sobrevivendo ao Horror"
+  ],
+  [
+    "Perturbador",
+    "Sobrevivendo ao Horror"
+  ],
+  [
+    "Potencializador",
+    "Sobrevivendo ao Horror"
+  ],
+  [
+    "Prolongador",
+    "Sobrevivendo ao Horror"
+  ],
+  [
+    "Pé de Morto",
+    "Sobrevivendo ao Horror"
+  ],
+  [
+    "Sangue",
+    "Sobrevivendo ao Horror"
+  ],
+  [
+    "Valete da Salvação",
+    "Sobrevivendo ao Horror"
+  ]
+]);
+    return lista.map(i => paranormais.get(i.nome) === i.livro
+      ? { ...i, grupo: 'Itens paranormais' } : i);
   },
 
   grupos() {
