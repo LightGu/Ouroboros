@@ -113,7 +113,7 @@ const Mesa = {
       <div class="stat-barra">
         <span class="stat-rot">${rotulo}</span>
         <div class="barrao ${chave} ${vazio ? 'no-zero' : baixo ? 'baixo' : ''}">
-          <div class="barrao-fill" style="width:${pct(atual, max)}%">${atual > 0 ? '<span class="oleo"></span><span class="bolhas"><i></i><i></i><i></i><i></i></span>' : ''}</div>
+          <div class="barrao-fill" style="width:${pct(atual, max)}%"></div>
           ${zona('esq', -1, 'Tirar 1 (Shift = 5)', '−')}
           ${miolo}
           ${zona('dir', 1, 'Pôr 1 (Shift = 5)', '+')}
