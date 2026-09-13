@@ -282,7 +282,12 @@ const Ficha = {
         <div class="grade-2">
           <label class="campo"${dica(AJUDA.campos.aparencia)}><span>Aparência</span><textarea data-bind="descricao.aparencia" rows="4">${esc(p.descricao.aparencia)}</textarea></label>
           <label class="campo"${dica(AJUDA.campos.personalidade)}><span>Personalidade</span><textarea data-bind="descricao.personalidade" rows="4">${esc(p.descricao.personalidade)}</textarea></label>
-          <label class="campo"${dica(AJUDA.campos.historico)}><span>Histórico</span><textarea data-bind="descricao.historico" rows="4">${esc(p.descricao.historico)}</textarea></label>
+          ${p.historiaCarregada === false ? '<p class="vazio-linha">Conecte-se novamente para carregar a história.</p>' : Store.podeVerHistoria(p) ? `<label class="campo"${dica(AJUDA.campos.historico)}><span>Histórico</span><textarea data-bind="descricao.historico" rows="4">${esc(p.descricao.historico)}</textarea></label>` : '<p class="vazio-linha">História escondida pelo jogador.</p>'}
+          ${Store.podeEditar(p) ? `<label class="campo"><span>Visibilidade da história</span>
+            <select data-bind="historiaPublica">
+              <option value="false" ${p.historiaPublica !== true ? 'selected' : ''}>Escondida</option>
+              <option value="true" ${p.historiaPublica === true ? 'selected' : ''}>Visível para os outros jogadores</option>
+            </select><small class="ajuda">Quando escondida, só você e o mestre podem ler.</small></label>` : ''}
           <label class="campo"${dica(AJUDA.campos.objetivo)}><span>Objetivo</span><textarea data-bind="descricao.objetivo" rows="4">${esc(p.descricao.objetivo)}</textarea></label>
         </div>
         ${Store.ehMestre ? `
@@ -483,8 +488,8 @@ const Ficha = {
     /* binding genérico */
     raiz.addEventListener('input', e => {
       const caminho = e.target.dataset.bind;
-      if (!caminho) return;
-      const valor = e.target.type === 'number' ? num(e.target.value) : e.target.value;
+      if (!caminho || !Store.podeEditar(this.atual)) return;
+      const valor = caminho === 'historiaPublica' ? e.target.value === 'true' : e.target.type === 'number' ? num(e.target.value) : e.target.value;
       setPath(this.atual, caminho, valor);
       this.salvarDepois();
       this.atualizarDerivados(e.target);

@@ -174,7 +174,7 @@ const App = {
   },
 
   /* Alguém mexeu em algo pelo aparelho dele. */
-  mudancaRemota(payload) {
+  async mudancaRemota(payload) {
     const id = payload.new?.id || payload.old?.id;
 
     /* Se a ficha está aberta e é editável por mim, não sobrescrevo o que estou digitando. */
@@ -183,6 +183,18 @@ const App = {
     Store.aplicarMudancaRemota(payload);
     if (this.telaAtual === 'mesa') Mesa.render();
     if (Ficha.atual && Ficha.atual.id === id) Ficha.abrir(id);
+    if (payload.eventType !== 'DELETE') {
+      const mesaId = Store.mesaId;
+      try {
+        const historias = await Nuvem.carregarHistorias(mesaId);
+        if (Store.mesaId !== mesaId) return;
+        const p = Store.obter(id);
+        if (p && !(Ficha.atual?.id === id && Store.podeEditar(p))) {
+          p.descricao.historico = historias[id] || '';
+          if (Ficha.atual?.id === id) Ficha.abrir(id);
+        }
+      } catch (e) { console.error('Não consegui carregar a história', e); }
+    }
   },
 
   /* ---------------- navegação ---------------- */

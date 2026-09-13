@@ -121,6 +121,10 @@ const Store = {
     return this.ehMestre || p.donoId === App.sessao?.user?.id;
   },
 
+  podeVerHistoria(p) {
+    return this.podeEditar(p) || p.historiaPublica === true;
+  },
+
   /* ---------------- realtime ---------------- */
 
   /* Aplica no array em memória uma mudança que veio de outro aparelho. */
@@ -145,13 +149,13 @@ const Store = {
 
   guardarCache() {
     try {
-      localStorage.setItem('cache_' + this.mesaId, JSON.stringify(this.estado.personagens));
+      localStorage.setItem('cache_v13_' + App.sessao?.user?.id + '_' + this.mesaId, JSON.stringify(this.estado.personagens.map(p => ({ ...p, historiaCarregada: false, descricao: { ...p.descricao, historico: '' } }))));
     } catch (e) { /* cache é conveniência, não pode derrubar o app */ }
   },
 
   lerCache() {
     try {
-      const b = localStorage.getItem('cache_' + this.mesaId);
+      const b = localStorage.getItem('cache_v13_' + App.sessao?.user?.id + '_' + this.mesaId);
       return b ? JSON.parse(b).map(p => this.normalizar(p)) : null;
     } catch { return null; }
   },
@@ -175,6 +179,7 @@ const Store = {
       id: null,
       rapido: false,
       oculto: false,
+      historiaPublica: false,
       donoId: null,
       ordem: 0,
       nome: '',

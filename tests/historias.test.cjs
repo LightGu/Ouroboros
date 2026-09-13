@@ -1,0 +1,34 @@
+const { readFileSync } = require('node:fs');
+const vm = require('node:vm');
+const assert = require('node:assert/strict');
+const cache = new Map();
+const ctx = vm.createContext({ console, App: { sessao: { user: { id: 'dono' } } },
+  localStorage: { setItem: (k,v) => cache.set(k,v), getItem: k => cache.get(k) },
+  num: v => Number(v) || 0 });
+vm.runInContext(['dados','store','nuvem'].map(f => readFileSync(`js/${f}.js`, 'utf8')).join('\n') + '\nglobalThis.api = {Store,Nuvem};', ctx);
+const { Store, Nuvem } = ctx.api;
+const p = Store.normalizar({ id:'p', donoId:'dono', descricao:{historico:'SEGREDO'} });
+assert.equal(p.historiaPublica, false);
+assert.equal(Store.podeVerHistoria(p), true);
+ctx.App.sessao.user.id = 'outro';
+assert.equal(Store.podeVerHistoria(p), false);
+p.historiaPublica = 'true';
+assert.equal(Store.podeVerHistoria(p), false);
+p.historiaPublica = true;
+assert.equal(Store.podeVerHistoria(p), true);
+p.historiaPublica = false;
+Store.ehMestre = true;
+assert.equal(Store.podeVerHistoria(p), true);
+Store.mesaId = 'mesa'; Store.estado.personagens = [p];
+Store.guardarCache();
+assert.equal([...cache.values()][0].includes('SEGREDO'), false);
+const cached = Store.lerCache()[0];
+assert.equal(cached.historiaCarregada, false);
+assert.equal('historico' in Nuvem.paraBanco(cached, 'mesa').dados.descricao, false);
+assert.equal(Nuvem.paraBanco(p, 'mesa').dados.descricao.historico, 'SEGREDO');
+ctx.App.sessao.user.id = 'terceiro';
+assert.equal(Store.lerCache(), null);
+const row = { id:'p', dados:{descricao:{historico:'legado'}} };
+assert.equal(Nuvem.paraApp(row).descricao.historico, '');
+assert.equal(Nuvem.paraApp(row, '', 'autorizado').descricao.historico, 'autorizado');
+console.log('Histórias: permissões, padrão privado, conversão e cache passaram.');

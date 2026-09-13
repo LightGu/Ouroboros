@@ -489,3 +489,15 @@ a penalidade cresce junto com o nível, o ganho real da subida é menor que o da
 tabela da classe (Combatente VIG 3 sobe +7 PV por NEX, mas com Frágil mostra
 +5). Se calcular uma vez só, a conta mente.
 
+
+### Privacidade das histórias (v13)
+
+Antes de publicar esta versão, execute `sql/v13-historias-privadas.sql` no SQL
+Editor do Supabase (instalações novas podem usar `sql/schema.sql`). A migração
+preserva os históricos existentes em uma tabela protegida por RLS e os deixa
+escondidos. Na ficha, em Descrição, o dono ou mestre pode escolher a visibilidade
+da história. Escondida: somente dono e mestre; compartilhada: membros que podem
+ver a ficha. Aparência, personalidade e objetivo continuam na ficha pública.
+As histórias não são armazenadas no cache offline; é preciso conexão para lê-las.
+
+Verificação local: `node tests/historias.test.cjs`.

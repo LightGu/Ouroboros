@@ -104,19 +104,22 @@ const Nuvem = {
   /* ---------------- personagens ---------------- */
 
   /* linha do banco -> objeto usado pela interface */
-  paraApp(linha, notas = '') {
+  paraApp(linha, notas = '', historia = '') {
     const p = Store.normalizar(Object.assign({}, linha.dados, { id: linha.id }));
     p.rapido  = linha.rapido;
     p.oculto  = linha.oculto;
     p.donoId  = linha.dono_id;
     p.ordem   = linha.ordem;
     p.notas   = notas;
+    p.descricao.historico = historia;
     return p;
   },
 
   /* objeto da interface -> linha do banco (notas ficam de fora de propósito) */
   paraBanco(p, mesaId) {
     const dados = JSON.parse(JSON.stringify(p));
+    if (p.historiaCarregada === false) delete dados.descricao.historico;
+    delete dados.historiaCarregada;
     delete dados.notas;
     delete dados.donoId;
     delete dados.ordem;
@@ -142,7 +145,15 @@ const Nuvem = {
       const { data: n } = await this.cliente.from('notas_mestre').select('*').eq('mesa_id', mesaId);
       (n || []).forEach(x => { notas[x.personagem_id] = x.texto; });
     }
-    return (data || []).map(l => this.paraApp(l, notas[l.id] || ''));
+    const historias = await this.carregarHistorias(mesaId);
+    return (data || []).map(l => this.paraApp(l, notas[l.id] || '', historias[l.id] || ''));
+  },
+
+  async carregarHistorias(mesaId) {
+    const { data, error } = await this.cliente.from('historias_personagens')
+      .select('personagem_id, texto').eq('mesa_id', mesaId);
+    if (error) throw error;
+    return Object.fromEntries((data || []).map(h => [h.personagem_id, h.texto]));
   },
 
   async criarPersonagem(p, mesaId) {
