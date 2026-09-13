@@ -26,9 +26,10 @@ const Mesa = {
       ? `<img src="${esc(imagem)}" alt="">`
       : `<div class="retrato-vazio" style="--h:${corDoNome(p.nome)}">${esc(iniciais(p.nome))}</div>`;
 
+    const classeTrilha = [p.classe, p.trilha].filter(Boolean).join('/');
     const sub = p.rapido
-      ? `<span class="tag tag-rapido">Rápido</span>${p.classe ? ' ' + esc(p.classe) : ''}`
-      : [p.classe, p.origem].filter(Boolean).map(esc).join(' • ') || '<span class="fraco">sem classe</span>';
+      ? `<span class="tag tag-rapido">Rápido</span>${classeTrilha ? ' ' + esc(classeTrilha) : ''}`
+      : [classeTrilha, p.origem].filter(Boolean).map(esc).join(' • ') || '<span class="fraco">sem classe</span>';
 
     const barrasExtras = p.rapido ? '' : `
       ${this.barra(p, 'pe',  'PE')}
