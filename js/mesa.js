@@ -383,7 +383,7 @@ const Mesa = {
     const p = Store.obter(id);
     if (!p || !Store.podeEditar(p)) return;
     const mesaId = Store.mesaId;
-    const estados = [['imagem', 'Normal — acima de 80%'], ['imagemFerido', 'Ferido — acima de 20% até 80%'], ['imagemCritica', 'Crítico — 20% ou menos'], ['imagemInconsciente', 'Inconsciente — enquanto a condição estiver ativa']];
+    const estados = [['imagem', 'Normal — acima de 80%'], ['imagemFerido', 'Ferido — acima de 28% até 80%'], ['imagemCritica', 'Crítico — 28% ou menos'], ['imagemInconsciente', 'Inconsciente — enquanto a condição estiver ativa']];
     const valores = Object.fromEntries(estados.map(([k]) => [k, p[k] || '']));
     const leituras = {};
     let salvando = false, lendo = 0;

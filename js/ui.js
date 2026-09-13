@@ -183,7 +183,7 @@ function imagemPorVida(p) {
   if (inconsciente && p.imagemInconsciente) return p.imagemInconsciente;
   const max = Number(p.pv?.max), atual = Number(p.pv?.atual);
   if (max > 0 && Number.isFinite(atual)) {
-    if (atual <= max * 0.2) return p.imagemCritica || p.imagemFerido || p.imagem || '';
+    if (atual <= max * 0.28) return p.imagemCritica || p.imagemFerido || p.imagem || '';
     if (atual <= max * 0.8) return p.imagemFerido || p.imagem || '';
   }
   return p.imagem || '';
