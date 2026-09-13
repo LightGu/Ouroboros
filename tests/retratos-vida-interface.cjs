@@ -17,11 +17,18 @@ function check(v,msg){if(!v)throw Error(msg);}
  for(const [pv,img] of [[100,p.imagem],[81,p.imagem],[80,p.imagemFerido],[50,p.imagemFerido],[21,p.imagemFerido],[20,p.imagemCritica],[0,p.imagemCritica],[90,p.imagem]]){
   p.pv.atual=pv;check(imagemPorVida(p)===img,'limite PV '+pv);
  }
+ p.imagemInconsciente='https://example.com/inconsciente.jpg';
+ p.condicoes=[' InConsciente '];
+ for(const pv of [100,50,10]) {p.pv.atual=pv;check(imagemPorVida(p)===p.imagemInconsciente,'prioridade inconsciente');}
+ p.condicoes=[];check(imagemPorVida(p)===p.imagemCritica,'remoção da condição');
+ p.condicoes=['Inconsciente'];delete p.imagemInconsciente;check(imagemPorVida(p)===p.imagemCritica,'inconsciente sem imagem');
+ p.condicoes=['Não inconsciente'];p.imagemInconsciente='https://example.com/inconsciente.jpg';check(imagemPorVida(p)===p.imagemCritica,'condição exata');
+ p.condicoes=[];
  p.pv.max=0;check(imagemPorVida(p)===p.imagem,'PV máximo ausente');p.pv.max=100;p.pv.atual=10;
  delete p.imagemCritica;check(imagemPorVida(p)===p.imagemFerido,'fallback ferido');
  delete p.imagemFerido;check(imagemPorVida(p)===p.imagem,'fallback normal');
  Mesa.trocarImagem('p');
- check(document.querySelectorAll('[data-retrato-arquivo]').length===3,'três uploads');
+ check(document.querySelectorAll('[data-retrato-arquivo]').length===4,'quatro uploads');
  const ferido=document.querySelector('[data-retrato-url="imagemFerido"]');
  ferido.value='https://example.com/novo.jpg';ferido.dispatchEvent(new Event('change'));
  check(!p.imagemFerido,'rascunho antes de salvar');

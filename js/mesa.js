@@ -383,13 +383,13 @@ const Mesa = {
     const p = Store.obter(id);
     if (!p || !Store.podeEditar(p)) return;
     const mesaId = Store.mesaId;
-    const estados = [['imagem', 'Normal — acima de 80%'], ['imagemFerido', 'Ferido — acima de 20% até 80%'], ['imagemCritica', 'Crítico — 20% ou menos']];
+    const estados = [['imagem', 'Normal — acima de 80%'], ['imagemFerido', 'Ferido — acima de 20% até 80%'], ['imagemCritica', 'Crítico — 20% ou menos'], ['imagemInconsciente', 'Inconsciente — enquanto a condição estiver ativa']];
     const valores = Object.fromEntries(estados.map(([k]) => [k, p[k] || '']));
     const leituras = {};
     let salvando = false, lendo = 0;
     Modal.abrir({
-      titulo: 'Imagens por pontos de vida', largo: true,
-      corpo: `<div id="retratos-vida"><p class="dialogo">A imagem é centralizada e ajustada sem esticar, dentro de uma moldura circular. Confira o enquadramento na prévia. Ela muda automaticamente com os PV. Sem uma imagem de ferido, usamos a normal; sem a crítica, usamos a de ferido ou a normal.</p>
+      titulo: 'Imagens por vida e condição', largo: true,
+      corpo: `<div id="retratos-vida"><p class="dialogo">A imagem é centralizada e ajustada sem esticar, dentro de uma moldura circular. Confira o enquadramento na prévia. Ela muda automaticamente com os PV. A imagem de Inconsciente tem prioridade enquanto essa condição estiver ativa; se não for cadastrada, continua usando a imagem por PV. Sem uma imagem de ferido, usamos a normal; sem a crítica, usamos a de ferido ou a normal.</p>
         ${estados.map(([k, nome]) => `<section class="bloco" data-retrato-estado="${k}"><h3>${nome}</h3>
           <label class="campo"><span>Enviar imagem</span><input type="file" accept="image/*" data-retrato-arquivo="${k}"></label>
           <label class="campo"><span>Ou colar um link</span><input type="url" data-retrato-url="${k}" placeholder="https://..." value="${valores[k].startsWith('http') ? esc(valores[k]) : ''}"></label>

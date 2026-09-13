@@ -179,6 +179,8 @@ function ligarArrasto({ raiz, itens, alca, aoMover }) {
 
 
 function imagemPorVida(p) {
+  const inconsciente = (p.condicoes || []).some(c => String(c).trim().toLocaleLowerCase('pt-BR') === 'inconsciente');
+  if (inconsciente && p.imagemInconsciente) return p.imagemInconsciente;
   const max = Number(p.pv?.max), atual = Number(p.pv?.atual);
   if (max > 0 && Number.isFinite(atual)) {
     if (atual <= max * 0.2) return p.imagemCritica || p.imagemFerido || p.imagem || '';

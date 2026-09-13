@@ -203,6 +203,7 @@ const Store = {
       imagem: '',
       imagemFerido: '',
       imagemCritica: '',
+      imagemInconsciente: '',
       origem: '',
       classe: '',
       patente: '',
