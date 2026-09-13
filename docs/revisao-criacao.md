@@ -32,7 +32,7 @@ dos livros ou de todas as combinações possíveis.
    atributos e complete as perícias. Escolhas fixas já vêm marcadas.
 2. Registre as escolhas de poderes e selecione equipamento. Pode deixar o
    equipamento para depois; o guia mostrará a pendência.
-3. Na ficha, use **Sua ficha, do seu jeito** e os controles dos títulos. Ocultar
+3. Na ficha, use **Opção de visibilidade** e os controles dos títulos. Ocultar
    não apaga nada; para recuperar, abra **Mostrar ou ocultar painéis**.
 4. Abra o **Guia do personagem** e use **Atualizar conferência** depois de
    preencher dados. Agentes evoluem com **Subir NEX**; Sobreviventes usam

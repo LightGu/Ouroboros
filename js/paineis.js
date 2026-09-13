@@ -17,7 +17,7 @@ const Paineis = {
     const barra = document.createElement('section');
     barra.className = 'bloco organizar-paineis';
     barra.setAttribute('aria-label', 'Organizar ficha');
-    barra.innerHTML = `<b>Sua ficha, do seu jeito</b><p>Arraste pela alça ⠿ ou use as setas. Recolher mantém o título; ocultar tira o painel da tela.</p>
+    barra.innerHTML = `<b>Opção de visibilidade</b><p>Arraste pela alça ⠿ ou use as setas. Recolher mantém o título; ocultar tira o painel da tela.</p>
       <div class="painel-acoes"><button class="btn btn-ghost" data-layout="lista">Lista</button><button class="btn btn-ghost" data-layout="cascata">Cascata</button>
       <button class="btn btn-ghost" data-todos="abrir">Expandir todos</button><button class="btn btn-ghost" data-todos="fechar">Recolher todos</button>
       <button class="btn btn-ghost" data-restaurar>Restaurar organização</button></div>
