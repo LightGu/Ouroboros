@@ -49,7 +49,6 @@ const Paineis = {
       pintar(); salvar();
       $('[data-painel-anuncio]', barra).textContent = `${item.nome} movido para a posição ${destino+1}.`;
     };
-    let arrastando = null;
     itens.forEach(item => {
       const {el,id} = item, titulo = el.querySelector(':scope > h2');
       item.nome = titulo.firstChild.textContent.trim();
@@ -58,7 +57,7 @@ const Paineis = {
       Array.from(el.childNodes).forEach(n => { if (n !== titulo) corpo.appendChild(n); });
       el.appendChild(corpo);
       const ctrl = document.createElement('span'); ctrl.className = 'painel-controles';
-      ctrl.innerHTML = `<button class="btn-mini painel-alca" draggable="true" aria-label="Arrastar ${esc(item.nome)}" title="Arrastar painel">⠿</button>
+      ctrl.innerHTML = `<button class="btn-mini painel-alca" aria-label="Arrastar ${esc(item.nome)}" title="Arrastar painel">⠿</button>
         <button class="btn btn-ghost btn-peq" data-recolher aria-controls="${corpo.id}">Recolher</button>
         <button class="btn-mini" data-ocultar aria-label="Ocultar ${esc(item.nome)}">×</button>`;
       titulo.appendChild(ctrl);
@@ -68,17 +67,12 @@ const Paineis = {
         if (b.hasAttribute('data-ocultar')) { ocultos.add(id); barra.querySelector('summary').focus(); }
         pintar(); salvar(); if (!ocultos.has(id)) b.focus();
       });
-      ctrl.querySelector('[draggable]').addEventListener('dragstart', e => {
-        arrastando = id; e.dataTransfer.setData('text/plain',id); e.dataTransfer.effectAllowed='move'; el.classList.add('arrastando');
-      });
-      el.addEventListener('dragover', e => { if (arrastando) { e.preventDefault(); e.dataTransfer.dropEffect='move'; el.classList.add('destino-arraste'); } });
-      el.addEventListener('dragleave', e => { if (!el.contains(e.relatedTarget)) el.classList.remove('destino-arraste'); });
-      el.addEventListener('drop', e => { if (!arrastando) return; e.preventDefault(); mover(arrastando,itens.findIndex(i=>i.id===id)); el.classList.remove('destino-arraste'); });
-      el.addEventListener('dragend', () => { arrastando=null; itens.forEach(i=>i.el.classList.remove('arrastando','destino-arraste')); });
       const b = document.createElement('button'); b.className='btn btn-ghost btn-peq'; b.textContent=item.nome; b.dataset.visibilidade=id;
       b.addEventListener('click',()=>{ ocultos.has(id) ? ocultos.delete(id) : ocultos.add(id); pintar(); salvar(); });
       $('.painel-visibilidade',barra).appendChild(b);
     });
+    ligarArrasto({ raiz: grupo, itens: '[data-painel]', alca: '.painel-alca',
+      aoMover: (origem, destino) => mover(origem.dataset.painel, itens.findIndex(i => i.id === destino.dataset.painel)) });
     barra.addEventListener('click', e => {
       const b=e.target.closest('button'); if (!b) return;
       if (b.dataset.layout) prefs.modo=b.dataset.layout;

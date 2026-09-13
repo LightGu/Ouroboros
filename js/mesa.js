@@ -574,41 +574,16 @@ const Mesa = {
 
   ligarDragAndDrop() {
     const grid = $('#grid');
-    let arrastado = null;
-
-    $$('.card', grid).forEach(card => {
-      const alca = $('[data-alca]', card);
-      alca.addEventListener('mousedown', () => { card.draggable = true; });
-      alca.addEventListener('touchstart', () => { card.draggable = true; }, { passive: true });
-
-      card.addEventListener('dragstart', e => {
-        arrastado = card;
-        card.classList.add('arrastando');
-        e.dataTransfer.effectAllowed = 'move';
-        e.dataTransfer.setData('text/plain', card.dataset.id);
-      });
-
-      card.addEventListener('dragend', () => {
-        card.classList.remove('arrastando');
-        card.draggable = false;
-        arrastado = null;
-        Store.reordenar($$('.card', grid).map(c => c.dataset.id));
-        Mesa.render();
-      });
-
-      card.addEventListener('dragover', e => {
-        e.preventDefault();
-        if (!arrastado || arrastado === card) return;
-        const r = card.getBoundingClientRect();
-        const depois = (e.clientX - r.left) > r.width / 2;
-        grid.insertBefore(arrastado, depois ? card.nextSibling : card);
-      });
-    });
-
-    if (!grid.dataset.ligado) {
-      grid.dataset.ligado = '1';
-      grid.addEventListener('dragover', e => e.preventDefault());
-    }
+    if (grid.dataset.arrastoPonteiro) return;
+    grid.dataset.arrastoPonteiro = '1';
+    ligarArrasto({ raiz: grid, itens: '.card', alca: '[data-alca]', aoMover: (origem, destino) => {
+      const ids = $$('.card', grid).map(c => c.dataset.id);
+      const de = ids.indexOf(origem.dataset.id), para = ids.indexOf(destino.dataset.id);
+      if (de < 0 || para < 0) return;
+      ids.splice(para, 0, ids.splice(de, 1)[0]);
+      Store.reordenar(ids);
+      Mesa.render();
+    }});
   }
 };
 

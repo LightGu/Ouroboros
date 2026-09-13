@@ -132,3 +132,47 @@ function num(v, padrao = 0) {
 }
 
 function d20() { return 1 + Math.floor(Math.random() * 20); }
+
+/* Arrasto por alça, com mouse, caneta ou toque. Só altera a ordem ao soltar. */
+function ligarArrasto({ raiz, itens, alca, aoMover }) {
+  let ativo = null;
+  const limpar = () => {
+    if (!ativo) return;
+    const { origem, cabo, pointerId } = ativo;
+    ativo = null;
+    origem.classList.remove('arrastando');
+    raiz.querySelectorAll('.destino-arraste').forEach(el => el.classList.remove('destino-arraste'));
+    if (cabo.hasPointerCapture(pointerId)) cabo.releasePointerCapture(pointerId);
+  };
+  raiz.addEventListener('pointerdown', e => {
+    const cabo = e.target.closest(alca), origem = cabo?.closest(itens);
+    if (!origem || !raiz.contains(origem) || e.button !== 0 || ativo) return;
+    e.preventDefault();
+    ativo = { origem, cabo, pointerId: e.pointerId, x: e.clientX, y: e.clientY, destino: null, moveu: false };
+    cabo.setPointerCapture(e.pointerId);
+  });
+  raiz.addEventListener('pointermove', e => {
+    if (!ativo || e.pointerId !== ativo.pointerId) return;
+    if (!ativo.moveu && Math.hypot(e.clientX - ativo.x, e.clientY - ativo.y) < 6) return;
+    ativo.moveu = true;
+    ativo.origem.classList.add('arrastando');
+    ativo.destino?.classList.remove('destino-arraste');
+    const alvo = document.elementFromPoint(e.clientX, e.clientY)?.closest(itens);
+    ativo.destino = alvo && raiz.contains(alvo) && alvo !== ativo.origem ? alvo : null;
+    ativo.destino?.classList.add('destino-arraste');
+    if (e.clientY < 60) window.scrollBy(0, -20);
+    else if (e.clientY > window.innerHeight - 60) window.scrollBy(0, 20);
+  });
+  raiz.addEventListener('pointerup', e => {
+    if (!ativo || e.pointerId !== ativo.pointerId) return;
+    const { origem, destino, moveu } = ativo;
+    limpar();
+    if (moveu && destino) aoMover(origem, destino);
+  });
+  raiz.addEventListener('pointercancel', limpar);
+  raiz.addEventListener('lostpointercapture', limpar);
+  raiz.addEventListener('dragstart', e => { if (e.target.closest(alca)) e.preventDefault(); });
+  raiz.addEventListener('click', e => {
+    if (e.target.closest(alca)) { e.preventDefault(); e.stopPropagation(); }
+  }, true);
+}
