@@ -442,7 +442,8 @@ const Celular = {
         <div class="previa" id="pers-previa-editar">${foto ? `<img src="${esc(foto)}" alt="Prévia">` : '<span class="fraco">sem foto</span>'}</div>
         ${this.corteMarkup('pers')}
         <p role="alert" id="pers-erro-editar"></p>`,
-      confirmar: async () => {
+      confirmar: 'Salvar',
+      onConfirmar: async () => {
         const url = $('#pers-url-editar').value.trim();
         if (url) foto = url;
         else if (!foto.startsWith('data:')) foto = '';
@@ -497,7 +498,8 @@ const Celular = {
         <div class="previa" id="perfil-previa-editar">${foto ? `<img src="${esc(foto)}" alt="Prévia">` : '<span class="fraco">sem foto</span>'}</div>
         ${this.corteMarkup('perfil')}
         <p role="alert" id="perfil-erro-editar"></p>`,
-      confirmar: async () => {
+      confirmar: 'Salvar',
+      onConfirmar: async () => {
         const url = $('#perfil-url-editar').value.trim();
         if (url) foto = url;
         else if (!foto.startsWith('data:')) foto = '';
