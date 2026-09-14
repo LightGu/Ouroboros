@@ -285,6 +285,61 @@ const Celular = {
     }
   },
 
+  corteMarkup(prefix) {
+    return `<div class="corte-retrato" id="${prefix}-corte" hidden><span class="fraco">Escolha uma imagem para recortar</span></div>
+      <label class="campo corte-zoom" id="${prefix}-zoom" hidden><span>Zoom</span><input type="range" id="${prefix}-zoom-input" min="0.5" max="2.5" step="0.01" value="1"></label>`;
+  },
+
+  renderCorte(prefix, corte) {
+    const area = $('#' + prefix + '-corte');
+    const zoom = $('#' + prefix + '-zoom');
+    if (!area) return;
+    if (!corte.data) {
+      area.innerHTML = '<span class="fraco">Escolha uma imagem para recortar</span>';
+      area.hidden = true;
+      zoom.hidden = true;
+      return;
+    }
+    area.hidden = false;
+    zoom.hidden = false;
+    area.innerHTML = `<img src="${esc(corte.data)}" alt="Prévia do recorte">`;
+    const img = $('img', area), atualizar = () => {
+      img.style.transform = `translate(${corte.x}px, ${corte.y}px) scale(${corte.zoom})`;
+    };
+    const controle = $('#' + prefix + '-zoom-input');
+    controle.value = corte.zoom;
+    controle.oninput = () => { corte.zoom = Number(controle.value); atualizar(); };
+    let arrastando = false, inicio;
+    area.onpointerdown = e => {
+      arrastando = true; inicio = { x: e.clientX - corte.x, y: e.clientY - corte.y };
+      area.setPointerCapture(e.pointerId);
+    };
+    area.onpointermove = e => {
+      if (!arrastando) return;
+      corte.x = Math.max(-area.clientWidth, Math.min(area.clientWidth, e.clientX - inicio.x));
+      corte.y = Math.max(-area.clientHeight, Math.min(area.clientHeight, e.clientY - inicio.y));
+      atualizar();
+    };
+    area.onpointerup = area.onpointercancel = () => { arrastando = false; };
+    atualizar();
+  },
+
+  async finalizarCorte(corte) {
+    if (!corte.data) return '';
+    const img = await new Promise((resolve, reject) => {
+      const el = new Image(); el.onload = () => resolve(el); el.onerror = reject; el.src = corte.data;
+    });
+    const tamanho = 460, canvas = document.createElement('canvas');
+    canvas.width = canvas.height = tamanho;
+    const escala = Math.max(tamanho / img.width, tamanho / img.height) * corte.zoom;
+    const x = tamanho / 2 - img.width * escala / 2 + corte.x * (tamanho / 260);
+    const y = tamanho / 2 - img.height * escala / 2 + corte.y * (tamanho / 260);
+    const ctx = canvas.getContext('2d');
+    ctx.fillStyle = '#15161a'; ctx.fillRect(0, 0, tamanho, tamanho);
+    ctx.drawImage(img, x, y, img.width * escala, img.height * escala);
+    return canvas.toDataURL('image/jpeg', 0.82);
+  },
+
   /* Passar o número adiante. O jogador só passa o que já tem — a checagem
      de verdade está na função do banco, esta tela é só conveniência. */
   modalPassar(c) {
@@ -379,11 +434,13 @@ const Celular = {
     if (!persona || !App.ehMestre) return;
     let foto = persona.foto || '';
     let lendo = false;
+    const corte = { data: '', zoom: 1, x: 0, y: 0 };
     Modal.abrir({
       titulo: 'Imagem do número',
       corpo: `<label class="campo"><span>Enviar imagem</span><input type="file" id="pers-foto-editar" accept="image/*"></label>
         <label class="campo"><span>Ou colar um link</span><input type="url" id="pers-url-editar" placeholder="https://..." value="${foto.startsWith('http') ? esc(foto) : ''}"></label>
         <div class="previa" id="pers-previa-editar">${foto ? `<img src="${esc(foto)}" alt="Prévia">` : '<span class="fraco">sem foto</span>'}</div>
+        ${this.corteMarkup('pers')}
         <p role="alert" id="pers-erro-editar"></p>`,
       confirmar: async () => {
         const url = $('#pers-url-editar').value.trim();
@@ -394,7 +451,11 @@ const Celular = {
           return false;
         }
         try {
-          if (foto.startsWith('data:')) foto = await Nuvem.enviarRetrato(foto, App.mesa.id, 'persona-' + id);
+          if (foto.startsWith('data:')) {
+            corte.data = foto;
+            foto = await this.finalizarCorte(corte);
+            foto = await Nuvem.enviarRetrato(foto, App.mesa.id, 'persona-' + id);
+          }
           await Nuvem.salvarPersona(id, foto || null);
           persona.foto = foto;
           this.render();
@@ -408,13 +469,18 @@ const Celular = {
       lendo = true;
       try {
         foto = await lerImagem(e.target.files[0]);
+        corte.data = foto; corte.zoom = 1; corte.x = 0; corte.y = 0;
         $('#pers-url-editar').value = '';
-        $('#pers-previa-editar').innerHTML = `<img src="${foto}" alt="Prévia">`;
+        $('#pers-previa-editar').hidden = true;
+        this.renderCorte('pers', corte);
       } catch { $('#pers-erro-editar').textContent = 'Não consegui ler a imagem.'; }
       finally { lendo = false; }
     });
     $('#pers-url-editar').addEventListener('change', e => {
       foto = e.target.value.trim();
+      $('#pers-previa-editar').hidden = false;
+      corte.data = '';
+      this.renderCorte('pers', corte);
       $('#pers-previa-editar').innerHTML = foto ? `<img src="${esc(foto)}" alt="Prévia">` : '<span class="fraco">sem foto</span>';
     });
   },
@@ -423,11 +489,13 @@ const Celular = {
     if (!App.ehMestre) return;
     let foto = App.perfil?.foto || '';
     let lendo = false;
+    const corte = { data: '', zoom: 1, x: 0, y: 0 };
     Modal.abrir({
       titulo: 'Imagem do meu número',
       corpo: `<label class="campo"><span>Enviar imagem</span><input type="file" id="perfil-foto-editar" accept="image/*"></label>
         <label class="campo"><span>Ou colar um link</span><input type="url" id="perfil-url-editar" placeholder="https://..." value="${foto.startsWith('http') ? esc(foto) : ''}"></label>
         <div class="previa" id="perfil-previa-editar">${foto ? `<img src="${esc(foto)}" alt="Prévia">` : '<span class="fraco">sem foto</span>'}</div>
+        ${this.corteMarkup('perfil')}
         <p role="alert" id="perfil-erro-editar"></p>`,
       confirmar: async () => {
         const url = $('#perfil-url-editar').value.trim();
@@ -438,7 +506,11 @@ const Celular = {
           return false;
         }
         try {
-          if (foto.startsWith('data:')) foto = await Nuvem.enviarRetrato(foto, App.mesa.id, 'perfil-' + App.sessao.user.id);
+          if (foto.startsWith('data:')) {
+            corte.data = foto;
+            foto = await this.finalizarCorte(corte);
+            foto = await Nuvem.enviarRetrato(foto, App.mesa.id, 'perfil-' + App.sessao.user.id);
+          }
           await Nuvem.salvarFotoPerfil(foto || null);
           App.perfil.foto = foto;
           const membro = this.membros.find(m => m.id === this.eu());
@@ -454,13 +526,18 @@ const Celular = {
       lendo = true;
       try {
         foto = await lerImagem(e.target.files[0]);
+        corte.data = foto; corte.zoom = 1; corte.x = 0; corte.y = 0;
         $('#perfil-url-editar').value = '';
-        $('#perfil-previa-editar').innerHTML = `<img src="${foto}" alt="Prévia">`;
+        $('#perfil-previa-editar').hidden = true;
+        this.renderCorte('perfil', corte);
       } catch { $('#perfil-erro-editar').textContent = 'Não consegui ler a imagem.'; }
       finally { lendo = false; }
     });
     $('#perfil-url-editar').addEventListener('change', e => {
       foto = e.target.value.trim();
+      $('#perfil-previa-editar').hidden = false;
+      corte.data = '';
+      this.renderCorte('perfil', corte);
       $('#perfil-previa-editar').innerHTML = foto ? `<img src="${esc(foto)}" alt="Prévia">` : '<span class="fraco">sem foto</span>';
     });
   },
