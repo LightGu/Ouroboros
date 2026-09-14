@@ -481,6 +481,11 @@ const Nuvem = {
     return data;
   },
 
+  async salvarPersona(id, foto) {
+    const { error } = await this.cliente.from('personas').update({ foto }).eq('id', id);
+    if (error) throw error;
+  },
+
   async apagarPersona(id) {
     const { error } = await this.cliente.from('personas').delete().eq('id', id);
     if (error) throw error;

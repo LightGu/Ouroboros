@@ -76,7 +76,9 @@ const Celular = {
   },
 
   fotoDe(tipo, id) {
-    return tipo === 'persona' ? (this.personas.find(p => p.id === id)?.foto || '') : '';
+    if (tipo === 'persona') return this.personas.find(p => p.id === id)?.foto || '';
+    const personagem = Store.estado?.personagens?.find(p => p.donoId === id);
+    return personagem ? imagemPorVida(personagem) : '';
   },
 
   /* Contatos: os outros membros da mesa, mais as personas.
@@ -88,7 +90,7 @@ const Celular = {
     const lista = this.membros
       .filter(m => this.comoPersona ? m.id !== this.eu() || true : m.id !== this.eu())
       .filter(m => this.comoPersona ? m.papel !== 'mestre' : m.id !== this.eu())
-      .map(m => ({ tipo: 'user', id: m.id, nome: m.nome, papel: m.papel }));
+      .map(m => ({ tipo: 'user', id: m.id, nome: m.nome, papel: m.papel, foto: this.fotoDe('user', m.id) }));
 
     if (this.souEu()) {
       /* o jogador só enxerga a persona depois que ela falou com ele:
@@ -170,6 +172,7 @@ const Celular = {
               <span class="cel-nome">${esc(c.nome)}${c.persona ? '<i class="cel-tag">número</i>' : ''}</span>
               <span class="cel-previa">${c.ultima ? esc(c.ultima.texto.slice(0, 38)) : '<i>sem conversa</i>'}</span>
             </span>
+            ${App.ehMestre && c.persona ? `<span class="cel-acao cel-editar-imagem" data-editar-persona="${esc(c.id)}" role="button" tabindex="0" title="Escolher imagem">imagem</span>` : ''}
             ${c.naoLidas ? (App.ehMestre
                 ? `<span class="cel-bolha">${c.naoLidas}</span>`
                 : '<span class="cel-novo" title="mensagem nova"></span>') : ''}
@@ -224,6 +227,11 @@ const Celular = {
 
     $('[data-voltar]', tela)?.addEventListener('click', () => { this.conversa = null; this.render(); });
     $('[data-nova-persona]', tela)?.addEventListener('click', () => this.modalPersona());
+    $$('[data-editar-persona]', tela).forEach(b => {
+      const abrir = e => { e.stopPropagation(); this.modalImagemPersona(b.dataset.editarPersona); };
+      b.addEventListener('click', abrir);
+      b.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') abrir(e); });
+    });
     $('[data-passar]', tela)?.addEventListener('click', () => this.modalPassar(this.conversa));
     $('#cel-identidade', tela)?.addEventListener('change', e => {
       this.comoPersona = e.target.value || null;
@@ -357,6 +365,51 @@ const Celular = {
       Modal.fechar();
       this.render();
     }));
+  },
+
+  modalImagemPersona(id) {
+    const persona = this.personas.find(p => p.id === id);
+    if (!persona || !App.ehMestre) return;
+    let foto = persona.foto || '';
+    let lendo = false;
+    Modal.abrir({
+      titulo: 'Imagem do número',
+      corpo: `<label class="campo"><span>Enviar imagem</span><input type="file" id="pers-foto-editar" accept="image/*"></label>
+        <label class="campo"><span>Ou colar um link</span><input type="url" id="pers-url-editar" placeholder="https://..." value="${foto.startsWith('http') ? esc(foto) : ''}"></label>
+        <div class="previa" id="pers-previa-editar">${foto ? `<img src="${esc(foto)}" alt="Prévia">` : '<span class="fraco">sem foto</span>'}</div>
+        <p role="alert" id="pers-erro-editar"></p>`,
+      confirmar: async () => {
+        const url = $('#pers-url-editar').value.trim();
+        if (url) foto = url;
+        else if (!foto.startsWith('data:')) foto = '';
+        if (lendo || (url && !/^https?:\/\//i.test(url))) {
+          $('#pers-erro-editar').textContent = 'Use um link http ou https válido.';
+          return false;
+        }
+        try {
+          if (foto.startsWith('data:')) foto = await Nuvem.enviarRetrato(foto, App.mesa.id, 'persona-' + id);
+          await Nuvem.salvarPersona(id, foto || null);
+          persona.foto = foto;
+          this.render();
+        } catch (e) {
+          $('#pers-erro-editar').textContent = 'Não consegui salvar: ' + (e.message || e);
+          return false;
+        }
+      }
+    });
+    $('#pers-foto-editar').addEventListener('change', async e => {
+      lendo = true;
+      try {
+        foto = await lerImagem(e.target.files[0]);
+        $('#pers-url-editar').value = '';
+        $('#pers-previa-editar').innerHTML = `<img src="${foto}" alt="Prévia">`;
+      } catch { $('#pers-erro-editar').textContent = 'Não consegui ler a imagem.'; }
+      finally { lendo = false; }
+    });
+    $('#pers-url-editar').addEventListener('change', e => {
+      foto = e.target.value.trim();
+      $('#pers-previa-editar').innerHTML = foto ? `<img src="${esc(foto)}" alt="Prévia">` : '<span class="fraco">sem foto</span>';
+    });
   },
 
   /* ---------------- abrir e fechar ---------------- */

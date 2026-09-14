@@ -42,7 +42,7 @@ create policy bestiary_storage_guard on storage.objects as restrictive for all t
 using (bucket_id <> 'bestiary-images' or
   (auth.uid() is not null and (storage.foldername(name))[1] = auth.uid()::text))
 with check (bucket_id <> 'bestiary-images' or
-  (auth.uid() is not null and (storage.foldername(name))[1] = auth.uid()::text));
+  (auth.uid() is not null and  (storage.foldername(name))[1] = auth.uid()::text));
 drop policy if exists bestiary_images_read on storage.objects;
 create policy bestiary_images_read on storage.objects for select to authenticated
 using (bucket_id = 'bestiary-images' and (storage.foldername(name))[1] = auth.uid()::text
