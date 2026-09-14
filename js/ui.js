@@ -195,3 +195,17 @@ function imagemPorVida(p) {
   }
   return p.imagem || '';
 }
+
+/* Compara apenas retratos já exibidos, sem animar a entrada na tela. */
+function animarVida(retrato, atual, anterior) {
+  if (!retrato) return;
+  atual = num(atual);
+  const antes = anterior ?? retrato.dataset.pvAnterior;
+  retrato.dataset.pvAnterior = atual;
+  if (antes === undefined || num(antes) === atual) return;
+  retrato.classList.remove('vida-dano', 'vida-cura');
+  void retrato.offsetWidth;
+  retrato.classList.add(atual < num(antes) ? 'vida-dano' : 'vida-cura');
+  clearTimeout(retrato._fimEfeitoVida);
+  retrato._fimEfeitoVida = setTimeout(() => retrato.classList.remove('vida-dano', 'vida-cura'), 1000);
+}

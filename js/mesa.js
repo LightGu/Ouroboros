@@ -7,7 +7,10 @@ const Mesa = {
     const lista = Store.estado.personagens;
 
     $('#vazio').hidden = lista.length > 0;
+    const anteriores = new Map($$('.card', grid).map(card => [card.dataset.id, $('.retrato-moldura', card)?.dataset.pvAnterior]));
     grid.innerHTML = lista.map((p, i) => this.card(p, i)).join('');
+
+    $$('.card', grid).forEach((card, i) => animarVida($('.retrato-moldura', card), lista[i].pv.atual, anteriores.get(card.dataset.id)));
 
     this.renderTurno();
     this.ligarDragAndDrop();

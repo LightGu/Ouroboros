@@ -18,6 +18,7 @@ const Ficha = {
     const foco = mesma && ativo ? ativo.dataset?.bind : null;
     const pos = foco && typeof ativo.selectionStart === 'number' ? ativo.selectionStart : null;
 
+    const pvAnterior = mesma ? $('.retrato-ficha', $('#view-ficha'))?.dataset.pvAnterior : undefined;
     this.atual = Store.obter(id);
     if (!this.atual) return;
     if (!mesma) { this.filtroItem = ''; this.ordenacao = {}; }
@@ -25,6 +26,7 @@ const Ficha = {
     this.aplicarCor($('#view-ficha'), this.atual.cor);
     $('#view-ficha').innerHTML = this.html(this.atual);
     Paineis.montar(this.atual);
+    animarVida($('.retrato-ficha'), this.atual.pv.atual, pvAnterior);
 
     if (mesma) {
       window.scrollTo(0, y);
@@ -946,6 +948,8 @@ const Ficha = {
       retrato.dataset.imagemAtual = imagem;
       retrato.innerHTML = (imagem ? `<img src="${esc(imagem)}" alt="">` : `<div class="retrato-vazio" style="--h:${corDoNome(p.nome)}">${esc(iniciais(p.nome))}</div>`) + '<span class="retrato-acao">trocar imagem</span>';
     }
+
+    animarVida(retrato, p.pv.atual);
 
     const dt = $('#dt-rituais', raiz);
     if (dt) { dt.textContent = Regras.dtRituais(p); $('#dt-rituais-formula', raiz).textContent = this.formulaDtRituais(p); }
