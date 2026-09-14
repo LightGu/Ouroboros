@@ -9,6 +9,8 @@ const Store = {
   mesaId: null,
   ehMestre: false,
   _pendentes: new Map(),
+  _salvando: new Set(),
+  _versoes: new Map(),
 
   /* ---------------- carga ---------------- */
 
@@ -38,18 +40,30 @@ const Store = {
     if (!p || !this.mesaId) return;
     if (!this.podeEditar(p)) return;
 
+    const versao = (this._versoes.get(p.id) || 0) + 1;
+    this._versoes.set(p.id, versao);
     this.guardarCache();
     clearTimeout(this._pendentes.get(p.id));
-    this._pendentes.set(p.id, setTimeout(async () => {
-      this._pendentes.delete(p.id);
-      try {
-        await Nuvem.salvarPersonagem(p, this.mesaId);
-        if (this.ehMestre) await Nuvem.salvarNotas(p, this.mesaId);
-      } catch (e) {
-        console.error(e);
-        toast('Não consegui salvar na nuvem: ' + (e.message || e), 'erro');
-      }
-    }, 500));
+    this._pendentes.set(p.id, setTimeout(() => this._gravar(p.id, versao), 500));
+  },
+
+  async _gravar(id, versao) {
+    this._pendentes.delete(id);
+    if (this._salvando.has(id)) return;
+    const p = this.obter(id);
+    if (!p || this._versoes.get(id) !== versao) return;
+    const copia = JSON.parse(JSON.stringify(p));
+    this._salvando.add(id);
+    try {
+      await Nuvem.salvarPersonagem(copia, this.mesaId);
+      if (this.ehMestre) await Nuvem.salvarNotas(copia, this.mesaId);
+    } catch (e) {
+      console.error(e);
+      toast('Não consegui salvar na nuvem: ' + (e.message || e), 'erro');
+    } finally {
+      this._salvando.delete(id);
+      if (this._versoes.get(id) !== versao) this._gravar(id, this._versoes.get(id));
+    }
   },
 
   /* Grava já, sem esperar o agrupamento (usado antes de sair da tela). */
@@ -145,6 +159,7 @@ const Store = {
   /* Aplica no array em memória uma mudança que veio de outro aparelho. */
   aplicarMudancaRemota(payload) {
     const { eventType, new: novo, old: antigo } = payload;
+    if (novo?.atualizado_por === App.sessao?.user?.id) return;
 
     if (eventType === 'DELETE') {
       const i = this.estado.personagens.findIndex(p => p.id === antigo.id);

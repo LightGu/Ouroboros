@@ -53,6 +53,12 @@ const Nuvem = {
     if (error) throw error;
   },
 
+  async salvarFotoPerfil(foto) {
+    const { error } = await this.cliente.from('perfis')
+      .update({ foto }).eq('id', App.sessao.user.id);
+    if (error) throw error;
+  },
+
   /* ---------------- mesas ---------------- */
 
   async mesas() {
@@ -83,13 +89,19 @@ const Nuvem = {
     if (!ms?.length) return [];
 
     const ids = ms.map(m => m.user_id);
-    const { data: ps } = await this.cliente.from('perfis').select('id, nome').in('id', ids);
-    const nomes = new Map((ps || []).map(p => [p.id, p.nome]));
+    let { data: ps, error: perfilError } = await this.cliente
+      .from('perfis').select('id, nome, foto').in('id', ids);
+    if (perfilError) {
+      const antigo = await this.cliente.from('perfis').select('id, nome').in('id', ids);
+      ps = antigo.data || [];
+    }
+    const perfis = new Map((ps || []).map(p => [p.id, p]));
 
     return ms.map(m => ({
       id: m.user_id,
       papel: m.papel,
-      nome: nomes.get(m.user_id) || 'Agente',
+      nome: perfis.get(m.user_id)?.nome || 'Agente',
+      foto: perfis.get(m.user_id)?.foto || '',
       entrouEm: m.entrou_em
     }));
   },

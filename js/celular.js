@@ -77,6 +77,8 @@ const Celular = {
 
   fotoDe(tipo, id) {
     if (tipo === 'persona') return this.personas.find(p => p.id === id)?.foto || '';
+    const membro = this.membros.find(m => m.id === id);
+    if (membro?.papel === 'mestre' && membro.foto) return membro.foto;
     const personagem = Store.estado?.personagens?.find(p => p.donoId === id);
     return personagem ? imagemPorVida(personagem) : '';
   },
@@ -156,13 +158,14 @@ const Celular = {
         <span class="cel-titulo">Mensagens</span>
         ${App.ehMestre ? '<button class="cel-acao" data-nova-persona title="Criar outro número">+ número</button>' : ''}
       </header>
-      ${App.ehMestre && this.personas.length ? `
+      ${App.ehMestre ? `
         <div class="cel-como">
           <span>meu número</span>
           <select id="cel-identidade">
             <option value="">${esc(App.perfil?.nome || 'Eu')}</option>
             ${this.personas.map(p => `<option value="${p.id}" ${this.comoPersona === p.id ? 'selected' : ''}>${esc(p.nome)}</option>`).join('')}
           </select>
+          ${!this.comoPersona ? '<button type="button" class="cel-acao" data-editar-perfil title="Escolher imagem">imagem</button>' : ''}
         </div>` : ''}
       <div class="cel-lista">
         ${lista.length ? lista.map(c => `
@@ -231,6 +234,10 @@ const Celular = {
       const abrir = e => { e.stopPropagation(); this.modalImagemPersona(b.dataset.editarPersona); };
       b.addEventListener('click', abrir);
       b.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') abrir(e); });
+    });
+    $('[data-editar-perfil]', tela)?.addEventListener('click', e => {
+      e.stopPropagation();
+      this.modalImagemPerfil();
     });
     $('[data-passar]', tela)?.addEventListener('click', () => this.modalPassar(this.conversa));
     $('#cel-identidade', tela)?.addEventListener('change', e => {
@@ -409,6 +416,52 @@ const Celular = {
     $('#pers-url-editar').addEventListener('change', e => {
       foto = e.target.value.trim();
       $('#pers-previa-editar').innerHTML = foto ? `<img src="${esc(foto)}" alt="Prévia">` : '<span class="fraco">sem foto</span>';
+    });
+  },
+
+  modalImagemPerfil() {
+    if (!App.ehMestre) return;
+    let foto = App.perfil?.foto || '';
+    let lendo = false;
+    Modal.abrir({
+      titulo: 'Imagem do meu número',
+      corpo: `<label class="campo"><span>Enviar imagem</span><input type="file" id="perfil-foto-editar" accept="image/*"></label>
+        <label class="campo"><span>Ou colar um link</span><input type="url" id="perfil-url-editar" placeholder="https://..." value="${foto.startsWith('http') ? esc(foto) : ''}"></label>
+        <div class="previa" id="perfil-previa-editar">${foto ? `<img src="${esc(foto)}" alt="Prévia">` : '<span class="fraco">sem foto</span>'}</div>
+        <p role="alert" id="perfil-erro-editar"></p>`,
+      confirmar: async () => {
+        const url = $('#perfil-url-editar').value.trim();
+        if (url) foto = url;
+        else if (!foto.startsWith('data:')) foto = '';
+        if (lendo || (url && !/^https?:\/\//i.test(url))) {
+          $('#perfil-erro-editar').textContent = 'Use um link http ou https válido.';
+          return false;
+        }
+        try {
+          if (foto.startsWith('data:')) foto = await Nuvem.enviarRetrato(foto, App.mesa.id, 'perfil-' + App.sessao.user.id);
+          await Nuvem.salvarFotoPerfil(foto || null);
+          App.perfil.foto = foto;
+          const membro = this.membros.find(m => m.id === this.eu());
+          if (membro) membro.foto = foto;
+          this.render();
+        } catch (e) {
+          $('#perfil-erro-editar').textContent = 'Não consegui salvar: ' + (e.message || e);
+          return false;
+        }
+      }
+    });
+    $('#perfil-foto-editar').addEventListener('change', async e => {
+      lendo = true;
+      try {
+        foto = await lerImagem(e.target.files[0]);
+        $('#perfil-url-editar').value = '';
+        $('#perfil-previa-editar').innerHTML = `<img src="${foto}" alt="Prévia">`;
+      } catch { $('#perfil-erro-editar').textContent = 'Não consegui ler a imagem.'; }
+      finally { lendo = false; }
+    });
+    $('#perfil-url-editar').addEventListener('change', e => {
+      foto = e.target.value.trim();
+      $('#perfil-previa-editar').innerHTML = foto ? `<img src="${esc(foto)}" alt="Prévia">` : '<span class="fraco">sem foto</span>';
     });
   },
 

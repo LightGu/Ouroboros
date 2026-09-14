@@ -9,6 +9,7 @@
 create table if not exists public.perfis (
   id         uuid primary key references auth.users on delete cascade,
   nome       text not null default 'Agente',
+  foto       text,
   criado_em  timestamptz not null default now()
 );
 
