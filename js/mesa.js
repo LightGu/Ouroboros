@@ -76,6 +76,7 @@ const Mesa = {
         ${this.aliados(p)}
         ${this.atributos(p)}
         ${this.bonusInterludio(p)}
+        ${this.ataques(p)}
         ${this.municoes(p)}
         ${this.condicoes(p)}
 
@@ -170,6 +171,28 @@ const Mesa = {
     return `<div class="bonus-il">
       ${chip('corpo', 'AGI/FOR/VIG', num(p.atributos.VIG))}
       ${chip('mente', 'INT/PRE', num(p.atributos.INT))}
+    </div>`;
+  },
+
+  /* Até três ataques no card. Em combate a pergunta é sempre a mesma — "com o
+     que você bate e quanto dá" — e abrir a ficha no meio do turno atrasa a
+     mesa. Do quarto em diante fica só na ficha: card não é planilha.
+     Linha sem nome e sem dano é linha que o jogador começou e não preencheu;
+     essa não conta. */
+  ataques(p) {
+    const lista = (p.ataques || []).filter(a => (a.nome || '').trim() || (a.dano || '').trim());
+    if (!lista.length) return '';
+    const resto = lista.length - 3;
+
+    return `<div class="ataques-card">
+      ${lista.slice(0, 3).map(a => {
+        const detalhe = [a.teste, a.especial].filter(Boolean).join(' • ');
+        return `<span class="atq" title="${esc(a.nome || 'Ataque')}${detalhe ? ' — ' + esc(detalhe) : ''}">
+          <b class="atq-nome">${esc(a.nome || 'Ataque')}</b>
+          ${a.dano ? `<i class="atq-dano">${esc(a.dano)}</i>` : ''}
+        </span>`;
+      }).join('')}
+      ${resto > 0 ? `<span class="atq atq-mais" title="Abra a ficha para ver todos">+${resto}</span>` : ''}
     </div>`;
   },
 

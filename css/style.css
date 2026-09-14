@@ -1941,6 +1941,17 @@ body.com-painel .view { padding-right: 352px; }
 .aliado-mini img { width: 100%; height: 100%; object-fit: cover; }
 .aliado-chip i { font-style: normal; font-size: 10px; color: #79c986; }
 
+/* até três ataques no card da mesa */
+.ataques-card { display: flex; flex-wrap: wrap; gap: 5px; }
+.atq {
+  display: inline-flex; align-items: baseline; gap: 5px; min-width: 0;
+  padding: 2px 8px; border-radius: 7px; font-size: 11px;
+  background: var(--bg-2); border: 1px solid var(--linha); color: var(--texto-2);
+}
+.atq-nome { font-weight: 500; max-width: 108px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.atq-dano { font-family: var(--display); font-style: normal; font-size: 12px; color: var(--roxo-cl); }
+.atq-mais { color: var(--texto-3); }
+
 /* ===========================================================
    CELULAR / TELA ESTREITA
    =========================================================== */
