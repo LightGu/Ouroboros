@@ -14,7 +14,8 @@ using (exists (
   where p.id = personagem_id and p.mesa_id = historias_personagens.mesa_id
     and public.eh_membro(p.mesa_id)
     and (public.eh_mestre(p.mesa_id) or p.dono_id = auth.uid()
-         or p.dados->'historiaPublica' = 'true'::jsonb)
+       or (coalesce(p.dados->>'fichaPrivada', 'true') <> 'true'
+         and p.dados->'historiaPublica' = 'true'::jsonb))
 ));
 -- Sem policies de escrita: a gravação passa pela permissão da própria ficha.
 insert into public.historias_personagens (personagem_id, mesa_id, texto)

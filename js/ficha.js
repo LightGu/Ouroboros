@@ -81,6 +81,11 @@ const Ficha = {
 
       <div class="ficha-topo">
         <button class="btn btn-ghost" data-voltar>‹ Voltar pra mesa</button>
+        ${Store.podeEditar(p) ? `<label class="campo campo-privacidade"><span>Privacidade da ficha</span>
+          <select data-bind="fichaPrivada">
+            <option value="true" ${p.fichaPrivada !== false ? 'selected' : ''}>Privada para os outros jogadores</option>
+            <option value="false" ${p.fichaPrivada === false ? 'selected' : ''}>Visível para os outros jogadores</option>
+          </select></label>` : ''}
         <div class="cresce"></div>
         <span class="salvo" id="indicador-salvo">salvo automaticamente</span>
         <button class="btn btn-ghost btn-perigo-texto" data-excluir>Excluir agente</button>
@@ -584,7 +589,7 @@ const Ficha = {
     raiz.addEventListener('input', e => {
       const caminho = e.target.dataset.bind;
       if (!caminho || !Store.podeEditar(this.atual)) return;
-      const valor = caminho === 'historiaPublica' ? e.target.value === 'true' : e.target.type === 'number' ? num(e.target.value) : e.target.value;
+      const valor = ['historiaPublica', 'fichaPrivada'].includes(caminho) ? e.target.value === 'true' : e.target.type === 'number' ? num(e.target.value) : e.target.value;
       setPath(this.atual, caminho, valor);
       if (/^inventario\.itens\.\d+\.descricao$/.test(caminho)) {
         e.target.closest('.item-descricao').querySelector('.item-descricao-texto').textContent = valor || 'Sem descrição.';
@@ -624,7 +629,9 @@ const Ficha = {
       }
 
       if (e.target.dataset.bind && e.target.tagName === 'SELECT') {
-        const v = e.target.dataset.per ? num(e.target.value) : e.target.value;
+        const v = ['historiaPublica', 'fichaPrivada'].includes(e.target.dataset.bind)
+          ? e.target.value === 'true'
+          : e.target.dataset.per ? num(e.target.value) : e.target.value;
         setPath(this.atual, e.target.dataset.bind, v);
         this.salvarDepois();
         this.atualizarDerivados(e.target);

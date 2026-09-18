@@ -276,14 +276,16 @@ create policy membros_ler  on public.membros for select to authenticated using (
 create policy membros_sair on public.membros for delete to authenticated
   using (user_id = auth.uid() or public.eh_mestre(mesa_id));
 
--- Jogador só enxerga o que não está oculto. O mestre enxerga tudo.
+-- Jogador só enxerga fichas públicas e não ocultas. O dono e o mestre enxergam tudo.
 drop policy if exists pers_ler    on public.personagens;
 drop policy if exists pers_criar  on public.personagens;
 drop policy if exists pers_editar on public.personagens;
 drop policy if exists pers_apagar on public.personagens;
 
 create policy pers_ler on public.personagens for select to authenticated
-  using (public.eh_membro(mesa_id) and (not oculto or public.eh_mestre(mesa_id)));
+  using (public.eh_membro(mesa_id) and (not oculto or public.eh_mestre(mesa_id))
+    and (public.eh_mestre(mesa_id) or dono_id = auth.uid()
+         or coalesce(dados->>'fichaPrivada', 'true') <> 'true'));
 
 -- personagem rápido e ficha oculta são ferramentas de mestre
 create policy pers_criar on public.personagens for insert to authenticated
@@ -291,6 +293,8 @@ create policy pers_criar on public.personagens for insert to authenticated
     public.eh_membro(mesa_id)
     and (not rapido  or public.eh_mestre(mesa_id))
     and (not oculto  or public.eh_mestre(mesa_id))
+        and (public.eh_mestre(mesa_id) or dono_id = auth.uid()
+          or coalesce(dados->>'fichaPrivada', 'true') <> 'true')
   );
 
 create policy pers_editar on public.personagens for update to authenticated
@@ -871,7 +875,8 @@ using (exists (
   where p.id = personagem_id and p.mesa_id = historias_personagens.mesa_id
     and public.eh_membro(p.mesa_id)
     and (public.eh_mestre(p.mesa_id) or p.dono_id = auth.uid()
-         or p.dados->'historiaPublica' = 'true'::jsonb)
+       or (coalesce(p.dados->>'fichaPrivada', 'true') <> 'true'
+         and p.dados->'historiaPublica' = 'true'::jsonb))
 ));
 -- Sem policies de escrita: a gravação passa pela permissão da própria ficha.
 insert into public.historias_personagens (personagem_id, mesa_id, texto)

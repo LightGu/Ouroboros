@@ -1,4 +1,4 @@
--- ============================================================
+  -- ============================================================
 -- v4 — caderno de campanha do mestre (só ele lê, só ele escreve)
 -- Os links entre anotações saem do próprio texto, no formato [[Título]],
 -- então não existe tabela de arestas: o grafo é derivado na hora.

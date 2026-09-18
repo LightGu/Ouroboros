@@ -154,6 +154,10 @@ const Store = {
     return this.podeEditar(p) || p.historiaPublica === true;
   },
 
+  podeVerFicha(p) {
+    return this.podeEditar(p) || p.fichaPrivada !== true;
+  },
+
   /* ---------------- realtime ---------------- */
 
   /* Aplica no array em memória uma mudança que veio de outro aparelho. */
@@ -211,6 +215,7 @@ const Store = {
       id: null,
       rapido: false,
       oculto: false,
+      fichaPrivada: true,
       historiaPublica: false,
       donoId: null,
       ordem: 0,

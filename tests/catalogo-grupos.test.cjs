@@ -21,6 +21,9 @@ assert.equal(catalogo.filtrar({grupo:'Itens paranormais', busca:'amarras', categ
 assert.equal(catalogo.paraItemDaFicha(catalogo.itens[0]).categoria, 'I');
 assert.equal(antigos[0].grupo, 'Equipamento');
 assert.equal(JSON.stringify(catalogo.corrigirGrupos(catalogo.itens)), JSON.stringify(catalogo.itens));
+const mascara = catalogo.corrigirGrupos([{nome:'Máscara de gás', livro:'Livro Básico', grupo:'Proteção'}]);
+assert.equal(mascara[0].grupo, 'Equipamento');
+assert.ok(!catalogo.corrigirGrupos([{nome:'Máscara de gás', livro:'Livro Básico', grupo:'Proteção'}]).some(i => i.grupo === 'Proteção'));
 console.log('Catálogo: classificação, filtros, origem, idempotência e categoria passaram.');
 
 const corrigidos=catalogo.corrigirGrupos([
