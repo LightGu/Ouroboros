@@ -350,90 +350,6 @@ const Ficha = {
     } catch (e) { /* A consulta não impede editar o inventário offline. */ }
   },
 
-  dimensoesItem(it) {
-    const peso = Math.max(1, num(it.espacos) || 1);
-    const nome = String(it.nome || '').toLowerCase();
-    if (/fuzil|espingarda|machado|lança|espada|arma longa/.test(nome)) return { w: 3, h: 2 };
-    if (peso <= 1) return { w: 1, h: 1 };
-    if (peso <= 2) return { w: 2, h: 1 };
-    if (peso <= 4) return { w: 2, h: 2 };
-    if (peso <= 6) return { w: 3, h: 2 };
-    return { w: 3, h: 3 };
-  },
-
-  gridItem(it) {
-    const base = this.dimensoesItem(it);
-    return Object.assign({ x: 0, y: 0, w: base.w, h: base.h, rot: 0, mao: '', manual: false }, it.grid);
-  },
-
-  colocarItemGrid(i, x, y) {
-    const inv = this.atual.inventario;
-    const grid = Object.assign({ cols: 6, rows: 6, aba: 'grid' }, inv.grid);
-    const item = inv.itens[i];
-    if (!item || !Store.podeEditar(this.atual)) return;
-    const g = this.gridItem(item);
-    const w = g.rot % 2 ? g.h : g.w;
-    const h = g.rot % 2 ? g.w : g.h;
-    if (x < 0 || y < 0 || x + w > Number(grid.cols) || y + h > Number(grid.rows)) {
-      return toast('Esse item não cabe nessa área do grid.', 'erro');
-    }
-    const colide = inv.itens.some((outro, j) => {
-      if (j === i) return false;
-      const o = this.gridItem(outro);
-      if (o.mao) return false;
-      const ow = o.rot % 2 ? o.h : o.w;
-      const oh = o.rot % 2 ? o.w : o.h;
-      return x < o.x + ow && x + w > o.x && y < o.y + oh && y + h > o.y;
-    });
-    if (colide) return toast('Esse espaço já está ocupado.', 'erro');
-    item.grid = Object.assign(g, { x, y, mao: '', manual: true });
-    Store.salvar(this.atual);
-    this.abrir(this.atual.id);
-  },
-
-  colocarItemMao(i, lado) {
-    const item = this.atual.inventario.itens[i];
-    if (!item || !Store.podeEditar(this.atual)) return;
-    this.atual.inventario.itens.forEach((outro, j) => {
-      if (j !== i && (lado === 'duas' && outro.grid?.mao || outro.grid?.mao === lado)) {
-        outro.grid = Object.assign(this.gridItem(outro), { mao: '' });
-      }
-    });
-    item.grid = Object.assign(this.gridItem(item), { mao: lado });
-    Store.salvar(this.atual);
-    this.abrir(this.atual.id);
-  },
-
-  organizarItensSemPosicao(p, grid) {
-    const ocupados = [];
-    const cabe = (x, y, w, h) => x >= 0 && y >= 0 && x + w <= grid.cols && y + h <= grid.rows &&
-      !ocupados.some(o => x < o.x + o.w && x + w > o.x && y < o.y + o.h && y + h > o.y);
-    p.inventario.itens.forEach(it => {
-      if (it.grid) {
-        const g = this.gridItem(it);
-        if (!g.mao) ocupados.push({ x: g.x, y: g.y, w: g.rot % 2 ? g.h : g.w, h: g.rot % 2 ? g.w : g.h });
-        return;
-      }
-      const base = this.gridItem(it);
-      let x = 0, y = 0;
-      for (let yy = 0; yy < grid.rows; yy++) {
-        for (let xx = 0; xx < grid.cols; xx++) {
-          if (cabe(xx, yy, base.w, base.h)) { x = xx; y = yy; yy = grid.rows; break; }
-        }
-      }
-      it.grid = Object.assign(base, { x, y });
-      ocupados.push({ x, y, w: base.w, h: base.h });
-    });
-  },
-
-  itemNaMao(lado, itens) {
-    const alvo = itens.find(({ it }) => this.gridItem(it).mao === lado || this.gridItem(it).mao === 'duas');
-    if (!alvo) return `<div class="inventario-mao-vazio" data-mao-drop="${lado}">arraste um item para cá</div>`;
-    return `<div class="inventario-mao-item" draggable="true" data-grid-cell="${alvo.i}" data-mao-drop="${lado}">
-      <strong>${esc(alvo.it.nome || 'Item')}</strong><span>${this.gridItem(alvo.it).mao === 'duas' ? '2 mãos' : lado}</span>
-    </div>`;
-  },
-
   blocoInventario(p) {
     const itens = p.inventario.itens;
     const f = this.filtroItem;
@@ -444,8 +360,7 @@ const Ficha = {
       .filter(({ it }) => !f || (f === 'sem' ? !it.categoria : it.categoria === f));
     const espacos = visiveis.reduce((t, { it }) => t + num(it.espacos), 0);
     const carga = num(p.inventario.cargaMax);
-    const grid = Object.assign({ cols: 6, rows: 6, aba: 'grid' }, p.inventario?.grid);
-    this.organizarItensSemPosicao(p, grid);
+    const grid = Object.assign({ cols: 6, rows: 4, aba: 'grid', slot1: '', slot2: '' }, p.inventario?.grid);
 
     const chip = (valor, rotulo, n) => `
       <button class="chip-filtro ${f === valor ? 'ativo' : ''}" data-filtro-item="${valor}">
@@ -466,37 +381,38 @@ const Ficha = {
           <label class="campo campo-mini"${dica(AJUDA.campos.prestigio)}><span>Prestígio</span><input data-bind="prestigio" value="${esc(p.prestigio)}"></label>
         </div>
 
-        <div class="inventario-aviso" role="note">Em fase de teste: mexa por sua conta e risco. Recomendado não mexer.</div>
         <div class="inventario-grid-config">
           <div class="inventario-tabs" role="tablist" aria-label="Aba do inventário">
             <button type="button" class="chip-filtro ${grid.aba === 'grid' ? 'ativo' : ''}" data-inventario-aba="grid">Grid</button>
+            <button type="button" class="chip-filtro ${grid.aba === 'bolso' ? 'ativo' : ''}" data-inventario-aba="bolso">Bolso</button>
             <button type="button" class="chip-filtro ${grid.aba === 'mao' ? 'ativo' : ''}" data-inventario-aba="mao">Mão</button>
-            <button type="button" class="chip-filtro ${grid.aba === 'ajustar' ? 'ativo' : ''}" data-inventario-aba="ajustar">Ajustar</button>
           </div>
-          <div class="inventario-grid-editor ${grid.aba === 'ajustar' ? 'ativo' : ''}">
+          <div class="inventario-grid-editor">
             <label class="campo campo-mini"><span>Colunas</span><input type="number" min="3" max="12" data-inventario-grid="cols" value="${num(grid.cols)}"></label>
-            <label class="campo campo-mini"><span>Linhas</span><input type="number" min="3" max="12" data-inventario-grid="rows" value="${num(grid.rows)}"></label>
-            <p class="inventario-ajuste-texto">O tamanho inicial usa os espaços do item: 1x1 leve, 2x1 comum, 2x2 pesado e 3x2 grande. Você pode alterar L/A abaixo.</p>
-          </div>
-          <div class="inventario-maos ${grid.aba === 'mao' ? 'ativo' : ''}">
-            <div class="inventario-mao-slot"><span>Mão esquerda</span>${this.itemNaMao('esquerda', visiveis)}</div>
-            <div class="inventario-mao-slot"><span>Mão direita</span>${this.itemNaMao('direita', visiveis)}</div>
+            <label class="campo campo-mini"><span>Linhas</span><input type="number" min="2" max="10" data-inventario-grid="rows" value="${num(grid.rows)}"></label>
+            <label class="campo campo-mini"><span>Slot 1</span><input data-inventario-grid="slot-1" value="${esc(grid.slot1 || '')}" placeholder="mão"></label>
+            <label class="campo campo-mini"><span>Slot 2</span><input data-inventario-grid="slot-2" value="${esc(grid.slot2 || '')}" placeholder="bolso"></label>
           </div>
         </div>
 
         <div class="inventario-grid-area ${grid.aba === 'grid' ? 'ativo' : ''}">
-          <div class="inventario-grid" style="grid-template-columns: repeat(${num(grid.cols)}, minmax(0, 1fr)); grid-template-rows: repeat(${num(grid.rows)}, minmax(48px, 1fr)); aspect-ratio: 1 / 1;">
+          <div class="inventario-grid" style="grid-template-columns: repeat(${num(grid.cols)}, minmax(0, 1fr)); grid-template-rows: repeat(${num(grid.rows)}, minmax(48px, 1fr));">
             ${Array.from({ length: num(grid.rows) * num(grid.cols) }, (_, idx) => {
               const y = Math.floor(idx / num(grid.cols));
               const x = idx % num(grid.cols);
-              const celula = visiveis.find(({ it }) => { const g = this.gridItem(it); return !g.mao && Number(g.x) === x && Number(g.y) === y; });
-              if (!celula) return `<div class="inventario-celula vazio" data-grid-drop="${x}:${y}"></div>`;
+              const celula = visiveis.find(({ it }) => {
+                const g = it.grid || { x: 0, y: 0, w: 1, h: 1, tipo: 'normal' };
+                const bx = Number(g.x || 0), by = Number(g.y || 0), w = Number(g.w || 1), h = Number(g.h || 1);
+                return x >= bx && x < bx + w && y >= by && y < by + h;
+              });
+              if (!celula) return '<div class="inventario-celula vazio"></div>';
               const it = celula.it;
-              const g = this.gridItem(it);
-              const w = g.rot % 2 ? g.h : g.w, h = g.rot % 2 ? g.w : g.h;
-              return `<div class="inventario-celula" draggable="true" data-grid-cell="${celula.i}" data-grid-drop="${x}:${y}" style="grid-column:${Number(g.x) + 1} / span ${w}; grid-row:${Number(g.y) + 1} / span ${h};">
+              const g = it.grid || { x: 0, y: 0, w: 1, h: 1, tipo: 'normal', slot: '' };
+              const slot = g.slot || '';
+              const tipo = g.tipo || 'normal';
+              return `<div class="inventario-celula ${tipo === 'fantasma' ? 'fantasma' : ''}" data-grid-cell="${celula.i}" style="grid-column:${Number(g.x || 0) + 1} / span ${Number(g.w || 1)}; grid-row:${Number(g.y || 0) + 1} / span ${Number(g.h || 1)};">
                 <strong>${esc(it.nome || 'Item')}</strong>
-                <span>${w}x${h}${g.rot % 2 ? ' · girado' : ''} · ${num(it.espacos || 1)} esp.</span>
+                <span>${tipo === 'fantasma' ? 'fantasma' : slot || 'normal'} · ${num(it.espacos || 1)} esp.</span>
               </div>`;
             }).join('')}
           </div>
@@ -519,12 +435,6 @@ const Ficha = {
               </select>
               <input data-bind="inventario.itens.${i}.espacos" value="${esc(it.espacos)}" placeholder="1">
               <button class="btn-mini perigo" data-del="itens:${i}" title="Remover">✕</button>
-              <div class="inventario-item-dimensoes">
-                <label><span>L</span><input type="number" min="1" max="4" data-bind="inventario.itens.${i}.grid.w" value="${num(this.gridItem(it).w)}"></label>
-                <label><span>A</span><input type="number" min="1" max="4" data-bind="inventario.itens.${i}.grid.h" value="${num(this.gridItem(it).h)}"></label>
-                <label><span>Rotação</span><select data-bind="inventario.itens.${i}.grid.rot"><option value="0" ${!this.gridItem(it).rot ? 'selected' : ''}>0°</option><option value="1" ${this.gridItem(it).rot === 1 ? 'selected' : ''}>90°</option><option value="2" ${this.gridItem(it).rot === 2 ? 'selected' : ''}>180°</option><option value="3" ${this.gridItem(it).rot === 3 ? 'selected' : ''}>270°</option></select></label>
-                <label><span>Destino</span><select data-bind="inventario.itens.${i}.grid.mao"><option value="">Grid</option><option value="esquerda" ${this.gridItem(it).mao === 'esquerda' ? 'selected' : ''}>Mão esquerda</option><option value="direita" ${this.gridItem(it).mao === 'direita' ? 'selected' : ''}>Mão direita</option><option value="duas" ${this.gridItem(it).mao === 'duas' ? 'selected' : ''}>2 mãos</option></select></label>
-              </div>
               <div class="item-descricao">
                 <div class="item-descricao-acoes"><button type="button" class="btn-mini" data-ver-item aria-expanded="false">Descrição</button>
                 ${Store.podeEditar(p) ? '<button type="button" class="btn-mini" data-editar-item title="Editar descrição deste item" aria-label="Editar descrição deste item" aria-expanded="false">✎</button>' : ''}</div>
@@ -718,11 +628,13 @@ const Ficha = {
     raiz.addEventListener('input', e => {
       const caminho = e.target.dataset.bind;
       if (e.target.closest('[data-inventario-grid]')) {
-        const inv = this.atual.inventario || { grid: { cols: 6, rows: 6, aba: 'grid' } };
-        inv.grid = Object.assign({ cols: 6, rows: 6, aba: 'grid' }, inv.grid);
+        const inv = this.atual.inventario || { grid: { cols: 6, rows: 4, aba: 'grid', slot1: '', slot2: '' } };
+        inv.grid = Object.assign({ cols: 6, rows: 4, aba: 'grid', slot1: '', slot2: '' }, inv.grid);
         const campo = e.target.dataset.inventarioGrid;
         if (campo === 'cols') inv.grid.cols = Math.min(Math.max(Number(e.target.value) || 6, 3), 12);
-        if (campo === 'rows') inv.grid.rows = Math.min(Math.max(Number(e.target.value) || 6, 3), 12);
+        if (campo === 'rows') inv.grid.rows = Math.min(Math.max(Number(e.target.value) || 4, 2), 10);
+        if (campo === 'slot-1') inv.grid.slot1 = e.target.value;
+        if (campo === 'slot-2') inv.grid.slot2 = e.target.value;
         this.salvarDepois();
         return;
       }
@@ -771,8 +683,6 @@ const Ficha = {
           ? e.target.value === 'true'
           : e.target.dataset.per ? num(e.target.value) : e.target.value;
         setPath(this.atual, e.target.dataset.bind, v);
-        const destino = e.target.dataset.bind.match(/^inventario\.itens\.(\d+)\.grid\.mao$/);
-        if (destino && v) return this.colocarItemMao(Number(destino[1]), v);
         this.salvarDepois();
         this.atualizarDerivados(e.target);
         /* Trocar a categoria de um item muda a contagem dos chips e pode tirar
@@ -848,35 +758,25 @@ const Ficha = {
 
       const abaInv = e.target.closest('[data-inventario-aba]');
       if (abaInv) {
-        const inv = this.atual.inventario || { grid: { cols: 6, rows: 6, aba: 'grid' } };
-        inv.grid = Object.assign({ cols: 6, rows: 6, aba: 'grid' }, inv.grid, { aba: abaInv.dataset.inventarioAba });
+        const inv = this.atual.inventario || { grid: { cols: 6, rows: 4, aba: 'grid' } };
+        inv.grid = Object.assign({ cols: 6, rows: 4, aba: 'grid' }, inv.grid, { aba: abaInv.dataset.inventarioAba });
         Store.salvar(this.atual);
         return this.abrir(this.atual.id);
       }
 
       const gridConfig = e.target.closest('[data-inventario-grid]');
       if (gridConfig) {
-        const inv = this.atual.inventario || { grid: { cols: 6, rows: 6, aba: 'grid' } };
+        const inv = this.atual.inventario || { grid: { cols: 6, rows: 4, aba: 'grid' } };
         const campo = gridConfig.dataset.inventarioGrid;
         const val = Number(gridConfig.value);
-        inv.grid = Object.assign({ cols: 6, rows: 6, aba: 'grid' }, inv.grid);
-        if (campo === 'cols') inv.grid.cols = Math.min(Math.max(val || 6, 3), 12);
-        if (campo === 'rows') inv.grid.rows = Math.min(Math.max(val || 6, 3), 12);
+        inv.grid = Object.assign({ cols: 6, rows: 4, aba: 'grid' }, inv.grid, {
+          [campo === 'cols' ? 'cols' : campo === 'rows' ? 'rows' : 'slot']:
+            campo === 'cols' || campo === 'rows' ? Math.min(Math.max(val || 1, campo === 'cols' ? 3 : 2), campo === 'cols' ? 12 : 10) : gridConfig.value
+        });
+        if (campo === 'slot-1') inv.grid.slot1 = gridConfig.value;
+        if (campo === 'slot-2') inv.grid.slot2 = gridConfig.value;
         Store.salvar(this.atual);
         return this.abrir(this.atual.id);
-      }
-
-      const mao = e.target.closest('[data-mao-drop]');
-      if (mao && this._itemArrastado !== undefined) {
-        this.colocarItemMao(this._itemArrastado, mao.dataset.maoDrop);
-        this._itemArrastado = undefined;
-        return;
-      }
-      const celula = e.target.closest('[data-grid-drop]');
-      if (celula && this._itemArrastado !== undefined) {
-        const [x, y] = celula.dataset.gridDrop.split(':').map(Number);
-        this.colocarItemGrid(this._itemArrastado, x, y);
-        this._itemArrastado = undefined;
       }
 
       const add = e.target.closest('[data-add]');
@@ -927,16 +827,6 @@ const Ficha = {
         Store.salvar(this.atual);
         return this.abrir(this.atual.id);
       }
-    });
-
-    raiz.addEventListener('dragstart', e => {
-      const item = e.target.closest('[data-grid-cell]');
-      if (!item) return;
-      this._itemArrastado = Number(item.dataset.gridCell);
-      e.dataTransfer.effectAllowed = 'move';
-    });
-    raiz.addEventListener('dragover', e => {
-      if (e.target.closest('[data-grid-drop]')) e.preventDefault();
     });
   },
 
