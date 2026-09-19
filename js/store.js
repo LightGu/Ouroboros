@@ -246,7 +246,13 @@ const Store = {
       desvantagensIdade: [],
       dtRituais: '',
       dtRituaisBonus: 0,
-      inventario: { limites: { I: '', II: '', III: '', IV: '' }, credito: '', cargaMax: '', itens: [] },
+      inventario: {
+        limites: { I: '', II: '', III: '', IV: '' },
+        credito: '',
+        cargaMax: '',
+        itens: [],
+        grid: { cols: 6, rows: 4, aba: 'grid' }
+      },
       prestigio: '',
       municoes: [],
       aliados: [],
@@ -274,6 +280,7 @@ const Store = {
     out.descricao  = Object.assign(base.descricao, p?.descricao);
     out.inventario = Object.assign(base.inventario, p?.inventario);
     out.inventario.limites = Object.assign({ I: '', II: '', III: '', IV: '' }, p?.inventario?.limites);
+    out.inventario.grid = Object.assign({ cols: 6, rows: 4, aba: 'grid' }, p?.inventario?.grid);
     out.inventario.itens = p?.inventario?.itens || [];
     out.ataques     = p?.ataques     || [];
     out.habilidades = p?.habilidades || [];

@@ -360,6 +360,7 @@ const Ficha = {
       .filter(({ it }) => !f || (f === 'sem' ? !it.categoria : it.categoria === f));
     const espacos = visiveis.reduce((t, { it }) => t + num(it.espacos), 0);
     const carga = num(p.inventario.cargaMax);
+    const grid = Object.assign({ cols: 6, rows: 4, aba: 'grid', slot1: '', slot2: '' }, p.inventario?.grid);
 
     const chip = (valor, rotulo, n) => `
       <button class="chip-filtro ${f === valor ? 'ativo' : ''}" data-filtro-item="${valor}">
@@ -379,6 +380,44 @@ const Ficha = {
           <label class="campo campo-mini"${dica(AJUDA.campos.cargaMax)}><span>Carga máx.</span><input data-bind="inventario.cargaMax" value="${esc(p.inventario.cargaMax)}"></label>
           <label class="campo campo-mini"${dica(AJUDA.campos.prestigio)}><span>Prestígio</span><input data-bind="prestigio" value="${esc(p.prestigio)}"></label>
         </div>
+
+        <div class="inventario-grid-config">
+          <div class="inventario-tabs" role="tablist" aria-label="Aba do inventário">
+            <button type="button" class="chip-filtro ${grid.aba === 'grid' ? 'ativo' : ''}" data-inventario-aba="grid">Grid</button>
+            <button type="button" class="chip-filtro ${grid.aba === 'bolso' ? 'ativo' : ''}" data-inventario-aba="bolso">Bolso</button>
+            <button type="button" class="chip-filtro ${grid.aba === 'mao' ? 'ativo' : ''}" data-inventario-aba="mao">Mão</button>
+          </div>
+          <div class="inventario-grid-editor">
+            <label class="campo campo-mini"><span>Colunas</span><input type="number" min="3" max="12" data-inventario-grid="cols" value="${num(grid.cols)}"></label>
+            <label class="campo campo-mini"><span>Linhas</span><input type="number" min="2" max="10" data-inventario-grid="rows" value="${num(grid.rows)}"></label>
+            <label class="campo campo-mini"><span>Slot 1</span><input data-inventario-grid="slot-1" value="${esc(grid.slot1 || '')}" placeholder="mão"></label>
+            <label class="campo campo-mini"><span>Slot 2</span><input data-inventario-grid="slot-2" value="${esc(grid.slot2 || '')}" placeholder="bolso"></label>
+          </div>
+        </div>
+
+        <div class="inventario-grid-area ${grid.aba === 'grid' ? 'ativo' : ''}">
+          <div class="inventario-grid" style="grid-template-columns: repeat(${num(grid.cols)}, minmax(0, 1fr)); grid-template-rows: repeat(${num(grid.rows)}, minmax(48px, 1fr));">
+            ${Array.from({ length: num(grid.rows) * num(grid.cols) }, (_, idx) => {
+              const y = Math.floor(idx / num(grid.cols));
+              const x = idx % num(grid.cols);
+              const celula = visiveis.find(({ it }) => {
+                const g = it.grid || { x: 0, y: 0, w: 1, h: 1, tipo: 'normal' };
+                const bx = Number(g.x || 0), by = Number(g.y || 0), w = Number(g.w || 1), h = Number(g.h || 1);
+                return x >= bx && x < bx + w && y >= by && y < by + h;
+              });
+              if (!celula) return '<div class="inventario-celula vazio"></div>';
+              const it = celula.it;
+              const g = it.grid || { x: 0, y: 0, w: 1, h: 1, tipo: 'normal', slot: '' };
+              const slot = g.slot || '';
+              const tipo = g.tipo || 'normal';
+              return `<div class="inventario-celula ${tipo === 'fantasma' ? 'fantasma' : ''}" data-grid-cell="${celula.i}" style="grid-column:${Number(g.x || 0) + 1} / span ${Number(g.w || 1)}; grid-row:${Number(g.y || 0) + 1} / span ${Number(g.h || 1)};">
+                <strong>${esc(it.nome || 'Item')}</strong>
+                <span>${tipo === 'fantasma' ? 'fantasma' : slot || 'normal'} · ${num(it.espacos || 1)} esp.</span>
+              </div>`;
+            }).join('')}
+          </div>
+        </div>
+
         ${itens.length ? `
         <div class="filtros filtros-itens">
           ${chip('', 'todos', itens.length)}
@@ -588,6 +627,17 @@ const Ficha = {
     /* binding genérico */
     raiz.addEventListener('input', e => {
       const caminho = e.target.dataset.bind;
+      if (e.target.closest('[data-inventario-grid]')) {
+        const inv = this.atual.inventario || { grid: { cols: 6, rows: 4, aba: 'grid', slot1: '', slot2: '' } };
+        inv.grid = Object.assign({ cols: 6, rows: 4, aba: 'grid', slot1: '', slot2: '' }, inv.grid);
+        const campo = e.target.dataset.inventarioGrid;
+        if (campo === 'cols') inv.grid.cols = Math.min(Math.max(Number(e.target.value) || 6, 3), 12);
+        if (campo === 'rows') inv.grid.rows = Math.min(Math.max(Number(e.target.value) || 4, 2), 10);
+        if (campo === 'slot-1') inv.grid.slot1 = e.target.value;
+        if (campo === 'slot-2') inv.grid.slot2 = e.target.value;
+        this.salvarDepois();
+        return;
+      }
       if (!caminho || !Store.podeEditar(this.atual)) return;
       const valor = ['historiaPublica', 'fichaPrivada'].includes(caminho) ? e.target.value === 'true' : e.target.type === 'number' ? num(e.target.value) : e.target.value;
       setPath(this.atual, caminho, valor);
@@ -703,6 +753,29 @@ const Ficha = {
       const fil = e.target.closest('[data-filtro-item]');
       if (fil) {
         this.filtroItem = fil.dataset.filtroItem;
+        return this.abrir(this.atual.id);
+      }
+
+      const abaInv = e.target.closest('[data-inventario-aba]');
+      if (abaInv) {
+        const inv = this.atual.inventario || { grid: { cols: 6, rows: 4, aba: 'grid' } };
+        inv.grid = Object.assign({ cols: 6, rows: 4, aba: 'grid' }, inv.grid, { aba: abaInv.dataset.inventarioAba });
+        Store.salvar(this.atual);
+        return this.abrir(this.atual.id);
+      }
+
+      const gridConfig = e.target.closest('[data-inventario-grid]');
+      if (gridConfig) {
+        const inv = this.atual.inventario || { grid: { cols: 6, rows: 4, aba: 'grid' } };
+        const campo = gridConfig.dataset.inventarioGrid;
+        const val = Number(gridConfig.value);
+        inv.grid = Object.assign({ cols: 6, rows: 4, aba: 'grid' }, inv.grid, {
+          [campo === 'cols' ? 'cols' : campo === 'rows' ? 'rows' : 'slot']:
+            campo === 'cols' || campo === 'rows' ? Math.min(Math.max(val || 1, campo === 'cols' ? 3 : 2), campo === 'cols' ? 12 : 10) : gridConfig.value
+        });
+        if (campo === 'slot-1') inv.grid.slot1 = gridConfig.value;
+        if (campo === 'slot-2') inv.grid.slot2 = gridConfig.value;
+        Store.salvar(this.atual);
         return this.abrir(this.atual.id);
       }
 
