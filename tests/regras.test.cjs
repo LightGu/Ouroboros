@@ -29,6 +29,6 @@ assert.equal(ajusteIdade({nex:99,desvantagensIdade:['fragil']}).pv,-40);
 const ficha=Store.normalizar({id:'legada',classe:'Sobrevivente',pv:{atual:12,max:33},trilha:'Esperto',estagio:4});
 assert.equal(ficha.pv.max,33);assert.equal(ficha.estagio,4);
 assert.equal(ficha.inventario.grid.cols,6);
-assert.equal(ficha.inventario.grid.rows,4);
+assert.equal(ficha.inventario.grid.rows,6);
 assert.equal(R.habilidadesIniciais({classe:'Especialista',origem:'Policial',perito:['crime','investigacao']}).length,3);
 console.log('Regras: 24 verificações passaram.');

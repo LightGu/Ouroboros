@@ -644,6 +644,12 @@ textarea { resize: vertical; }
 .filtros-itens .chip-filtro i { font-style: normal; font-size: 11px; opacity: .55; margin-left: 3px; }
 .filtros-itens .chip-filtro.ativo i { opacity: .8; }
 
+.inventario-aviso {
+  margin: 0 0 12px; padding: 9px 12px; border-radius: 8px;
+  border: 1px solid rgba(255,176,72,.6); background: rgba(255,176,72,.08);
+  color: var(--texto-2); font-size: 12px; line-height: 1.5; font-weight: 600;
+}
+
 .inventario-grid-config {
   display: grid; gap: 12px; margin: 12px 0 14px;
   padding: 12px; border: 1px solid var(--linha); border-radius: 10px;
@@ -653,6 +659,15 @@ textarea { resize: vertical; }
 .inventario-grid-editor {
   display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px;
 }
+.inventario-grid-editor.ativo { display: grid; }
+.inventario-ajuste-texto { margin: 0; align-self: center; color: var(--texto-2); font-size: 12px; line-height: 1.5; }
+.inventario-maos { display: none; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.inventario-maos.ativo { display: grid; }
+.inventario-mao-slot { display: flex; flex-direction: column; gap: 8px; min-height: 88px; padding: 10px; border: 1px solid var(--linha); border-radius: 10px; background: rgba(255,255,255,.02); }
+.inventario-mao-slot > span { color: var(--texto-3); font-size: 11px; letter-spacing: .08em; text-transform: uppercase; }
+.inventario-mao-item, .inventario-mao-vazio { display: flex; flex-direction: column; justify-content: center; gap: 4px; min-height: 50px; padding: 8px 10px; border: 1px solid rgba(139,92,246,.5); border-radius: 8px; background: rgba(139,92,246,.12); color: var(--texto); font-size: 12px; }
+.inventario-mao-vazio { border-style: dashed; background: rgba(255,255,255,.02); color: var(--texto-3); }
+.inventario-mao-item span { color: var(--texto-3); font-size: 10px; text-transform: uppercase; }
 .inventario-grid-area { display: none; margin-bottom: 16px; }
 .inventario-grid-area.ativo { display: block; }
 .inventario-grid {
@@ -665,7 +680,9 @@ textarea { resize: vertical; }
   min-height: 48px; padding: 8px 10px; gap: 4px; border-radius: 10px;
   background: rgba(139,92,246,.12); border: 1px solid rgba(139,92,246,.5);
   color: var(--texto); overflow: hidden;
+  cursor: grab;
 }
+.inventario-celula:active, .inventario-mao-item:active { cursor: grabbing; }
 .inventario-celula.vazio {
   background: rgba(255,255,255,.02); border: 1px dashed var(--linha); opacity: .52;
 }
@@ -678,6 +695,9 @@ textarea { resize: vertical; }
 .inventario-celula span {
   font-size: 10px; letter-spacing: .04em; text-transform: uppercase; color: var(--texto-3);
 }
+.inventario-item-dimensoes { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; margin: 8px 0 0; }
+.inventario-item-dimensoes label { display: flex; flex-direction: column; gap: 4px; color: var(--texto-3); font-size: 10px; letter-spacing: .08em; text-transform: uppercase; }
+.inventario-item-dimensoes input, .inventario-item-dimensoes select { width: 100%; box-sizing: border-box; padding: 5px 6px; border: 1px solid var(--linha); border-radius: 6px; background: var(--painel-2); font-size: 11px; }
 
 /* popup "Do catálogo": lista dos itens dos livros */
 .cat-lista {
