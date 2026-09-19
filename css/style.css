@@ -644,41 +644,6 @@ textarea { resize: vertical; }
 .filtros-itens .chip-filtro i { font-style: normal; font-size: 11px; opacity: .55; margin-left: 3px; }
 .filtros-itens .chip-filtro.ativo i { opacity: .8; }
 
-.inventario-grid-config {
-  display: grid; gap: 12px; margin: 12px 0 14px;
-  padding: 12px; border: 1px solid var(--linha); border-radius: 10px;
-  background: rgba(139,92,246,.04);
-}
-.inventario-tabs { display: flex; gap: 8px; flex-wrap: wrap; }
-.inventario-grid-editor {
-  display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px;
-}
-.inventario-grid-area { display: none; margin-bottom: 16px; }
-.inventario-grid-area.ativo { display: block; }
-.inventario-grid {
-  display: grid; gap: 8px; min-height: 250px; padding: 10px;
-  background: linear-gradient(180deg, rgba(18,22,30,.7), rgba(11,13,17,.9));
-  border: 1px solid var(--linha); border-radius: 12px;
-}
-.inventario-celula {
-  position: relative; display: flex; flex-direction: column; justify-content: center;
-  min-height: 48px; padding: 8px 10px; gap: 4px; border-radius: 10px;
-  background: rgba(139,92,246,.12); border: 1px solid rgba(139,92,246,.5);
-  color: var(--texto); overflow: hidden;
-}
-.inventario-celula.vazio {
-  background: rgba(255,255,255,.02); border: 1px dashed var(--linha); opacity: .52;
-}
-.inventario-celula.fantasma {
-  border-style: dashed; background: rgba(255,255,255,.04); opacity: .7;
-}
-.inventario-celula strong {
-  font-size: 12px; line-height: 1.2; max-width: 100%; overflow: hidden; text-overflow: ellipsis;
-}
-.inventario-celula span {
-  font-size: 10px; letter-spacing: .04em; text-transform: uppercase; color: var(--texto-3);
-}
-
 /* popup "Do catálogo": lista dos itens dos livros */
 .cat-lista {
   display: flex; flex-direction: column; gap: 4px;
