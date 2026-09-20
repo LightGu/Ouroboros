@@ -279,7 +279,7 @@ const Store = {
       item,
       { municao: Object.assign({ atual: 0, max: 0 }, item?.municao) }
     ));
-    out.ataques     = (p?.ataques || []).map(a => Object.assign({ usaMunicao: false }, a));
+    out.ataques     = (p?.ataques || []).map(a => Object.assign({ usaMunicao: false, pente: 0, municaoAtual: 0 }, a));
     out.habilidades = p?.habilidades || [];
     out.rituais     = p?.rituais     || [];
     out.desvantagensIdade = p?.desvantagensIdade || [];

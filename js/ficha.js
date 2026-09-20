@@ -187,14 +187,15 @@ const Ficha = {
       <section class="bloco">
         <h2 class="titulo-bloco">Ataques <button class="btn btn-ghost btn-peq" data-add="ataques">+ Ataque</button></h2>
         <div class="tabela tabela-ataques">
-          <div class="tabela-cab"><span${dica(AJUDA.campos.ataqueNome)}>Ataque</span><span${dica(AJUDA.campos.ataqueTeste)}>Teste</span><span${dica(AJUDA.campos.ataqueDano)}>Dano</span><span${dica(AJUDA.campos.ataqueEspecial)}>Crítico / Alcance / Especial</span><span>Munição</span><span></span></div>
+          <div class="tabela-cab"><span${dica(AJUDA.campos.ataqueNome)}>Ataque</span><span${dica(AJUDA.campos.ataqueTeste)}>Teste</span><span${dica(AJUDA.campos.ataqueDano)}>Dano</span><span${dica(AJUDA.campos.ataqueEspecial)}>Crítico / Alcance / Especial</span><span>Munição / pente</span><span></span></div>
           ${p.ataques.length ? p.ataques.map((a, i) => `
             <div class="tabela-linha">
               <input data-bind="ataques.${i}.nome"     value="${esc(a.nome)}"     placeholder="Pistola">
               <input data-bind="ataques.${i}.teste"    value="${esc(a.teste)}"    placeholder="Pontaria">
               <input data-bind="ataques.${i}.dano"     value="${esc(a.dano)}"     placeholder="2d6">
               <input data-bind="ataques.${i}.especial" value="${esc(a.especial)}" placeholder="19/x2, curto, balístico">
-              <label class="ataque-municao"><input type="checkbox" data-bind="ataques.${i}.usaMunicao" ${a.usaMunicao ? 'checked' : ''}> usa</label>
+              <label class="ataque-municao"><input type="checkbox" data-bind="ataques.${i}.usaMunicao" ${a.usaMunicao ? 'checked' : ''}> usa
+                <input type="number" min="1" data-bind="ataques.${i}.pente" value="${num(a.pente)}" placeholder="pente" title="Tamanho do pente"></label>
               <button class="btn-mini" data-rolardano="${i}" title="Rolar o dano">🎲</button>
               <button class="btn-mini perigo" data-del="ataques:${i}" title="Remover">✕</button>
             </div>`).join('') : '<p class="vazio-linha">Nenhum ataque cadastrado.</p>'}
@@ -395,16 +396,14 @@ const Ficha = {
           ${semCat ? chip('sem', 'sem categoria', semCat) : ''}
         </div>` : ''}
         <div class="tabela tabela-itens">
-          <div class="tabela-cab"><span>Item</span><span>Tipo</span><span>Equip.</span><span>Munição máx.</span><span>Munição atual</span>${this.cabecalhoOrdem('itens', 'categoria', 'Categoria')}${this.cabecalhoOrdem('itens', 'espacos', 'Espaços')}<span></span></div>
+          <div class="tabela-cab"><span>Item</span><span>Tipo</span><span>Equip.</span>${this.cabecalhoOrdem('itens', 'categoria', 'Categoria')}${this.cabecalhoOrdem('itens', 'espacos', 'Espaços')}<span></span></div>
           ${visiveis.length ? visiveis.map(({ it, i }) => `
             <div class="tabela-linha">
               <input data-bind="inventario.itens.${i}.nome" value="${esc(it.nome)}" placeholder="Nome do item">
               <select data-bind="inventario.itens.${i}.tipo" data-recarrega>
                 ${TIPOS_ITEM.map(tipo => `<option value="${esc(tipo)}" ${it.tipo === tipo ? 'selected' : ''}>${esc(tipo)}</option>`).join('')}
               </select>
-              ${it.tipo === 'Arma' ? `<label class="item-equipada"><input type="checkbox" data-bind="inventario.itens.${i}.equipada" ${it.equipada ? 'checked' : ''}> sim</label>
-                <input type="number" min="0" data-bind="inventario.itens.${i}.municao.max" value="${num(it.municao?.max)}" placeholder="máx. munição">
-                <input type="number" min="0" data-bind="inventario.itens.${i}.municao.atual" value="${num(it.municao?.atual)}" placeholder="munição atual">` : '<span></span><span></span><span></span>'}
+              ${it.tipo === 'Arma' ? `<label class="item-equipada"><input type="checkbox" data-bind="inventario.itens.${i}.equipada" ${it.equipada ? 'checked' : ''}> sim</label>` : '<span></span>'}
               <select data-bind="inventario.itens.${i}.categoria">
                 <option value="">—</option>
                 ${CATEGORIAS_ITEM.map(c => `<option value="${c}" ${it.categoria === c ? 'selected' : ''}>${c}</option>`).join('')}
@@ -940,7 +939,7 @@ const Ficha = {
 
   adicionarLinha(nome) {
     const modelos = {
-      ataques:     { nome: '', teste: '', dano: '', especial: '', usaMunicao: false },
+      ataques:     { nome: '', teste: '', dano: '', especial: '', usaMunicao: false, pente: 0, municaoAtual: 0 },
       habilidades: { nome: '', custo: '', pagina: '', desc: '' },
       rituais:     { nome: '', elemento: '', circulo: '', custo: '', execucao: '', alcance: '',
                      alvo: '', duracao: '', resistencia: '', pagina: '', desc: '' },
