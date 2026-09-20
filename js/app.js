@@ -99,6 +99,9 @@ const App = {
     Celular.carregar();
     Mesa.render();
     this.mostrar('mesa');
+    Catalogo.carregar().then(() => {
+      if (this.telaAtual === 'mesa') Mesa.render();
+    }).catch(() => {});
   },
 
   /* O mestre mexeu nos turnos: todo mundo acompanha. */

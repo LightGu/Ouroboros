@@ -633,7 +633,13 @@ textarea { resize: vertical; }
 .tabela-habilidades .tabela-cab, .tabela-habilidades .tabela-linha {
   grid-template-columns: 1.1fr .9fr .8fr 1.6fr 30px 30px;
 }
-.tabela-itens .tabela-cab, .tabela-itens .tabela-linha { grid-template-columns: 3fr .8fr .8fr 30px; }
+.tabela-itens { overflow-x: auto; }
+.tabela-itens .tabela-cab, .tabela-itens .tabela-linha {
+  grid-template-columns: minmax(180px, 2fr) 112px 62px 88px 92px 78px 58px 30px;
+  min-width: 760px;
+}
+.tabela-itens .tabela-cab > span:nth-child(1) { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tabela-itens .tabela-linha > input:first-child { min-width: 0; }
 
 .grade-limites { display: grid; grid-template-columns: repeat(7, 1fr); gap: 10px; margin-bottom: 16px; }
 

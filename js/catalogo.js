@@ -100,6 +100,13 @@ const Catalogo = {
     return candidatos.length === 1 ? candidatos[0].descricao || '' : '';
   },
 
+  tipoDoItem(item) {
+    if (item?.tipo && item.tipo !== 'Equipamento') return item.tipo;
+    const encontrado = (this.itens || []).find(i => this.normal(i.nome) === this.normal(item?.nome)
+      && (!item?.livro || item.livro === i.livro));
+    return encontrado?.grupo || item?.tipo || 'Equipamento';
+  },
+
   paraItemDaFicha(i) {
     return {
       nome: i.nome,

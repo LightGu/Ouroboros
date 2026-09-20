@@ -336,11 +336,19 @@ const Ficha = {
      pro banco, e a linha continua editando o item pelo índice real da lista,
      por isso o `map` guarda o `i` ANTES de filtrar. */
   async carregarDescricoesInventario(p) {
-    if (typeof Catalogo === 'undefined' || !p.inventario.itens.some(i => !i.descricao)) return;
+    if (typeof Catalogo === 'undefined') return;
     try {
       await Catalogo.carregar();
       if (this.atual?.id !== p.id) return;
       p.inventario.itens.forEach((item, i) => {
+        const tipo = Catalogo.tipoDoItem(item);
+        if (tipo !== item.tipo) {
+          item.tipo = tipo;
+          if (tipo === 'Arma' && !item.equipada) {
+            item.equipada = (p.ataques || []).some(a => Catalogo.normal(a.nome) === Catalogo.normal(item.nome));
+          }
+          Store.salvar(p);
+        }
         const el = $(`[data-bind="inventario.itens.${i}.descricao"]`);
         if (el && !el.value && document.activeElement !== el) {
           el.value = Catalogo.descricaoItem(item);
@@ -386,16 +394,16 @@ const Ficha = {
           ${semCat ? chip('sem', 'sem categoria', semCat) : ''}
         </div>` : ''}
         <div class="tabela tabela-itens">
-          <div class="tabela-cab">${this.cabecalhoOrdem('itens', 'nome', 'Item')}${this.cabecalhoOrdem('itens', 'categoria', 'Categoria')}${this.cabecalhoOrdem('itens', 'espacos', 'Espaços')}<span></span></div>
+          <div class="tabela-cab"><span>Item</span><span>Tipo</span><span>Equip.</span><span>Munição máx.</span><span>Munição atual</span>${this.cabecalhoOrdem('itens', 'categoria', 'Categoria')}${this.cabecalhoOrdem('itens', 'espacos', 'Espaços')}<span></span></div>
           ${visiveis.length ? visiveis.map(({ it, i }) => `
             <div class="tabela-linha">
               <input data-bind="inventario.itens.${i}.nome" value="${esc(it.nome)}" placeholder="Nome do item">
               <select data-bind="inventario.itens.${i}.tipo" data-recarrega>
                 ${TIPOS_ITEM.map(tipo => `<option value="${esc(tipo)}" ${it.tipo === tipo ? 'selected' : ''}>${esc(tipo)}</option>`).join('')}
               </select>
-              ${it.tipo === 'Arma' ? `<label class="item-equipada"><input type="checkbox" data-bind="inventario.itens.${i}.equipada" ${it.equipada ? 'checked' : ''}> equipada</label>
-                <input type="number" min="0" data-bind="inventario.itens.${i}.municao.max" value="${num(it.municao?.max)}" placeholder="capacidade">
-                <input type="number" min="0" data-bind="inventario.itens.${i}.municao.atual" value="${num(it.municao?.atual)}" placeholder="balas atuais">` : ''}
+              ${it.tipo === 'Arma' ? `<label class="item-equipada"><input type="checkbox" data-bind="inventario.itens.${i}.equipada" ${it.equipada ? 'checked' : ''}> sim</label>
+                <input type="number" min="0" data-bind="inventario.itens.${i}.municao.max" value="${num(it.municao?.max)}" placeholder="máx. munição">
+                <input type="number" min="0" data-bind="inventario.itens.${i}.municao.atual" value="${num(it.municao?.atual)}" placeholder="munição atual">` : '<span></span><span></span><span></span>'}
               <select data-bind="inventario.itens.${i}.categoria">
                 <option value="">—</option>
                 ${CATEGORIAS_ITEM.map(c => `<option value="${c}" ${it.categoria === c ? 'selected' : ''}>${c}</option>`).join('')}

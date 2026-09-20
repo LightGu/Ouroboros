@@ -199,7 +199,12 @@ const Mesa = {
   municoes(p) {
     const vinculadas = (p.inventario?.itens || [])
       .map((item, i) => ({ item, i }))
-      .filter(({ item }) => item.tipo === 'Arma' && item.equipada);
+      .filter(({ item }) => {
+        const tipo = typeof Catalogo !== 'undefined' ? Catalogo.tipoDoItem(item) : item.tipo;
+        const ataque = (p.ataques || []).some(a => typeof Catalogo !== 'undefined'
+          && Catalogo.normal(a.nome) === Catalogo.normal(item.nome));
+        return tipo === 'Arma' && (item.equipada || ataque);
+      });
     if (!vinculadas.length && !p.municoes?.length) return '';
     const pode = Store.podeEditar(p);
     const linhas = vinculadas.length
