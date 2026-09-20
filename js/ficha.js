@@ -187,13 +187,14 @@ const Ficha = {
       <section class="bloco">
         <h2 class="titulo-bloco">Ataques <button class="btn btn-ghost btn-peq" data-add="ataques">+ Ataque</button></h2>
         <div class="tabela tabela-ataques">
-          <div class="tabela-cab"><span${dica(AJUDA.campos.ataqueNome)}>Ataque</span><span${dica(AJUDA.campos.ataqueTeste)}>Teste</span><span${dica(AJUDA.campos.ataqueDano)}>Dano</span><span${dica(AJUDA.campos.ataqueEspecial)}>Crítico / Alcance / Especial</span><span></span></div>
+          <div class="tabela-cab"><span${dica(AJUDA.campos.ataqueNome)}>Ataque</span><span${dica(AJUDA.campos.ataqueTeste)}>Teste</span><span${dica(AJUDA.campos.ataqueDano)}>Dano</span><span${dica(AJUDA.campos.ataqueEspecial)}>Crítico / Alcance / Especial</span><span>Munição</span><span></span></div>
           ${p.ataques.length ? p.ataques.map((a, i) => `
             <div class="tabela-linha">
               <input data-bind="ataques.${i}.nome"     value="${esc(a.nome)}"     placeholder="Pistola">
               <input data-bind="ataques.${i}.teste"    value="${esc(a.teste)}"    placeholder="Pontaria">
               <input data-bind="ataques.${i}.dano"     value="${esc(a.dano)}"     placeholder="2d6">
               <input data-bind="ataques.${i}.especial" value="${esc(a.especial)}" placeholder="19/x2, curto, balístico">
+              <label class="ataque-municao"><input type="checkbox" data-bind="ataques.${i}.usaMunicao" ${a.usaMunicao ? 'checked' : ''}> usa</label>
               <button class="btn-mini" data-rolardano="${i}" title="Rolar o dano">🎲</button>
               <button class="btn-mini perigo" data-del="ataques:${i}" title="Remover">✕</button>
             </div>`).join('') : '<p class="vazio-linha">Nenhum ataque cadastrado.</p>'}
@@ -939,7 +940,7 @@ const Ficha = {
 
   adicionarLinha(nome) {
     const modelos = {
-      ataques:     { nome: '', teste: '', dano: '', especial: '' },
+      ataques:     { nome: '', teste: '', dano: '', especial: '', usaMunicao: false },
       habilidades: { nome: '', custo: '', pagina: '', desc: '' },
       rituais:     { nome: '', elemento: '', circulo: '', custo: '', execucao: '', alcance: '',
                      alvo: '', duracao: '', resistencia: '', pagina: '', desc: '' },

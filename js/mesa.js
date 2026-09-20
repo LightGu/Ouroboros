@@ -201,9 +201,9 @@ const Mesa = {
       .map((item, i) => ({ item, i }))
       .filter(({ item }) => {
         const tipo = typeof Catalogo !== 'undefined' ? Catalogo.tipoDoItem(item) : item.tipo;
-        const ataque = (p.ataques || []).some(a => typeof Catalogo !== 'undefined'
+        const ataque = (p.ataques || []).some(a => a.usaMunicao && typeof Catalogo !== 'undefined'
           && Catalogo.normal(a.nome) === Catalogo.normal(item.nome));
-        return tipo === 'Arma' && (item.equipada || ataque);
+        return tipo === 'Arma' && ataque;
       });
     if (!vinculadas.length && !p.municoes?.length) return '';
     const pode = Store.podeEditar(p);

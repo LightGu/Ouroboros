@@ -633,6 +633,10 @@ textarea { resize: vertical; }
 .tabela-habilidades .tabela-cab, .tabela-habilidades .tabela-linha {
   grid-template-columns: 1.1fr .9fr .8fr 1.6fr 30px 30px;
 }
+.tabela-ataques .tabela-cab, .tabela-ataques .tabela-linha {
+  grid-template-columns: 1.1fr .9fr .8fr 1.6fr 70px 30px 30px;
+}
+.ataque-municao { display: flex; align-items: center; gap: 5px; font-size: 11px; color: var(--texto-2); }
 .tabela-itens { overflow-x: auto; }
 .tabela-itens .tabela-cab, .tabela-itens .tabela-linha {
   grid-template-columns: minmax(180px, 2fr) 112px 62px 88px 92px 78px 58px 30px;
@@ -884,7 +888,8 @@ textarea { resize: vertical; }
   .grade-limites { grid-template-columns: repeat(4, 1fr); }
   .grade-3, .grade-4 { grid-template-columns: repeat(2, 1fr); }
   .tabela-ataques .tabela-cab, .tabela-habilidades .tabela-cab { display: none; }
-  .tabela-ataques .tabela-linha, .tabela-habilidades .tabela-linha { grid-template-columns: 1fr 1fr 30px 30px; }
+  .tabela-ataques .tabela-linha { grid-template-columns: 1fr 1fr 70px 30px 30px; }
+  .tabela-habilidades .tabela-linha { grid-template-columns: 1fr 1fr 30px 30px; }
 }
 
 @media (max-width: 620px) {
