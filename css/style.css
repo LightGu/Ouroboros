@@ -1269,10 +1269,6 @@ body.com-painel .view { padding-right: 352px; }
 .mun-vazia { border-color: #6d2a22; background: rgba(192,57,43,.12); }
 .mun-vazia .mun-num { color: #ef8878; }
 
-.tabela-municao .tabela-cab, .tabela-municao .tabela-linha {
-  grid-template-columns: 3fr 1fr 1fr 30px;
-}
-
 /* ===========================================================
    SONS
    =========================================================== */

@@ -198,22 +198,20 @@ const Mesa = {
 
   municoes(p) {
     const ataques = (p.ataques || []).map((a, i) => ({ ...a, indice: i })).filter(a => a.usaMunicao);
-    if (!ataques.length && !p.municoes?.length) return '';
+    if (!ataques.length) return '';
     const pode = Store.podeEditar(p);
-    const linhas = ataques.length
-      ? ataques.map(a => ({ nome: a.nome, atual: a.municaoAtual, max: a.pente, origem: 'a', indice: a.indice }))
-      : p.municoes.map((m, i) => ({ ...m, origem: 'l', indice: i }));
+    const linhas = ataques.map(a => ({ nome: a.nome, atual: a.municaoAtual, max: a.pente, indice: a.indice }));
     return `<div class="municoes">${linhas.map(m => {
       const atual = num(m.atual), max = num(m.max);
       const vazio = atual <= 0;
       const pouco = max > 0 && atual > 0 && atual / max <= 1 / 3;
       return `
         <span class="mun ${vazio ? 'mun-vazia' : pouco ? 'mun-pouca' : ''}" title="${esc(m.nome || 'Munição')}">
-          ${pode ? `<button data-mun="${m.origem}:${m.indice}:-1:${max}" title="Gastar 1">−</button>` : ''}
+          ${pode ? `<button data-mun="${m.indice}:-1:${max}" title="Gastar 1">−</button>` : ''}
           <b class="mun-nome">${esc(m.nome || 'Munição')}</b>
           <b class="mun-num">${atual}<i>/${max}</i></b>
-          ${pode ? `<button data-mun="${m.origem}:${m.indice}:1:${max}" title="Repor 1">+</button>
-                    <button data-recarregar="${m.origem}:${m.indice}:${max}" title="Recarregar até o máximo">↻</button>` : ''}
+          ${pode ? `<button data-mun="${m.indice}:1:${max}" title="Repor 1">+</button>
+                    <button data-recarregar="${m.indice}:${max}" title="Recarregar até o máximo">↻</button>` : ''}
         </span>`;
     }).join('')}</div>`;
   },
@@ -686,11 +684,10 @@ document.addEventListener('click', e => {
   if (mun) {
     const p = Store.obter(id);
     if (!Store.podeEditar(p)) return toast('Essa ficha não é sua.', 'erro');
-    const [origem, indice, d, limite] = mun.dataset.mun.split(':');
-    const m = origem === 'a' ? p.ataques[Number(indice)] : p.municoes[Number(indice)];
-    const campo = origem === 'a' ? 'municaoAtual' : 'atual';
+    const [indice, d, limite] = mun.dataset.mun.split(':');
+    const ataque = p.ataques[Number(indice)];
     const passo = Number(d) * (e.shiftKey ? 5 : 1);
-    m[campo] = Math.max(0, Math.min(num(limite) || num(m.max) || Infinity, num(m[campo]) + passo));
+    ataque.municaoAtual = Math.max(0, Math.min(num(limite) || Infinity, num(ataque.municaoAtual) + passo));
     Store.salvar(p); return Mesa.render();
   }
 
@@ -698,9 +695,8 @@ document.addEventListener('click', e => {
   if (rec) {
     const p = Store.obter(id);
     if (!Store.podeEditar(p)) return toast('Essa ficha não é sua.', 'erro');
-    const [origem, indice, limite] = rec.dataset.recarregar.split(':');
-    const m = origem === 'a' ? p.ataques[Number(indice)] : p.municoes[Number(indice)];
-    m[origem === 'a' ? 'municaoAtual' : 'atual'] = num(limite) || num(m.max);
+    const [indice, limite] = rec.dataset.recarregar.split(':');
+    p.ataques[Number(indice)].municaoAtual = num(limite);
     Store.salvar(p); return Mesa.render();
   }
 

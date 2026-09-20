@@ -249,23 +249,6 @@ const Ficha = {
           : '<p class="vazio-linha">Nenhum aliado. Um bicho de estimação treinado entra aqui, e o bônus dele passa a valer nos testes.</p>'}
       </section>
 
-      <!-- MUNIÇÃO -->
-      <section class="bloco">
-        <h2 class="titulo-bloco"${dica(AJUDA.campos.municao)}>Munição
-          <button class="btn btn-ghost btn-peq" data-add="municoes">+ Munição</button></h2>
-        <div class="tabela tabela-municao">
-          <div class="tabela-cab"><span>Arma / tipo</span><span>Atual</span><span>Máximo</span><span></span></div>
-          ${p.municoes.length ? p.municoes.map((m, i) => `
-            <div class="tabela-linha">
-              <input data-bind="municoes.${i}.nome" value="${esc(m.nome)}" placeholder="Fuzil de assalto">
-              <input type="number" data-bind="municoes.${i}.atual" value="${num(m.atual)}">
-              <input type="number" data-bind="municoes.${i}.max" value="${num(m.max)}">
-              <button class="btn-mini perigo" data-del="municoes:${i}" title="Remover">✕</button>
-            </div>`).join('')
-            : '<p class="vazio-linha">Sem controle de munição. Adicione uma linha por arma — aparece no card da mesa.</p>'}
-        </div>
-      </section>
-
       <!-- HABILIDADES -->
       <section class="bloco">
         <h2 class="titulo-bloco"${dica(AJUDA.campos.habilidade)}>Habilidades
@@ -944,7 +927,6 @@ const Ficha = {
       rituais:     { nome: '', elemento: '', circulo: '', custo: '', execucao: '', alcance: '',
                      alvo: '', duracao: '', resistencia: '', pagina: '', desc: '' },
       itens:       { nome: '', tipo: 'Equipamento', equipada: false, municao: { atual: 0, max: 0 }, categoria: '', espacos: '', descricao: '' },
-      municoes:    { nome: '', atual: 0, max: 0 },
       aliados:     { nome: '', tipo: '', foto: '', descricao: '', bonus: [], habilidades: [] }
     };
     const novo = Object.assign({}, modelos[nome]);

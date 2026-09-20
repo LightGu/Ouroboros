@@ -248,7 +248,6 @@ const Store = {
       dtRituaisBonus: 0,
       inventario: { limites: { I: '', II: '', III: '', IV: '' }, credito: '', cargaMax: '', itens: [] },
       prestigio: '',
-      municoes: [],
       aliados: [],
       cor: '',
       bonus: { corpo: 0, mente: 0 },
@@ -284,7 +283,6 @@ const Store = {
     out.rituais     = p?.rituais     || [];
     out.desvantagensIdade = p?.desvantagensIdade || [];
     out.condicoes   = p?.condicoes   || [];
-    out.municoes    = p?.municoes    || [];
     out.aliados     = (p?.aliados || []).map(a => Object.assign(
       { nome: '', tipo: '', foto: '', descricao: '', bonus: [], habilidades: [] }, a));
     out.bonus       = Object.assign({ corpo: 0, mente: 0 }, p?.bonus);
