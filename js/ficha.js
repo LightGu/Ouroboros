@@ -390,6 +390,12 @@ const Ficha = {
           ${visiveis.length ? visiveis.map(({ it, i }) => `
             <div class="tabela-linha">
               <input data-bind="inventario.itens.${i}.nome" value="${esc(it.nome)}" placeholder="Nome do item">
+              <select data-bind="inventario.itens.${i}.tipo" data-recarrega>
+                ${TIPOS_ITEM.map(tipo => `<option value="${esc(tipo)}" ${it.tipo === tipo ? 'selected' : ''}>${esc(tipo)}</option>`).join('')}
+              </select>
+              ${it.tipo === 'Arma' ? `<label class="item-equipada"><input type="checkbox" data-bind="inventario.itens.${i}.equipada" ${it.equipada ? 'checked' : ''}> equipada</label>
+                <input type="number" min="0" data-bind="inventario.itens.${i}.municao.max" value="${num(it.municao?.max)}" placeholder="capacidade">
+                <input type="number" min="0" data-bind="inventario.itens.${i}.municao.atual" value="${num(it.municao?.atual)}" placeholder="balas atuais">` : ''}
               <select data-bind="inventario.itens.${i}.categoria">
                 <option value="">—</option>
                 ${CATEGORIAS_ITEM.map(c => `<option value="${c}" ${it.categoria === c ? 'selected' : ''}>${c}</option>`).join('')}
@@ -589,7 +595,9 @@ const Ficha = {
     raiz.addEventListener('input', e => {
       const caminho = e.target.dataset.bind;
       if (!caminho || !Store.podeEditar(this.atual)) return;
-      const valor = ['historiaPublica', 'fichaPrivada'].includes(caminho) ? e.target.value === 'true' : e.target.type === 'number' ? num(e.target.value) : e.target.value;
+      const valor = e.target.type === 'checkbox' ? e.target.checked
+        : ['historiaPublica', 'fichaPrivada'].includes(caminho) ? e.target.value === 'true'
+        : e.target.type === 'number' ? num(e.target.value) : e.target.value;
       setPath(this.atual, caminho, valor);
       if (/^inventario\.itens\.\d+\.descricao$/.test(caminho)) {
         e.target.closest('.item-descricao').querySelector('.item-descricao-texto').textContent = valor || 'Sem descrição.';
@@ -927,7 +935,7 @@ const Ficha = {
       habilidades: { nome: '', custo: '', pagina: '', desc: '' },
       rituais:     { nome: '', elemento: '', circulo: '', custo: '', execucao: '', alcance: '',
                      alvo: '', duracao: '', resistencia: '', pagina: '', desc: '' },
-      itens:       { nome: '', categoria: '', espacos: '', descricao: '' },
+      itens:       { nome: '', tipo: 'Equipamento', equipada: false, municao: { atual: 0, max: 0 }, categoria: '', espacos: '', descricao: '' },
       municoes:    { nome: '', atual: 0, max: 0 },
       aliados:     { nome: '', tipo: '', foto: '', descricao: '', bonus: [], habilidades: [] }
     };

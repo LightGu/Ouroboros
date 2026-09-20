@@ -274,7 +274,11 @@ const Store = {
     out.descricao  = Object.assign(base.descricao, p?.descricao);
     out.inventario = Object.assign(base.inventario, p?.inventario);
     out.inventario.limites = Object.assign({ I: '', II: '', III: '', IV: '' }, p?.inventario?.limites);
-    out.inventario.itens = p?.inventario?.itens || [];
+    out.inventario.itens = (p?.inventario?.itens || []).map(item => Object.assign(
+      { nome: '', tipo: 'Equipamento', equipada: false, municao: { atual: 0, max: 0 }, categoria: '', espacos: '', descricao: '' },
+      item,
+      { municao: Object.assign({ atual: 0, max: 0 }, item?.municao) }
+    ));
     out.ataques     = p?.ataques     || [];
     out.habilidades = p?.habilidades || [];
     out.rituais     = p?.rituais     || [];

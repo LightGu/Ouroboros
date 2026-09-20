@@ -433,6 +433,7 @@ function ajusteIdade(p) {
 const PATENTES = ['Recruta', 'Operador', 'Agente Especial', 'Oficial de Operações', 'Agente de Elite'];
 
 const CATEGORIAS_ITEM = ['I', 'II', 'III', 'IV'];
+const TIPOS_ITEM = ['Arma', 'Munição', 'Explosivo', 'Proteção', 'Medicamento', 'Equipamento', 'Itens paranormais', 'Catalisadores', 'Amaldiçoado'];
 
 /* Vocabulário dos rituais, conferido nos Arquivos Secretos. O bloco impresso
    no livro é sempre: Nome / ELEMENTO Círculo / Execução / Alcance / Alvo /

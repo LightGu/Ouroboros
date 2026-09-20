@@ -103,6 +103,9 @@ const Catalogo = {
   paraItemDaFicha(i) {
     return {
       nome: i.nome,
+      tipo: i.grupo || 'Equipamento',
+      equipada: false,
+      municao: { atual: 0, max: 0 },
       categoria: this.categoriaTexto(i.categoria),
       espacos: this.espacosTexto(i.espacos),
       descricao: i.descricao || '',
