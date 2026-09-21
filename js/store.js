@@ -238,6 +238,7 @@ const Store = {
       san: { atual: 0, max: 0 },
       defesa: { equip: 0, outros: 0 },
       protecao: '',
+      proficienciasExtras: [],
       resistencias: '',
       pericias: {},
       ataques: [],
@@ -282,6 +283,7 @@ const Store = {
     out.habilidades = p?.habilidades || [];
     out.rituais     = p?.rituais     || [];
     out.desvantagensIdade = p?.desvantagensIdade || [];
+    out.proficienciasExtras = p?.proficienciasExtras || [];
     out.condicoes   = p?.condicoes   || [];
     out.aliados     = (p?.aliados || []).map(a => Object.assign(
       { nome: '', tipo: '', foto: '', descricao: '', bonus: [], habilidades: [] }, a));

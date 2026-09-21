@@ -406,6 +406,12 @@ const Nuvem = {
     }
   },
 
+  async catalogoPoderes() {
+    const { data, error } = await this.cliente.from('poderes_catalogo').select('*').order('nome');
+    if (error) throw error;
+    return data || [];
+  },
+
   async catalogoItens() {
     const { data, error } = await this.cliente.from('itens_catalogo')
       .select('nome, grupo, categoria, espacos, dano, critico, alcance, tipo_dano, descricao, livro, pagina')

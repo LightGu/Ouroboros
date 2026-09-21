@@ -56,7 +56,7 @@ const Ficha = {
   travar() {
     const raiz = $('#view-ficha');
     $$('input, select, textarea', raiz).forEach(el => { el.disabled = true; });
-    $$('[data-add], [data-del], [data-attr], [data-excluir], [data-calcular], [data-catalogo], [data-catalogo-rituais], [data-subirnex], [data-aliado-pronto], [data-virar-ritual], [data-add-bonus], [data-add-hab], [data-foto-aliado]', raiz)
+    $$('[data-add], [data-del], [data-attr], [data-excluir], [data-calcular], [data-catalogo], [data-catalogo-rituais], [data-catalogo-poderes], [data-subirnex], [data-aliado-pronto], [data-virar-ritual], [data-add-bonus], [data-add-hab], [data-foto-aliado]', raiz)
       .forEach(el => el.remove());
     $('[data-trocar-img]', raiz)?.removeAttribute('data-trocar-img');
     const ind = $('#indicador-salvo', raiz);
@@ -252,6 +252,7 @@ const Ficha = {
       <!-- HABILIDADES -->
       <section class="bloco">
         <h2 class="titulo-bloco"${dica(AJUDA.campos.habilidade)}>Habilidades
+          <button class="btn btn-ghost btn-peq" data-catalogo-poderes>Do catálogo</button>
           <button class="btn btn-ghost btn-peq" data-add="habilidades">+ Habilidade</button></h2>
         <div class="tabela tabela-habilidades">
           <div class="tabela-cab">${[['nome', 'Nome'], ['custo', 'Custo'], ['desc', 'Descritivo']].map(([chave, titulo]) => this.cabecalhoOrdem('habilidades', chave, titulo)).join('')}<span></span></div>
@@ -672,6 +673,7 @@ const Ficha = {
       if (e.target.closest('[data-excluir]'))    return this.excluir();
       if (e.target.closest('[data-trocar-img]')) return Mesa.trocarImagem(this.atual.id);
       if (e.target.closest('[data-catalogo-rituais]')) return CatalogoRituais.abrir(this.atual);
+      if (e.target.closest('[data-catalogo-poderes]')) return CatalogoPoderes.abrir(this.atual);
       if (e.target.closest('[data-calcular]'))   return this.calcular();
 
       const rolar = e.target.closest('[data-rolar]');

@@ -62,8 +62,11 @@ MEDICAMENTO = {'Anti-inflamatório', 'Antibiótico', 'Antiemético', 'Antihistam
                'Aplicador de Adrenalina'}
 CATALISADORES = {'Ampliador', 'Perturbador', 'Potencializador', 'Prolongador', 'Catalisador Sofisticado e Horrorizado'}
 ELEMENTOS_EXTRAIDOS = {'Sangue', 'Morte', 'Conhecimento', 'Energia', 'Medo'}
-PROTECAO = {'Traje hazmat', 'Traje de mergulho', 'Traje espacial', 'Máscara de gás',
-            'Paraquedas', 'Vestimenta'}
+PROTECOES_BASICAS = [
+    ('Proteção leve', 1, 2, 'Defesa +5.'),
+    ('Proteção pesada', 2, 5, 'Defesa +10 e resistência 2 a dano balístico, corte, impacto e perfuração. Impõe –5 nas perícias que sofrem penalidade de carga.'),
+    ('Escudo', 1, 2, 'Defesa +2. Precisa ser empunhado em uma mão e conta como proteção pesada para proficiência.'),
+]
 
 
 def grupo(x):
@@ -81,7 +84,6 @@ def grupo(x):
     if x.get('dano') or sub.startswith(SUBTIPO_ARMA) or nome in ARMAS:   return 'Arma'
     if nome.startswith('Granada') or nome in EXPLOSIVO:                  return 'Explosivo'
     if nome in MEDICAMENTO:                                              return 'Medicamento'
-    if nome in PROTECAO:                                                 return 'Proteção'
     return 'Equipamento'
 
 
@@ -128,6 +130,11 @@ def limpar(bruto):
         saida.append(dict(nome=nome, grupo='Itens paranormais', categoria=0, espacos=1,
                           dano='', critico='', alcance='', tipo_dano='', livro='Livro Básico', pagina='66–67',
                           descricao=f'Conjunto de componentes para conjurar rituais de {elemento}. Medo não utiliza componentes ritualísticos.'))
+    for nome, categoria, espacos, descricao in PROTECOES_BASICAS:
+        saida = [i for i in saida if not (i['nome'] == nome and i['livro'] == 'Livro Básico')]
+        saida.append(dict(nome=nome, grupo='Proteção', categoria=categoria, espacos=espacos,
+                          dano='', critico='', alcance='', tipo_dano='', descricao=descricao,
+                          livro='Livro Básico', pagina='62'))
     saida.sort(key=lambda i: i['nome'].lower())
     return saida
 

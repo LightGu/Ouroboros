@@ -63,9 +63,11 @@ const Catalogo = {
       ['Catalisador Sofisticado e Horrorizado', 'Arquivos Secretos 2']
     ]);
     const elementosExtraidos = ['Sangue', 'Morte', 'Conhecimento', 'Energia', 'Medo'];
+    const protecoes = new Set(['Proteção leve', 'Proteção pesada', 'Escudo']);
     const corrigida = lista.filter(i => !(i.livro === 'Sobrevivendo ao Horror' && elementosExtraidos.includes(i.nome)))
       .map(i => catalisadores.get(i.nome) === i.livro ? { ...i, grupo: 'Catalisadores' }
         : paranormais.get(i.nome) === i.livro ? { ...i, grupo: 'Itens paranormais' }
+        : i.grupo === 'Proteção' && !protecoes.has(i.nome) ? { ...i, grupo: 'Equipamento' }
         : i.grupo === 'Catalisador' ? { ...i, grupo: 'Catalisadores' } : i);
     for (const item of this.componentes()) {
       if (!corrigida.some(i => i.nome === item.nome && i.livro === item.livro)) corrigida.push(item);
