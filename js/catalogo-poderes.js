@@ -21,7 +21,10 @@ const CatalogoPoderes = {
   render() {
     const q=Catalogo.normal($('#poder-busca')?.value||''), conhecidos=new Set(this.p.habilidades.map(h=>Catalogo.normal(h.nome)));
     const lista=this.itens.filter(x=>(!this.classe||x.classe===this.classe)&&(!q||Catalogo.normal(`${x.nome} ${x.descricao}`).includes(q)));
-    $('#poder-lista').innerHTML=lista.map(x=>{const i=this.itens.indexOf(x), ja=conhecidos.has(Catalogo.normal(x.nome)), on=this.escolhidos.has(i); return `<article class="catalogo-item"><button type="button" class="btn ${on?'btn-primary':''}" data-poder="${i}" ${ja?'disabled':''}>${ja?'✓':on?'✓':'+'}</button><div><b>${esc(x.nome)}</b> <small>${esc(x.classe)} · ${esc(x.livro)}, p. ${esc(x.pagina)}</small><p>${esc(x.descricao)}</p></div></article>`}).join('')||'<p class="vazio-linha">Nenhum poder encontrado.</p>';
+    $('#poder-lista').innerHTML=lista.map(x=>{const i=this.itens.indexOf(x), ja=conhecidos.has(Catalogo.normal(x.nome)), on=this.escolhidos.has(i); return `<article class="poder-catalogo-item ${on?'ativo':''}">
+      <button type="button" class="poder-catalogo-add" data-poder="${i}" ${ja?'disabled':''} aria-label="${ja?'Poder já adicionado':'Adicionar '+esc(x.nome)}">${ja||on?'✓':'+'}</button>
+      <details><summary>${esc(x.nome)}</summary><p>${esc(x.descricao)}</p></details>
+    </article>`}).join('')||'<p class="vazio-linha">Nenhum poder encontrado.</p>';
   },
   adicionar() {
     const novos=[...this.escolhidos].map(i=>this.itens[i]).filter(Boolean);
