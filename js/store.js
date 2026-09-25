@@ -69,6 +69,7 @@ const Store = {
   /* Grava já, sem esperar o agrupamento (usado antes de sair da tela). */
   async salvarAgora(p) {
     if (!p || !this.mesaId || !this.podeEditar(p)) return;
+    this.guardarCache();
     clearTimeout(this._pendentes.get(p.id));
     this._pendentes.delete(p.id);
     await Nuvem.salvarPersonagem(p, this.mesaId);

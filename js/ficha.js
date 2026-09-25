@@ -87,7 +87,8 @@ const Ficha = {
             <option value="false" ${p.fichaPrivada === false ? 'selected' : ''}>Visível para os outros jogadores</option>
           </select></label>` : ''}
         <div class="cresce"></div>
-        <span class="salvo" id="indicador-salvo">salvo automaticamente</span>
+        <span class="salvo" id="indicador-salvo">salvamento automático ativo</span>
+        ${Store.podeEditar(p) ? '<button class="btn btn-ghost btn-peq" data-salvar>Salvar</button>' : ''}
         <button class="btn btn-ghost btn-perigo-texto" data-excluir>Excluir agente</button>
       </div>
 
@@ -671,6 +672,7 @@ const Ficha = {
       if (e.target.closest('[data-revisar-guia]')) return this.abrir(this.atual.id);
       if (e.target.closest('[data-voltar]'))     return this.voltar();
       if (e.target.closest('[data-excluir]'))    return this.excluir();
+      if (e.target.closest('[data-salvar]'))     return this.salvarAgora();
       if (e.target.closest('[data-trocar-img]')) return Mesa.trocarImagem(this.atual.id);
       if (e.target.closest('[data-catalogo-rituais]')) return CatalogoRituais.abrir(this.atual);
       if (e.target.closest('[data-catalogo-poderes]')) return CatalogoPoderes.abrir(this.atual);
@@ -1120,14 +1122,31 @@ const Ficha = {
       }
     });
   },
+  async salvarAgora() {
+    if (!this.atual || !Store.podeEditar(this.atual)) return;
+    clearTimeout(this._t);
+    const ind = $('#indicador-salvo'), botao = $('[data-salvar]');
+    if (ind) { ind.textContent = 'salvando...'; ind.classList.add('salvando'); }
+    if (botao) botao.disabled = true;
+    try {
+      await Store.salvarAgora(this.atual);
+      if (ind) { ind.textContent = 'salvo na nuvem'; ind.classList.remove('salvando'); }
+    } catch (e) {
+      if (ind) { ind.textContent = 'falha ao salvar'; ind.classList.remove('salvando'); }
+      toast('Não consegui salvar na nuvem: ' + (e.message || e), 'erro');
+    } finally {
+      if (botao) botao.disabled = false;
+    }
+  },
+
 
   salvarDepois() {
     clearTimeout(this._t);
     const ind = $('#indicador-salvo');
-    if (ind) { ind.textContent = 'salvando...'; ind.classList.add('salvando'); }
+    if (ind) { ind.textContent = 'alterações pendentes...'; ind.classList.add('salvando'); }
     this._t = setTimeout(() => {
       Store.salvar(this.atual);
-      if (ind) { ind.textContent = 'salvo na nuvem'; ind.classList.remove('salvando'); }
+      if (ind) { ind.textContent = 'salvamento automático ativo'; ind.classList.remove('salvando'); }
     }, 400);
   }
 };

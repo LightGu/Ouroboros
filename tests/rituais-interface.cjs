@@ -17,11 +17,12 @@ const rituais=[
 window.Nuvem={cliente:{},catalogoRituais:async()=>rituais};
 const p=Store.normalizar({id:'p',nex:5,atributos:{PRE:3},descricao:{historico:'HISTORIA_SECRETA',personalidade:'PERSONALIDADE_SECRETA',objetivo:'OBJETIVO_SECRETO',aparencia:'APARENCIA_PUBLICA'}});
 Store.estado={personagens:[p]};Store.podeEditar=()=>true;
-let saves=0;Store.salvar=()=>{saves++;};Store.salvarAgora=async()=>{};
+let saves=0,manualSaves=0;Store.salvar=()=>{saves++;};Store.salvarAgora=async()=>{manualSaves++;};
 function check(v,msg){if(!v)throw Error(msg);}
 function input(bind,value){const el=document.querySelector('[data-bind="'+bind+'"]');el.value=value;el.dispatchEvent(new Event('input',{bubbles:true}));}
 (async()=>{
  Ficha.abrir(p.id);
+ check(document.querySelector('[data-salvar]'),'botão salvar visível');await Ficha.salvarAgora();check(manualSaves===1&&document.querySelector('#indicador-salvo').textContent==='salvo na nuvem','salvamento manual confirmado');
  input('pe.max','14');input('pe.atual','7');
  check(document.querySelector('[data-barra-numero="pe"]').textContent==='7/14','valor de PE na barra');
  check(document.querySelector('[data-barra="pe"]').style.width==='50%','preenchimento de PE');
@@ -79,6 +80,7 @@ function input(bind,value){const el=document.querySelector('[data-bind="'+bind+'
  check(document.querySelector('[data-bind="descricao.aparencia"]'),'aparência visível');
  p.historiaPublica=true;Ficha.abrir(p.id);
  check(document.querySelector('[data-bind="descricao.objetivo"]').disabled,'objetivo público em consulta');
+ check(!document.querySelector('[data-salvar]'),'visitante não vê botão salvar');
  Store.podeEditar=()=>true;p.historiaPublica=false;Ficha.abrir(p.id);
  check(document.querySelector('[data-bind="descricao.personalidade"]').value==='PERSONALIDADE_SECRETA','dono lê privado');
  document.body.innerHTML='<p id="resultado">PASSOU: DT, catálogo, componentes e privacidade.</p>';
