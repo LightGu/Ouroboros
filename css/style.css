@@ -92,7 +92,9 @@ textarea { resize: vertical; }
 
 .brand { display: flex; align-items: center; gap: 12px; }
 
+.brand-titulo { display: flex; align-items: baseline; gap: 6px; }
 .brand h1 { font-size: 19px; font-weight: 700; }
+.app-versao { font-size: 9px; color: var(--texto-3); opacity: .65; letter-spacing: .04em; }
 .brand p { margin: 0; font-size: 11px; color: var(--texto-3); letter-spacing: .18em; text-transform: uppercase; }
 
 .topbar-actions { margin-left: auto; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
