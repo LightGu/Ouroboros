@@ -112,6 +112,7 @@ textarea { resize: vertical; }
 }
 .btn:hover { background: #232732; border-color: #414857; }
 .btn:active { transform: translateY(1px); }
+.btn:disabled { opacity: .55; cursor: wait; transform: none; }
 
 .btn-primary { background: var(--roxo); border-color: var(--roxo); color: #fff; }
 .btn-primary:hover { background: var(--roxo-cl); border-color: var(--roxo-cl); }

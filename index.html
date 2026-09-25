@@ -64,10 +64,10 @@
       <button class="btn btn-ghost" id="btn-exportar" title="Baixar backup .json">Exportar</button>
       <button class="btn btn-ghost" id="btn-importar" title="Carregar backup .json">Importar</button>
     </div>
-    <button class="btn btn-ghost btn-icon" id="btn-mais" title="Mais ações">⋯</button>
+    <button class="btn btn-ghost btn-icon" id="btn-mais" title="Mais ações" aria-label="Mais ações">⋯</button>
     <input type="file" id="file-importar" accept="application/json" hidden>
     <div class="sep"></div>
-    <button class="btn btn-ghost btn-icon" id="btn-rolagens" title="Rolagens da mesa">🎲</button>
+    <button class="btn btn-ghost btn-icon" id="btn-rolagens" title="Rolagens da mesa" aria-label="Rolagens da mesa">🎲</button>
     <span class="conexao off" id="conexao" title="Conectando..."></span>
     <button class="btn btn-ghost" id="btn-conta"><span id="conta-nome">…</span> ▾</button>
   </div>
@@ -103,18 +103,18 @@
     <div id="lista-mesas" class="lista-mesas"></div>
 
     <div class="grade-2 espaco-topo">
-      <div class="caixa-acao">
+      <form class="caixa-acao" id="form-criar-mesa">
         <h3>Criar uma mesa</h3>
         <p>Você vira o mestre e recebe um código pra passar pros jogadores.</p>
         <label class="campo"><span>Nome da mesa</span><input id="nova-mesa" placeholder="Ex.: Mesa de Segunda"></label>
-        <button class="btn btn-primary btn-largo" id="btn-criar-mesa">Criar mesa</button>
-      </div>
-      <div class="caixa-acao">
+        <button class="btn btn-primary btn-largo" id="btn-criar-mesa" type="submit">Criar mesa</button>
+      </form>
+      <form class="caixa-acao" id="form-entrar-mesa">
         <h3>Entrar numa mesa</h3>
         <p>Cole o código de 6 caracteres que o mestre te passou.</p>
         <label class="campo"><span>Código</span><input id="codigo-mesa" maxlength="6" placeholder="A1B2C3" style="text-transform:uppercase"></label>
-        <button class="btn btn-largo" id="btn-entrar-mesa">Entrar</button>
-      </div>
+        <button class="btn btn-largo" id="btn-entrar-mesa" type="submit">Entrar</button>
+      </form>
     </div>
 
     <button class="btn btn-ghost espaco-topo" id="btn-sair-mesas">Sair da conta</button>
@@ -221,7 +221,7 @@
   <div class="modal" role="dialog" aria-modal="true">
     <header class="modal-head">
       <h2 id="modal-titulo">Título</h2>
-      <button class="btn btn-icon btn-ghost" id="modal-fechar">✕</button>
+      <button class="btn btn-icon btn-ghost" id="modal-fechar" aria-label="Fechar">✕</button>
     </header>
     <div class="modal-body" id="modal-body"></div>
     <footer class="modal-foot" id="modal-foot"></footer>
@@ -232,7 +232,7 @@
   <header class="painel-cab">
     <h2>Rolagens</h2>
     <button class="btn btn-ghost" id="rolagens-limpar" hidden>Limpar histórico</button>
-    <button class="btn btn-icon btn-ghost" id="rolagens-fechar">✕</button>
+    <button class="btn btn-icon btn-ghost" id="rolagens-fechar" aria-label="Fechar rolagens">✕</button>
   </header>
   <div id="rolagens-lista" class="rolagens-lista"></div>
   <footer class="painel-rodape">

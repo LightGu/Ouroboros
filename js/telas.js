@@ -91,7 +91,8 @@ const Telas = {
   },
 
   ligarMesas() {
-    $('#btn-criar-mesa').addEventListener('click', async () => {
+    $('#form-criar-mesa').addEventListener('submit', async e => {
+      e.preventDefault();
       const nome = $('#nova-mesa').value.trim();
       if (!nome) return toast('Dá um nome pra mesa.', 'erro');
       const btn = $('#btn-criar-mesa');
@@ -105,7 +106,8 @@ const Telas = {
       finally { btn.disabled = false; }
     });
 
-    $('#btn-entrar-mesa').addEventListener('click', async () => {
+    $('#form-entrar-mesa').addEventListener('submit', async e => {
+      e.preventDefault();
       const codigo = $('#codigo-mesa').value.trim();
       if (!codigo) return toast('Cola o código da mesa.', 'erro');
       const btn = $('#btn-entrar-mesa');

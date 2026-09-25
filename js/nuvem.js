@@ -164,7 +164,8 @@ const Nuvem = {
 
     let notas = {};
     if (ehMestre) {
-      const { data: n } = await this.cliente.from('notas_mestre').select('*').eq('mesa_id', mesaId);
+      const { data: n, error: erroNotas } = await this.cliente.from('notas_mestre').select('*').eq('mesa_id', mesaId);
+      if (erroNotas) throw erroNotas;
       (n || []).forEach(x => { notas[x.personagem_id] = x.texto; });
     }
     const historias = await this.carregarHistorias(mesaId);
