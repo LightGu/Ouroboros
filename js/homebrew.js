@@ -7,7 +7,7 @@ const Homebrew = {
       <div class="lista-mesas">${personagens.map(p => `<article class="caixa-acao"><h3>${esc(p.nome || 'Sem nome')}</h3>
         <p>${esc(p.proficiencias || CLASSE_INFO[p.classe]?.proficiencias || 'Sem proficiência de classe')}</p>
         <div class="filtros">${(p.proficienciasExtras || []).map((x, i) => `<button class="chip-filtro" data-remover-proficiencia="${p.id}:${i}" title="Remover">${esc(x)} ×</button>`).join('')}</div>
-        <form data-add-proficiencia="${p.id}" class="grade-2"><input name="proficiencia" list="homebrew-proficiencias" placeholder="Ex.: Armas pesadas" required><button class="btn btn-primary">Adicionar</button></form>
+        <form data-add-proficiencia="${p.id}" class="grade-2"><label class="campo"><span class="sr-only">Nova proficiência</span><input name="proficiencia" list="homebrew-proficiencias" placeholder="Ex.: Armas pesadas" required></label><button class="btn btn-primary">Adicionar</button></form>
       </article>`).join('') || '<p class="vazio-linha">Nenhum personagem de jogador.</p>'}</div>`;
     $('#view-homebrew').onclick = e => {
       const botao = e.target.closest('[data-remover-proficiencia]');
