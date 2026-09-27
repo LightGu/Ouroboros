@@ -10,7 +10,10 @@ const Mesa = {
     const anteriores = new Map($$('.card', grid).map(card => [card.dataset.id, $('.retrato-moldura', card)?.dataset.pvAnterior]));
     grid.innerHTML = lista.map((p, i) => this.card(p, i)).join('');
 
-    $$('.card', grid).forEach((card, i) => animarVida($('.retrato-moldura', card), lista[i].pv.atual, anteriores.get(card.dataset.id)));
+    $$('.card', grid).forEach((card, i) => {
+      if (lista[i].rapido && !Store.ehMestre) return;
+      animarVida($('.retrato-moldura', card), lista[i].pv.atual, anteriores.get(card.dataset.id));
+    });
 
     this.renderTurno();
     this.ligarDragAndDrop();
@@ -19,6 +22,7 @@ const Mesa = {
   /* ---------------- card ---------------- */
 
   card(p, i) {
+    if (p.rapido && !Store.ehMestre) return this.cardRapidoPublico(p, i);
     const c = Store.estado.combate;
     const pode = Store.podeEditar(p);
     const naVez = c.ativo && c.indice === i;
@@ -88,6 +92,24 @@ const Mesa = {
         ${barrasExtras}
         ${meta}
       </div>
+    </article>`;
+  },
+
+  /* O retrato público é fixo: imagem por PV também revelaria o estado do inimigo. */
+  cardRapidoPublico(p, i) {
+    const c = Store.estado.combate;
+    const naVez = c.ativo && c.indice === i;
+    const retrato = p.imagem
+      ? `<img src="${esc(p.imagem)}" alt="">`
+      : `<div class="retrato-vazio" style="--h:${corDoNome(p.nome)}">${esc(iniciais(p.nome))}</div>`;
+    return `
+    <article class="card e-rapido so-leitura ${naVez ? 'na-vez' : ''}" data-id="${esc(p.id)}" data-i="${i}">
+      <div class="card-barra-topo"><span class="pos">${i + 1}</span></div>
+      <div class="retrato">
+        <div class="retrato-moldura">${retrato}</div>
+        ${naVez ? '<span class="selo-vez">NA VEZ</span>' : ''}
+      </div>
+      <div class="card-corpo"><h3 class="card-nome">${esc(p.nome || 'Sem nome')}</h3></div>
     </article>`;
   },
 
