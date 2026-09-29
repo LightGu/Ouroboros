@@ -46,6 +46,7 @@ const Sons = {
           <span class="som-tags">
             ${s.categoria ? `<span class="chip-cat">${esc(s.categoria)}</span>` : ''}
             ${s.loop ? '<span class="chip-cat chip-loop">loop</span>' : ''}
+            ${!s.caminho ? '<span class="chip-cat chip-link">link</span>' : ''}
           </span>
         </div>
         <input class="som-vol" type="range" min="0" max="1" step="0.05" value="${s.volume}"
@@ -131,12 +132,24 @@ const Sons = {
 
   /* ---------------- acervo (mestre) ---------------- */
 
+  urlAudio(valor) {
+    const texto = String(valor || '').trim();
+    if (!texto) return '';
+    try {
+      const url = new URL(texto);
+      return ['http:', 'https:'].includes(url.protocol) ? url.href : '';
+    } catch { return ''; }
+  },
+
   modalNovo() {
     Modal.abrir({
       titulo: 'Novo som',
       corpo: `
-        <label class="campo"><span>Arquivo de áudio *</span><input type="file" id="sm-arq" accept="audio/*"></label>
+        <label class="campo"><span>Arquivo de áudio</span><input type="file" id="sm-arq" accept="audio/*"></label>
         <p class="dialogo fraco" id="sm-info">MP3, OGG, WAV ou M4A. Limite de 20 MB por arquivo.</p>
+        <div class="separador-ou"><span>ou use um link</span></div>
+        <label class="campo"><span>Link direto do áudio</span><input type="url" id="sm-url" inputmode="url" placeholder="https://exemplo.com/musica.mp3"></label>
+        <p class="dialogo fraco">Bom para faixas grandes: o link precisa abrir o arquivo de áudio diretamente. Links de páginas do YouTube ou Spotify não funcionam.</p>
         <div class="grade-2">
           <label class="campo"><span>Nome</span><input id="sm-nome" placeholder="Chuva na floresta"></label>
           <label class="campo"><span>Categoria</span>
@@ -151,17 +164,21 @@ const Sons = {
       confirmar: 'Enviar',
       onConfirmar: async () => {
         const arq = $('#sm-arq').files[0];
-        if (!arq) { toast('Escolhe um arquivo.', 'erro'); return false; }
-        if (arq.size > 20 * 1024 * 1024) { toast('Arquivo maior que 20 MB.', 'erro'); return false; }
+        const textoUrl = $('#sm-url').value.trim();
+        const url = this.urlAudio(textoUrl);
+        if (!arq && !textoUrl) { toast('Escolhe um arquivo ou cola um link.', 'erro'); return false; }
+        if (textoUrl && !url) { toast('O link precisa começar com http:// ou https://.', 'erro'); return false; }
+        if (arq && textoUrl) { toast('Escolhe só uma opção: arquivo ou link.', 'erro'); return false; }
+        if (arq && arq.size > 20 * 1024 * 1024) { toast('Arquivo maior que 20 MB.', 'erro'); return false; }
         const btn = $('[data-modal-ok]');
-        if (btn) { btn.disabled = true; btn.textContent = 'Enviando...'; }
+        if (btn) { btn.disabled = true; btn.textContent = arq ? 'Enviando...' : 'Salvando...'; }
         try {
-          const { caminho, url } = await Nuvem.enviarSom(arq, App.mesa.id);
+          const hospedado = arq ? await Nuvem.enviarSom(arq, App.mesa.id) : { caminho: null, url };
           const som = await Nuvem.criarSom({
             mesa_id: App.mesa.id,
-            nome: $('#sm-nome').value.trim() || arq.name.replace(/\.[^.]+$/, ''),
+            nome: $('#sm-nome').value.trim() || (arq ? arq.name.replace(/\.[^.]+$/, '') : 'Som por link'),
             categoria: $('#sm-cat').value.trim(),
-            arquivo: url, caminho,
+            arquivo: hospedado.url, caminho: hospedado.caminho,
             volume: num($('#sm-vol').value, .8),
             loop: $('#sm-loop').checked,
             ordem: this.lista.length
@@ -200,15 +217,20 @@ const Sons = {
             <datalist id="dl-cats2">${this.categorias().map(c => `<option value="${esc(c)}">`).join('')}</datalist>
           </label>
         </div>
+        ${!s.caminho ? `<label class="campo"><span>Link direto do áudio</span><input type="url" id="sm-url" inputmode="url" value="${esc(s.arquivo)}"></label>` : ''}
         <label class="radio"><input type="checkbox" id="sm-loop" ${s.loop ? 'checked' : ''}> repetir sem parar</label>
         <button class="btn btn-ghost btn-perigo-texto" id="sm-apagar" type="button">Apagar som</button>`,
       confirmar: 'Salvar',
       onConfirmar: async () => {
+        const textoUrl = $('#sm-url')?.value.trim();
+        const url = textoUrl == null ? null : this.urlAudio(textoUrl);
+        if (textoUrl != null && !url) { toast('O link precisa começar com http:// ou https://.', 'erro'); return false; }
         const campos = {
           nome: $('#sm-nome').value.trim() || s.nome,
           categoria: $('#sm-cat').value.trim(),
           loop: $('#sm-loop').checked
         };
+        if (url) campos.arquivo = url;
         Object.assign(s, campos);
         this.render();
         try { await Nuvem.salvarSom(s.id, campos); }

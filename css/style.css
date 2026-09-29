@@ -1333,9 +1333,16 @@ body.com-painel .view { padding-right: 352px; }
   background: var(--bg-2); border: 1px solid var(--linha); color: var(--texto-3);
 }
 .chip-loop { color: #b39bff; border-color: rgba(139,92,246,.35); }
+.chip-link { color: #75bde8; border-color: rgba(71,159,211,.38); }
 .som-vol { width: 96px; flex: 0 0 auto; }
 .dica-som { font-size: 11.5px; color: var(--texto-3); white-space: nowrap; }
 .som .alca { flex: 0 0 auto; }
+
+.separador-ou {
+  display: flex; align-items: center; gap: 10px; margin: 4px 0 10px;
+  color: var(--texto-3); font-size: 10px; letter-spacing: .08em; text-transform: uppercase;
+}
+.separador-ou::before, .separador-ou::after { content: ''; height: 1px; flex: 1; background: var(--linha); }
 
 .aviso-audio {
   position: fixed; left: 50%; bottom: 26px; transform: translateX(-50%); z-index: 200;
