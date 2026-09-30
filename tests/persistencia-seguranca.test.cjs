@@ -49,3 +49,13 @@ test('uploads novos incluem a pasta do usuário', () => {
   assert.match(js, /`\$\{mesaId\}\/\$\{dono\}\/\$\{personagemId\}/);
   assert.match(js, /`\$\{mesaId\}\/\$\{dono\}\/mapa-/);
 });
+
+
+test('anotações compartilhadas e leituras continuam limitadas à própria mesa', () => {
+  const sql = fs.readFileSync('sql/v26-integridade-anotacoes-leituras.sql', 'utf8');
+  assert.match(sql, /public\.eh_membro\(mesa_id\)[\s\S]*compartilhada/);
+  assert.match(sql, /NEW\.mesa_id is distinct from OLD\.mesa_id/);
+  assert.match(sql, /NEW\.autor_id is distinct from OLD\.autor_id/);
+  assert.match(sql, /'u:' \|\| mb\.user_id::text = leituras\.chave/);
+  assert.match(sql, /'p:' \|\| p\.id::text = leituras\.chave/);
+});

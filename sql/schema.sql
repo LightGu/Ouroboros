@@ -802,7 +802,24 @@ alter table public.leituras enable row level security;
 
 drop policy if exists leituras_minhas on public.leituras;
 create policy leituras_minhas on public.leituras for all to authenticated
-  using (user_id = auth.uid()) with check (user_id = auth.uid());
+  using (
+    user_id = auth.uid() and public.eh_membro(mesa_id)
+    and (
+      exists (select 1 from public.membros mb
+              where mb.mesa_id = leituras.mesa_id and 'u:' || mb.user_id::text = leituras.chave)
+      or exists (select 1 from public.personas p
+                 where p.mesa_id = leituras.mesa_id and 'p:' || p.id::text = leituras.chave)
+    )
+  )
+  with check (
+    user_id = auth.uid() and public.eh_membro(mesa_id)
+    and (
+      exists (select 1 from public.membros mb
+              where mb.mesa_id = leituras.mesa_id and 'u:' || mb.user_id::text = leituras.chave)
+      or exists (select 1 from public.personas p
+                 where p.mesa_id = leituras.mesa_id and 'p:' || p.id::text = leituras.chave)
+    )
+  );
 -- ============================================================
 -- v9 — liberar contato de persona + anotações dos jogadores
 -- ============================================================
@@ -883,12 +900,12 @@ drop policy if exists anot_ler on public.anotacoes;
 drop policy if exists anot_criar on public.anotacoes;
 drop policy if exists anot_mexer on public.anotacoes;
 
--- vejo as minhas, as que alguém compartilhou, e o mestre vê tudo
+-- vejo as minhas, as que alguém compartilhou, e o mestre vê tudo —
+-- sempre limitado a integrantes da mesma mesa.
 create policy anot_ler on public.anotacoes for select to authenticated
   using (
-    public.eh_mestre(mesa_id)
-    or autor_id = auth.uid()
-    or compartilhada
+    public.eh_membro(mesa_id)
+    and (public.eh_mestre(mesa_id) or autor_id = auth.uid() or compartilhada)
   );
 
 create policy anot_criar on public.anotacoes for insert to authenticated
@@ -896,7 +913,20 @@ create policy anot_criar on public.anotacoes for insert to authenticated
 
 -- editar e apagar: só o dono da anotação (o mestre mexe nas dele também)
 create policy anot_mexer on public.anotacoes for update to authenticated
-  using (autor_id = auth.uid()) with check (autor_id = auth.uid());
+  using (autor_id = auth.uid() and public.eh_membro(mesa_id))
+  with check (autor_id = auth.uid() and public.eh_membro(mesa_id));
+
+create or replace function public.proteger_identidade_anotacao()
+returns trigger language plpgsql set search_path = public as $$
+begin
+  if NEW.mesa_id is distinct from OLD.mesa_id or NEW.autor_id is distinct from OLD.autor_id then
+    raise exception 'Não é permitido mover uma anotação ou trocar seu autor';
+  end if;
+  return NEW;
+end $$;
+drop trigger if exists trg_proteger_identidade_anotacao on public.anotacoes;
+create trigger trg_proteger_identidade_anotacao before update on public.anotacoes
+for each row execute function public.proteger_identidade_anotacao();
 
 drop policy if exists anot_apagar on public.anotacoes;
 create policy anot_apagar on public.anotacoes for delete to authenticated

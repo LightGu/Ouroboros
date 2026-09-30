@@ -192,7 +192,8 @@ tipicamente "só se ainda não tiver dono" ou "só se você mesmo já tiver esse
 `sql/schema.sql` é a fonte da verdade e roda por cima de si mesmo. Cada mudança também vira um
 arquivo próprio (`v4` em diante) — **cole o arquivo pequeno, não o schema inteiro**: paste cortado
 no editor do Supabase gera erro de sintaxe fantasma difícil de diagnosticar. Para atualizar uma
-instalação que já estava na v24, execute `sql/v25-integridade-mensagens-tokens-storage.sql`.
+instalação que já estava na v24, execute, em ordem, `sql/v25-integridade-mensagens-tokens-storage.sql` e
+`sql/v26-integridade-anotacoes-leituras.sql`.
 
 - `create table if not exists`, `drop policy if exists` antes de `create policy`
 - **`drop function` antes de `create or replace` se a assinatura mudou.** O Postgres recusa
