@@ -16,7 +16,9 @@ decidido no banco, não na interface.
 ## 1. Rodar
 
 ```bash
+npm install                    # uma vez: dependências dos testes
 python3 dev-server.py 5599     # http://localhost:5599
+npm test                       # suíte completa
 ```
 
 **Use o `dev-server.py`, nunca `python -m http.server`.** Ele manda `no-store` e ainda carimba
@@ -52,8 +54,9 @@ de topo de arquivo **não** vira propriedade de `window` (só é acessível pelo
 Ordem de carga (há dependências):
 
 ```
-config → dados → ui → ajuda → nuvem → store → mesa → catalogo → ficha → criacao → rolagem
-→ mapa → sons → campanha → interludio → celular → logs → contas → telas → app
+config → dados → ui → ajuda → nuvem → store → mesa → catalogo → catalogo-rituais
+→ catalogo-poderes → paineis → regras → ficha → criacao → rolagem → mapa → sons
+→ campanha → interludio → bestiario → homebrew → celular → logs → contas → telas → app
 ```
 
 `app.js` é o último: ele chama `App.iniciar()` na última linha.
@@ -187,8 +190,9 @@ tipicamente "só se ainda não tiver dono" ou "só se você mesmo já tiver esse
 ### Migração
 
 `sql/schema.sql` é a fonte da verdade e roda por cima de si mesmo. Cada mudança também vira um
-arquivo próprio (`v4`…`v12`) — **cole o arquivo pequeno, não as 700 linhas**: paste cortado no
-editor do Supabase gera erro de sintaxe fantasma difícil de diagnosticar.
+arquivo próprio (`v4` em diante) — **cole o arquivo pequeno, não o schema inteiro**: paste cortado
+no editor do Supabase gera erro de sintaxe fantasma difícil de diagnosticar. Para atualizar uma
+instalação que já estava na v24, execute `sql/v25-integridade-mensagens-tokens-storage.sql`.
 
 - `create table if not exists`, `drop policy if exists` antes de `create policy`
 - **`drop function` antes de `create or replace` se a assinatura mudou.** O Postgres recusa

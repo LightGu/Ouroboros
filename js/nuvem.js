@@ -277,7 +277,9 @@ const Nuvem = {
 
   async enviarRetrato(dataUrl, mesaId, personagemId) {
     const blob = await (await fetch(dataUrl)).blob();
-    const caminho = `${mesaId}/${personagemId}-${Date.now()}.jpg`;
+    const dono = App.sessao?.user?.id;
+    if (!dono) throw new Error('Sessão ausente para enviar a imagem');
+    const caminho = `${mesaId}/${dono}/${personagemId}-${Date.now()}.jpg`;
     const { error } = await this.cliente.storage
       .from('retratos').upload(caminho, blob, { contentType: 'image/jpeg', upsert: true });
     if (error) throw error;
@@ -383,7 +385,9 @@ const Nuvem = {
 
   async enviarImagemMapa(dataUrl, mesaId) {
     const blob = await (await fetch(dataUrl)).blob();
-    const caminho = `${mesaId}/mapa-${Date.now()}.jpg`;
+    const dono = App.sessao?.user?.id;
+    if (!dono) throw new Error('Sessão ausente para enviar o mapa');
+    const caminho = `${mesaId}/${dono}/mapa-${Date.now()}.jpg`;
     const { error } = await this.cliente.storage
       .from('retratos').upload(caminho, blob, { contentType: 'image/jpeg', upsert: true });
     if (error) throw error;

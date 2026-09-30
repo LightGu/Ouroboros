@@ -1,0 +1,14 @@
+{
+  "name": "ouroboros-rpg",
+  "private": true,
+  "scripts": {
+    "test": "node --test tests/*.cjs",
+    "test:security": "node --test tests/persistencia-seguranca.test.cjs",
+    "test:ui": "node tests/interface.cjs",
+    "test:migrations": "node tests/migracoes-rituais-historias.cjs"
+  },
+  "devDependencies": {
+    "@electric-sql/pglite": "^0.3.7",
+    "playwright": "^1.55.0"
+  }
+}

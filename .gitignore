@@ -15,3 +15,5 @@ __pycache__/
 
 # Fichas extraídas dos livros: importação local para o bucket privado.
 bestiario/
+node_modules/
+*.pyc

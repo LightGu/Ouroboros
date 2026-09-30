@@ -19,7 +19,7 @@ const assert = require('node:assert/strict');
       create function public.eh_mestre(uuid) returns boolean language sql as $$ select auth.uid() = '00000000-0000-0000-0000-000000000003'::uuid $$;
       insert into mesas values ('10000000-0000-0000-0000-000000000000');
       insert into personagens values ('20000000-0000-0000-0000-000000000000','10000000-0000-0000-0000-000000000000','00000000-0000-0000-0000-000000000001',
-        '{"descricao":{"historico":"história antiga","personalidade":"personalidade antiga","objetivo":"objetivo antigo","aparencia":"visível"}}');
+        '{"fichaPrivada":false,"descricao":{"historico":"história antiga","personalidade":"personalidade antiga","objetivo":"objetivo antigo","aparencia":"visível"}}');
     `);
     const migration = async name => db.exec(fs.readFileSync('sql/'+name, 'utf8'));
     await migration('v12-catalogo-itens.sql');
@@ -66,7 +66,7 @@ const assert = require('node:assert/strict');
       const stats=(await db.query(`select count(*)::int total,
         count(*) filter(where grupo='Catalisadores')::int catalisadores,
         count(*) filter(where trim(descricao)='')::int vazios from itens_catalogo`)).rows[0];
-      assert.deepEqual(stats,{total:158,catalisadores:5,vazios:0});
+      assert.deepEqual(stats,{total:161,catalisadores:5,vazios:0});
     }
     console.log('SQL: migrações e seed repetíveis, preservação, atualizações parciais, RLS e catálogo privado passaram.');
   } finally { await db.close(); }

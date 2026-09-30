@@ -31,3 +31,21 @@ test('políticas impedem jogador de criar ficha sem dono ou ocultar ficha', () =
   assert.match(sql, /not rapido and not oculto/);
   assert.match(sql, /NEW\.mesa_id <> OLD\.mesa_id/);
 });
+
+
+test('mensagens, tokens e Storage ficam presos à mesa e ao proprietário', () => {
+  const sql = fs.readFileSync('sql/v25-integridade-mensagens-tokens-storage.sql', 'utf8');
+  assert.match(sql, /p\.mesa_id = mensagens\.mesa_id/);
+  assert.match(sql, /mb\.mesa_id = mensagens\.mesa_id/);
+  assert.match(sql, /revoke update on public\.mensagens from authenticated/);
+  assert.match(sql, /Jogadores só podem mover o próprio token/);
+  assert.match(sql, /v_mesa_mapa is distinct from NEW\.mesa_id/);
+  assert.match(sql, /\(storage\.foldername\(name\)\)\[2\] = auth\.uid\(\)::text/);
+  assert.match(sql, /bucket_id = 'sons' and public\.eh_mestre/);
+});
+
+test('uploads novos incluem a pasta do usuário', () => {
+  const js = fs.readFileSync('js/nuvem.js', 'utf8');
+  assert.match(js, /`\$\{mesaId\}\/\$\{dono\}\/\$\{personagemId\}/);
+  assert.match(js, /`\$\{mesaId\}\/\$\{dono\}\/mapa-/);
+});
