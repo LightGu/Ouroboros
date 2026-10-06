@@ -76,6 +76,7 @@ const Nuvem = {
   async entrarMesa(codigo) {
     const { data, error } = await this.cliente.rpc('entrar_na_mesa', { p_codigo: codigo });
     if (error) throw error;
+    if (!data) throw new Error('Código inválido ou tentativas demais. Aguarde um minuto.');
     return data;
   },
 

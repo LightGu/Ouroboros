@@ -252,8 +252,10 @@ const App = {
     $('#btn-conta').addEventListener('click', e => { e.stopPropagation(); Telas.menuConta($('#btn-conta')); });
 
     $('#btn-novo').addEventListener('click', () => Criacao.inicio());
+    $('#btn-vazio-novo').addEventListener('click', () => Criacao.inicio());
 
     $('#btn-rapido').addEventListener('click', () => Mesa.modalRapido(null));
+    $('#btn-vazio-rapido').addEventListener('click', () => Mesa.modalRapido(null));
 
     /* A máscara na ponta direita das abas só faz sentido enquanto sobra
        aba escondida; no fim da rolagem ela vira um borrão sem motivo. */

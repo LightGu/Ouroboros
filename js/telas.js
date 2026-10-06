@@ -11,7 +11,10 @@ const Telas = {
       this.modo = b.dataset.modo;
       $$('.alt').forEach(x => x.classList.toggle('ativa', x === b));
       $('#campo-nome').hidden = this.modo === 'entrar';
-      $('#auth-senha').autocomplete = this.modo === 'entrar' ? 'current-password' : 'new-password';
+      const senha = $('#auth-senha');
+      senha.autocomplete = this.modo === 'entrar' ? 'current-password' : 'new-password';
+      senha.minLength = this.modo === 'entrar' ? 6 : 10;
+      senha.placeholder = this.modo === 'entrar' ? 'sua senha' : 'mínimo 10 caracteres';
       $('#btn-auth').textContent = this.modo === 'entrar' ? 'Entrar' : 'Criar conta';
       $('#auth-erro').hidden = true;
     }));
@@ -56,7 +59,7 @@ const Telas = {
     const m = msg.toLowerCase();
     if (m.includes('invalid login')) return 'Email ou senha não conferem.';
     if (m.includes('already registered')) return 'Esse email já tem conta. Tenta entrar.';
-    if (m.includes('password should be')) return 'A senha precisa de pelo menos 6 caracteres.';
+    if (m.includes('password should be')) return 'Use uma senha com pelo menos 10 caracteres.';
     if (m.includes('email not confirmed')) return 'Falta confirmar o email — olha sua caixa de entrada.';
     if (m.includes('failed to fetch')) return 'Não consegui falar com o servidor. Confere sua internet.';
     return msg;

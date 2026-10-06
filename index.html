@@ -37,7 +37,7 @@
   <div class="brand">
     <svg class="brand-mark" aria-hidden="true"><use href="#ouroboros"/></svg>
     <div>
-      <div class="brand-titulo"><h1>OUROBOROS</h1><span class="app-versao">v1.25</span></div>
+      <div class="brand-titulo"><h1>OUROBOROS</h1><span class="app-versao">v1.27</span></div>
       <p id="mesa-nome"></p>
     </div>
   </div>
@@ -85,11 +85,11 @@
 
     <form id="form-auth" autocomplete="on">
       <label class="campo" id="campo-nome" hidden><span>Como te chamam na mesa</span>
-        <input id="auth-nome" autocomplete="nickname" placeholder="Gustavo"></label>
+        <input id="auth-nome" autocomplete="nickname" maxlength="80" placeholder="Gustavo"></label>
       <label class="campo"><span>Email</span>
-        <input id="auth-email" type="email" autocomplete="email" required placeholder="voce@email.com"></label>
+        <input id="auth-email" type="email" autocomplete="email" required maxlength="254" placeholder="voce@email.com"></label>
       <label class="campo"><span>Senha</span>
-        <input id="auth-senha" type="password" autocomplete="current-password" required minlength="6" placeholder="mínimo 6 caracteres"></label>
+        <input id="auth-senha" type="password" autocomplete="current-password" required minlength="6" maxlength="128" placeholder="sua senha"></label>
       <button class="btn btn-primary btn-largo" id="btn-auth" type="submit">Entrar</button>
       <p class="auth-erro" id="auth-erro" hidden></p>
     </form>
@@ -106,13 +106,13 @@
       <form class="caixa-acao" id="form-criar-mesa">
         <h3>Criar uma mesa</h3>
         <p>Você vira o mestre e recebe um código pra passar pros jogadores.</p>
-        <label class="campo"><span>Nome da mesa</span><input id="nova-mesa" placeholder="Ex.: Mesa de Segunda"></label>
+        <label class="campo"><span>Nome da mesa</span><input id="nova-mesa" maxlength="80" placeholder="Ex.: Mesa de Segunda"></label>
         <button class="btn btn-primary btn-largo" id="btn-criar-mesa" type="submit">Criar mesa</button>
       </form>
       <form class="caixa-acao" id="form-entrar-mesa">
         <h3>Entrar numa mesa</h3>
-        <p>Cole o código de 6 caracteres que o mestre te passou.</p>
-        <label class="campo"><span>Código</span><input id="codigo-mesa" maxlength="6" placeholder="A1B2C3" style="text-transform:uppercase"></label>
+        <p>Cole o código de 12 caracteres que o mestre te passou.</p>
+        <label class="campo"><span>Código</span><input id="codigo-mesa" minlength="12" maxlength="12" pattern="[0-9A-Fa-f]{12}" placeholder="A1B2C3D4E5F6" style="text-transform:uppercase"></label>
         <button class="btn btn-largo" id="btn-entrar-mesa" type="submit">Entrar</button>
       </form>
     </div>
@@ -153,8 +153,8 @@
     <h2>Nenhum agente na mesa</h2>
     <p>Crie um personagem completo com a ficha de agente, ou um personagem rápido pra usar como NPC / inimigo nos turnos.</p>
     <div class="vazio-btns">
-      <button class="btn btn-primary" onclick="document.getElementById('btn-novo').click()">+ Personagem</button>
-      <button class="btn" onclick="document.getElementById('btn-rapido').click()">+ Personagem rápido</button>
+      <button class="btn btn-primary" id="btn-vazio-novo">+ Personagem</button>
+      <button class="btn" id="btn-vazio-rapido">+ Personagem rápido</button>
     </div>
   </div>
 </main>

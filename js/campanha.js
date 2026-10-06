@@ -115,8 +115,9 @@ const Campanha = {
         <h2>${this.lista.length ? 'Nada bate com esse filtro' : 'Caderno vazio'}</h2>
         <p>${this.lista.length ? 'Tenta outra busca.'
           : 'Anote NPCs, mistérios, pistas e locais. Escreva <b>[[Nome de outra anotação]]</b> no texto pra ligar as duas — o grafo se monta sozinho.'}</p>
-        ${this.lista.length ? '' : '<div class="vazio-btns"><button class="btn btn-primary" onclick="Campanha.nova()">+ Primeira anotação</button></div>'}
+        ${this.lista.length ? '' : '<div class="vazio-btns"><button class="btn btn-primary" id="btn-primeira-nota">+ Primeira anotação</button></div>'}
       </div>`;
+      $('#btn-primeira-nota')?.addEventListener('click', () => this.nova());
       return;
     }
 

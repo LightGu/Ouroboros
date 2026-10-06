@@ -25,6 +25,8 @@ npm test                       # suíte completa
 `?v=<mtime>` nas tags do `index.html`. Sem isso o Chrome serve `.js` velho sem nem perguntar,
 e você depura um código que não está rodando. Aconteceu duas vezes aqui.
 
+**Segurança antes de publicar:** cumpra o checklist de [`SECURITY.md`](SECURITY.md).
+
 **Publicar:** o Cloudflare Pages está ligado ao GitHub e publica a cada push (~40s).
 
 ```bash
@@ -192,9 +194,11 @@ tipicamente "só se ainda não tiver dono" ou "só se você mesmo já tiver esse
 `sql/schema.sql` é a fonte da verdade e roda por cima de si mesmo. Cada mudança também vira um
 arquivo próprio (`v4` em diante) — **cole o arquivo pequeno, não o schema inteiro**: paste cortado
 no editor do Supabase gera erro de sintaxe fantasma difícil de diagnosticar. Para atualizar uma
-instalação que já estava na v24, execute, em ordem, `sql/v25-integridade-mensagens-tokens-storage.sql` e
-`sql/v26-integridade-anotacoes-leituras.sql`.
+instalação que já estava na v24, execute, em ordem, `sql/v25-integridade-mensagens-tokens-storage.sql`,
+`sql/v26-integridade-anotacoes-leituras.sql`, `sql/v27-integridade-rolagens.sql` e
+`sql/v28-hardening-pre-lancamento.sql`.
 
+- A versão visível fica no `index.html` e no `package.json`; cada fix publicado incrementa a versão.
 - `create table if not exists`, `drop policy if exists` antes de `create policy`
 - **`drop function` antes de `create or replace` se a assinatura mudou.** O Postgres recusa
   trocar o tipo de retorno. Já quebrou aqui com `minhas_mesas()`

@@ -2,6 +2,9 @@
 
 const Sons = {
   lista: [],
+  locais: [],
+  pastaLocal: null,
+  pastaLocalAtiva: false,
   tocando: new Map(),      // id -> HTMLAudioElement
   filtro: '',
   busca: '',
@@ -9,12 +12,18 @@ const Sons = {
 
   async carregar() {
     if (!App.ehMestre) return;          /* acervo é só do mestre */
-    try { this.lista = await Nuvem.sons(App.mesa.id); this.render(); }
+    try {
+      this.lista = await Nuvem.sons(App.mesa.id);
+      await this.restaurarPastaLocal();
+      this.render();
+    }
     catch (e) { $('#sons-lista').innerHTML = `<p class="vazio-linha">Erro: ${esc(e.message || e)}</p>`; }
   },
 
+  todos() { return [...this.locais, ...this.lista]; },
+
   categorias() {
-    return [...new Set(this.lista.map(s => s.categoria).filter(Boolean))]
+    return [...new Set(this.todos().map(s => s.categoria).filter(Boolean))]
       .sort((a, b) => a.localeCompare(b, 'pt-BR'));
   },
 
@@ -24,34 +33,36 @@ const Sons = {
     this.renderBarra();
     const alvo = $('#sons-lista');
     const b = this.busca.toLowerCase();
-    const lista = this.lista.filter(s =>
+    const todos = this.todos();
+    const lista = todos.filter(s =>
       (!this.filtro || s.categoria === this.filtro) &&
       (!b || (s.nome + ' ' + s.categoria).toLowerCase().includes(b)));
 
     if (!lista.length) {
-      alvo.innerHTML = `<p class="vazio-linha">${this.lista.length
+      alvo.innerHTML = `<p class="vazio-linha">${todos.length
         ? 'Nada bate com esse filtro.'
-        : 'Nenhum som ainda. Suba um arquivo pra começar.'}</p>`;
+        : 'Nenhum som ainda. Abra uma pasta local ou suba um arquivo pra começar.'}</p>`;
       return;
     }
 
     alvo.innerHTML = lista.map(s => {
       const ativo = this.tocando.has(s.id);
       return `
-      <article class="som ${ativo ? 'som-tocando' : ''}" data-som="${s.id}">
-        <span class="alca" data-alca title="Arraste para reordenar">⠿</span>
-        <button class="som-play" data-tocar="${s.id}" title="${ativo ? 'Parar' : 'Tocar'}">${ativo ? '⏸' : '▶'}</button>
+      <article class="som ${ativo ? 'som-tocando' : ''}" data-som="${esc(s.id)}">
+        ${s.local ? '<span class="som-local-icone" title="Arquivo do seu computador">♪</span>' : '<span class="alca" data-alca title="Arraste para reordenar">⠿</span>'}
+        <button class="som-play" data-tocar="${esc(s.id)}" title="${ativo ? 'Parar imediatamente' : 'Tocar'}">${ativo ? '■' : '▶'}</button>
         <div class="som-info">
           <span class="som-nome">${esc(s.nome)}</span>
           <span class="som-tags">
             ${s.categoria ? `<span class="chip-cat">${esc(s.categoria)}</span>` : ''}
             ${s.loop ? '<span class="chip-cat chip-loop">loop</span>' : ''}
-            ${!s.caminho ? '<span class="chip-cat chip-link">link</span>' : ''}
+            ${s.local ? '<span class="chip-cat chip-local">local</span>' : ''}
+            ${!s.local && !s.caminho ? '<span class="chip-cat chip-link">link</span>' : ''}
           </span>
         </div>
         <input class="som-vol" type="range" min="0" max="1" step="0.05" value="${s.volume}"
-               data-vol="${s.id}" title="Volume">
-        <button class="btn-mini" data-editar="${s.id}" title="Editar">⋯</button>
+               data-vol="${esc(s.id)}" title="Volume">
+        ${s.local ? '' : `<button class="btn-mini" data-editar="${esc(s.id)}" title="Editar">⋯</button>`}
       </article>`;
     }).join('');
 
@@ -60,8 +71,11 @@ const Sons = {
 
   renderBarra() {
     const cats = this.categorias();
+    const temPasta = Boolean(this.pastaLocal);
     $('#sons-barra').innerHTML = `
       <button class="btn btn-primary btn-peq" id="btn-add-som">+ Som</button><div class="sep"></div>
+      <button class="btn btn-ghost btn-peq" id="btn-pasta-local">📁 ${temPasta ? (this.pastaLocalAtiva ? 'Trocar pasta' : 'Reconectar pasta') : 'Abrir pasta local'}</button>
+      ${temPasta ? '<button class="btn-mini" id="btn-remover-pasta" title="Esquecer pasta local">✕</button>' : ''}<div class="sep"></div>
       <input id="sons-busca" class="busca" placeholder="Buscar som..." value="${esc(this.busca)}">
       <div class="filtros">
         <button class="chip-filtro ${!this.filtro ? 'ativo' : ''}" data-filtro="">todos</button>
@@ -72,6 +86,8 @@ const Sons = {
       <button class="btn btn-ghost btn-peq" id="btn-parar-tudo">■ Parar tudo</button>`;
 
     $('#btn-add-som')?.addEventListener('click', () => this.modalNovo());
+    $('#btn-pasta-local')?.addEventListener('click', () => this.abrirPastaLocal());
+    $('#btn-remover-pasta')?.addEventListener('click', () => this.removerPastaLocal());
     $('#sons-busca').addEventListener('input', e => { this.busca = e.target.value; this.render(); });
     $$('#sons-barra [data-filtro]').forEach(b => b.addEventListener('click', () => {
       this.filtro = b.dataset.filtro; this.render();
@@ -84,31 +100,180 @@ const Sons = {
     if (!this.tocando.size) { barra.hidden = true; return; }
     barra.hidden = false;
     barra.innerHTML = `<span class="tocando-rotulo">tocando</span>` +
-      [...this.tocando.keys()].map(id => {
-        const s = this.lista.find(x => x.id === id);
-        return `<span class="tocando-item">${esc(s?.nome || 'som')}
-          <button data-parar="${id}" title="Parar">✕</button></span>`;
+      [...this.tocando.entries()].map(([id, audio]) => {
+        const s = this.todos().find(x => x.id === id);
+        const duracao = Number.isFinite(audio.duration) ? audio.duration : 0;
+        const atual = Number.isFinite(audio.currentTime) ? audio.currentTime : 0;
+        return `<div class="tocando-item" data-player="${esc(id)}">
+          <div class="tocando-cabecalho">
+            <span class="tocando-nome">${esc(s?.nome || 'som')}</span>
+            <span class="tocando-tempo" data-tempo>${this.formatarTempo(atual)} / ${this.formatarTempo(duracao)}</span>
+          </div>
+          <div class="tocando-controles">
+            <input class="tocando-progresso" type="range" min="0" max="${duracao}" step="0.1"
+                   value="${Math.min(atual, duracao)}" data-minutagem="${esc(id)}"
+                   aria-label="Minutagem de ${esc(s?.nome || 'som')}" ${duracao ? '' : 'disabled'}>
+            <button class="btn btn-ghost btn-peq tocando-parar" data-parar="${esc(id)}" title="Parar imediatamente">■ Parar</button>
+          </div>
+        </div>`;
       }).join('') +
       '<button class="btn btn-ghost btn-peq" id="tocando-parar-tudo">Parar tudo</button>';
     $('#tocando-parar-tudo')?.addEventListener('click', () => this.pararTudo());
   },
 
+  formatarTempo(segundos) {
+    const valor = Number(segundos);
+    const total = Number.isFinite(valor) ? Math.max(0, Math.floor(valor)) : 0;
+    const horas = Math.floor(total / 3600);
+    const minutos = Math.floor((total % 3600) / 60);
+    const segundosRestantes = total % 60;
+    return horas
+      ? `${horas}:${String(minutos).padStart(2, '0')}:${String(segundosRestantes).padStart(2, '0')}`
+      : `${minutos}:${String(segundosRestantes).padStart(2, '0')}`;
+  },
+
+  atualizarPlayer(id) {
+    const audio = this.tocando.get(id);
+    const player = [...$$('[data-player]')].find(el => el.dataset.player === id);
+    if (!audio || !player) return;
+    const duracao = Number.isFinite(audio.duration) ? audio.duration : 0;
+    const atual = Number.isFinite(audio.currentTime) ? audio.currentTime : 0;
+    const progresso = $('[data-minutagem]', player);
+    const tempo = $('[data-tempo]', player);
+    if (progresso && document.activeElement !== progresso) progresso.value = Math.min(atual, duracao);
+    if (progresso) { progresso.max = duracao; progresso.disabled = !duracao; }
+    if (tempo) tempo.textContent = `${this.formatarTempo(atual)} / ${this.formatarTempo(duracao)}`;
+  },
+
   /* ---------------- tocar ---------------- */
+
+  async abrirBancoLocal() {
+    return new Promise((resolve, reject) => {
+      const pedido = indexedDB.open('ouroboros-sons-locais', 1);
+      pedido.onupgradeneeded = () => pedido.result.createObjectStore('config');
+      pedido.onsuccess = () => resolve(pedido.result);
+      pedido.onerror = () => reject(pedido.error);
+    });
+  },
+
+  async lerPastaSalva() {
+    if (!window.indexedDB) return null;
+    const banco = await this.abrirBancoLocal();
+    return new Promise((resolve, reject) => {
+      const pedido = banco.transaction('config').objectStore('config').get('pasta');
+      pedido.onsuccess = () => resolve(pedido.result || null);
+      pedido.onerror = () => reject(pedido.error);
+    }).finally(() => banco.close());
+  },
+
+  async salvarPasta(handle) {
+    if (!window.indexedDB) return;
+    const banco = await this.abrirBancoLocal();
+    await new Promise((resolve, reject) => {
+      const pedido = banco.transaction('config', 'readwrite').objectStore('config').put(handle, 'pasta');
+      pedido.onsuccess = resolve;
+      pedido.onerror = () => reject(pedido.error);
+    }).finally(() => banco.close());
+  },
+
+  async esquecerPasta() {
+    if (!window.indexedDB) return;
+    const banco = await this.abrirBancoLocal();
+    await new Promise((resolve, reject) => {
+      const pedido = banco.transaction('config', 'readwrite').objectStore('config').delete('pasta');
+      pedido.onsuccess = resolve;
+      pedido.onerror = () => reject(pedido.error);
+    }).finally(() => banco.close());
+  },
+
+  async restaurarPastaLocal() {
+    if (!window.showDirectoryPicker) return;
+    try {
+      this.pastaLocal = await this.lerPastaSalva();
+      if (!this.pastaLocal) return;
+      const permissao = await this.pastaLocal.queryPermission({ mode: 'read' });
+      if (permissao === 'granted') await this.lerPastaLocal();
+    } catch (e) { console.warn('Não consegui restaurar a pasta de sons:', e); }
+  },
+
+  async abrirPastaLocal() {
+    if (!window.showDirectoryPicker) {
+      toast('A pasta local requer Chrome ou Edge no computador.', 'erro');
+      return;
+    }
+    try {
+      let handle = this.pastaLocal;
+      if (handle && !this.pastaLocalAtiva) {
+        const permissao = await handle.requestPermission({ mode: 'read' });
+        if (permissao !== 'granted') return;
+      } else {
+        handle = await window.showDirectoryPicker({ id: 'sons-rpg', mode: 'read' });
+      }
+      this.pastaLocal = handle;
+      await this.salvarPasta(handle);
+      await this.lerPastaLocal();
+      this.render();
+      toast(`${this.locais.length} áudio${this.locais.length === 1 ? '' : 's'} encontrado${this.locais.length === 1 ? '' : 's'} em ${handle.name}.`);
+    } catch (e) {
+      if (e?.name !== 'AbortError') toast('Não consegui abrir a pasta: ' + (e.message || e), 'erro');
+    }
+  },
+
+  async lerPastaLocal() {
+    const extensoes = /\.(mp3|ogg|oga|wav|m4a|aac|flac|opus|webm)$/i;
+    const encontrados = [];
+    const visitar = async (diretorio, partes = []) => {
+      for await (const [nome, handle] of diretorio.entries()) {
+        if (handle.kind === 'directory') await visitar(handle, [...partes, nome]);
+        else if (extensoes.test(nome)) {
+          const caminho = [...partes, nome].join('/');
+          encontrados.push({
+            id: `local:${caminho}`, local: true, handle,
+            nome: nome.replace(/\.[^.]+$/, ''),
+            categoria: partes.join(' / ') || 'Pasta local',
+            volume: .8, loop: false, caminhoLocal: caminho
+          });
+        }
+      }
+    };
+    await visitar(this.pastaLocal);
+    this.locais = encontrados.sort((a, b) => a.caminhoLocal.localeCompare(b.caminhoLocal, 'pt-BR'));
+    this.pastaLocalAtiva = true;
+  },
+
+  async removerPastaLocal() {
+    this.locais.forEach(s => this.parar(s.id));
+    this.locais = [];
+    this.pastaLocal = null;
+    this.pastaLocalAtiva = false;
+    try { await this.esquecerPasta(); } catch (e) { console.warn(e); }
+    this.render();
+    toast('Pasta local desconectada. Nenhum arquivo foi apagado.');
+  },
 
   /* Toca só neste aparelho: o arquivo é baixado uma vez e fica em cache.
      Nada vai pela rede pros outros — foi o que barateou a banda. */
   alternar(id) {
-    const s = this.lista.find(x => x.id === id);
+    const s = this.todos().find(x => x.id === id);
     if (!s) return;
     this.tocando.has(id) ? this.parar(id) : this.tocar(s);
   },
 
-  tocar(s) {
+  async tocar(s) {
     this.parar(s.id);
-    const a = new Audio(s.arquivo);
+    let origem = s.arquivo;
+    if (s.local) {
+      try { origem = URL.createObjectURL(await s.handle.getFile()); }
+      catch (e) { toast('Não consegui ler esse áudio local.', 'erro'); return; }
+    }
+    const a = new Audio(origem);
+    if (s.local) a._urlLocal = origem;
     a.volume = Math.max(0, Math.min(1, s.volume ?? .8));
     a.loop = Boolean(s.loop);
     a.addEventListener('ended', () => { if (!a.loop) { this.tocando.delete(s.id); this.render(); this.renderTocando(); } });
+    a.addEventListener('loadedmetadata', () => this.atualizarPlayer(s.id));
+    a.addEventListener('durationchange', () => this.atualizarPlayer(s.id));
+    a.addEventListener('timeupdate', () => this.atualizarPlayer(s.id));
     a.play().then(() => { this.bloqueado = false; $('#aviso-audio').hidden = true; })
             .catch(() => { this.bloqueado = true; $('#aviso-audio').hidden = false; });
     this.tocando.set(s.id, a);
@@ -120,6 +285,7 @@ const Sons = {
     const a = this.tocando.get(id);
     if (!a) return;
     a.pause();
+    if (a._urlLocal) URL.revokeObjectURL(a._urlLocal);
     a.src = '';
     this.tocando.delete(id);
     this.render();
@@ -256,13 +422,15 @@ const Sons = {
   },
 
   async mudarVolume(id, v) {
-    const s = this.lista.find(x => x.id === id);
+    const s = this.todos().find(x => x.id === id);
     if (!s) return;
     s.volume = v;
     const a = this.tocando.get(id);
     if (a) a.volume = v;
-    clearTimeout(this._tv);
-    this._tv = setTimeout(() => Nuvem.salvarSom(id, { volume: v }).catch(() => {}), 500);
+    if (!s.local) {
+      clearTimeout(this._tv);
+      this._tv = setTimeout(() => Nuvem.salvarSom(id, { volume: v }).catch(() => {}), 500);
+    }
   },
 
   /* ---------------- ordem ---------------- */
@@ -325,6 +493,14 @@ const Sons = {
     $('#sons-tocando').addEventListener('click', e => {
       const p = e.target.closest('[data-parar]');
       if (p) this.parar(p.dataset.parar);
+    });
+    $('#sons-tocando').addEventListener('input', e => {
+      const controle = e.target.closest('[data-minutagem]');
+      if (!controle) return;
+      const audio = this.tocando.get(controle.dataset.minutagem);
+      if (!audio || !Number.isFinite(audio.duration)) return;
+      audio.currentTime = Math.max(0, Math.min(audio.duration, num(controle.value)));
+      this.atualizarPlayer(controle.dataset.minutagem);
     });
     /* o navegador só libera áudio depois de um clique do usuário */
     $('#aviso-audio').addEventListener('click', () => {
