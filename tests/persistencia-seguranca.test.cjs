@@ -70,11 +70,11 @@ test('rolagens têm autoria do banco, limites e segredo exclusivo do mestre', ()
   assert.match(sql, /length\(trim\(NEW\.rotulo\)\) not between 1 and 200/);
 });
 
-test('versão publicada é 1.27 em todos os pontos', () => {
+test('versão publicada é 1.28 em todos os pontos', () => {
   const html = fs.readFileSync('index.html', 'utf8');
   const pacote = JSON.parse(fs.readFileSync('package.json', 'utf8'));
-  assert.match(html, /class="app-versao">v1\.27</);
-  assert.equal(pacote.version, '1.27.0');
+  assert.match(html, /class="app-versao">v1\.28</);
+  assert.equal(pacote.version, '1.28.0');
 });
 
 

@@ -1,4 +1,4 @@
-# Segurança de produção — Ouroboros 1.27
+# Segurança de produção — Ouroboros 1.28
 
 ## Antes de abrir o site
 
