@@ -1,4 +1,4 @@
--- Catálogo privado de rituais. Depois, importar catalogo/seed-rituais.sql.
+-- Catálogo privado de rituais. Depois, importar private/catalogo/seed-rituais.sql.
 begin;
 create table if not exists public.rituais_catalogo (
   id bigint generated always as identity primary key,

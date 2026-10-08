@@ -990,8 +990,8 @@ end $$;
 -- v12 — catálogo de itens (popup "Do catálogo" no inventário)
 --
 -- Tabela global: o catálogo é o mesmo para todas as mesas e ninguém edita
--- pelo site. Quem escreve é o dono do projeto, rodando o catalogo/seed-itens.sql
--- que o sql/gerar-catalogo.py gera. Por isso não existe policy de escrita.
+-- pelo site. Quem escreve é o dono do projeto, rodando o private/catalogo/seed-itens.sql
+-- que o scripts/gerar-catalogo.py gera. Por isso não existe policy de escrita.
 --
 -- São as estatísticas dos livros da Jambô: atrás do login é a mesa consultando
 -- o material que comprou; como arquivo público do site, seria distribuição.
@@ -1161,7 +1161,7 @@ commit;
 
 
 -- v18 — catálogo de rituais e componentes
--- Catálogo privado de rituais. Depois, importar catalogo/seed-rituais.sql.
+-- Catálogo privado de rituais. Depois, importar private/catalogo/seed-rituais.sql.
 begin;
 create table if not exists public.rituais_catalogo (
   id bigint generated always as identity primary key,
@@ -1239,7 +1239,7 @@ commit;
 
 
 -- v20 — classificação de catalisadores
--- Restaura a divisão do catálogo. Depois, execute catalogo/seed-itens.sql
+-- Restaura a divisão do catálogo. Depois, execute private/catalogo/seed-itens.sql
 -- para carregar as descrições revisadas. Não altera inventários das fichas.
 begin;
 update public.itens_catalogo set grupo = 'Catalisadores'

@@ -1,11 +1,11 @@
 /* Catálogo de itens dos livros — a lista que o popup do inventário mostra.
 
    Fonte: tabela `itens_catalogo` do Supabase, que só quem está logado lê
-   (sql/v12-catalogo-itens.sql). São estatísticas dos livros da Jambô: não
+   (sql/migrations/v12-catalogo-itens.sql). São estatísticas dos livros da Jambô: não
    podem virar arquivo público do site.
 
    No desenvolvimento, enquanto a tabela não existe (ou o Supabase não está
-   configurado), cai no `catalogo/catalogo-limpo.json` — que o .vercelignore
+   configurado), cai no `private/catalogo/catalogo-limpo.json` — que o assets ignore
    barra, então essa queda só acontece na máquina de quem está mexendo.
 
    Carrega uma vez por sessão e guarda: são ~160 linhas que nunca mudam
@@ -35,7 +35,7 @@ const Catalogo = {
       console.warn('catálogo do Supabase indisponível:', e.message || e);
     }
     try {
-      const r = await fetch('catalogo/catalogo-limpo.json');
+      const r = await fetch('private/catalogo/catalogo-limpo.json');
       if (r.ok) { this.origem = 'local'; return (this.itens = this.corrigirGrupos(await r.json())); }
     } catch (e) { /* sem arquivo local também: lista vazia, o popup avisa */ }
     this.origem = '';

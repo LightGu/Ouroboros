@@ -21,14 +21,14 @@ const assert = require('node:assert/strict');
       insert into personagens values ('20000000-0000-0000-0000-000000000000','10000000-0000-0000-0000-000000000000','00000000-0000-0000-0000-000000000001',
         '{"fichaPrivada":false,"descricao":{"historico":"história antiga","personalidade":"personalidade antiga","objetivo":"objetivo antigo","aparencia":"visível"}}');
     `);
-    const migration = async name => db.exec(fs.readFileSync('sql/'+name, 'utf8'));
+    const migration = async name => db.exec(fs.readFileSync('sql/migrations/'+name, 'utf8'));
     await migration('v12-catalogo-itens.sql');
     await migration('v13-historias-privadas.sql');
     await migration('v18-catalogo-rituais.sql');
     await migration('v18-catalogo-rituais.sql');
     assert.equal((await db.query('select count(*)::int n from itens_catalogo')).rows[0].n,4);
-    if (fs.existsSync('catalogo/seed-rituais.sql')) {
-      const seed=fs.readFileSync('catalogo/seed-rituais.sql','utf8');
+    if (fs.existsSync('private/catalogo/seed-rituais.sql')) {
+      const seed=fs.readFileSync('private/catalogo/seed-rituais.sql','utf8');
       await db.exec(seed); await db.exec(seed);
       assert.equal((await db.query('select count(*)::int n from rituais_catalogo')).rows[0].n,107);
     }
@@ -58,8 +58,8 @@ const assert = require('node:assert/strict');
     await assert.rejects(()=>db.query("insert into rituais_catalogo (nome,elemento,circulo,livro,pagina) values ('x','medo',1,'x','1')"),/permission denied/);
     await assert.rejects(()=>db.query("update historias_personagens set objetivo='ataque'"),/permission denied/);
     await db.exec('reset role;');
-    if (fs.existsSync('catalogo/seed-itens.sql')) {
-      await db.exec(fs.readFileSync('catalogo/seed-itens.sql','utf8'));
+    if (fs.existsSync('private/catalogo/seed-itens.sql')) {
+      await db.exec(fs.readFileSync('private/catalogo/seed-itens.sql','utf8'));
       await db.exec(`insert into itens_catalogo(nome,livro,grupo) values ('Medo','Sobrevivendo ao Horror','Itens paranormais');
         update itens_catalogo set grupo='Itens paranormais' where nome='Ampliador';`);
       await migration('v20-catalisadores.sql'); await migration('v20-catalisadores.sql');

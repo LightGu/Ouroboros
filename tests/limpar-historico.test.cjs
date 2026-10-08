@@ -1,7 +1,7 @@
 const fs=require('node:fs'),vm=require('node:vm'),assert=require('node:assert/strict');
 const el={disabled:false,textContent:''};let modal,calls=[];
 const ctx=vm.createContext({console,App:{ehMestre:true,mesa:{id:'mesa-a'}},Modal:{abrir:o=>modal=o},$:()=>el,toast:()=>{},Nuvem:{limparHistorico:async(...args)=>calls.push(args)},Rolagem:{carregar:async()=>{}}});
-vm.runInContext(fs.readFileSync('js/logs.js','utf8')+';globalThis.L=Logs;',ctx);
+vm.runInContext(fs.readFileSync('public/js/logs.js','utf8')+';globalThis.L=Logs;',ctx);
 ctx.L.carregar=async()=>{};ctx.L.limparBadge=()=>{};
 (async()=>{
  ctx.L.confirmarLimpeza('logs');assert.equal(calls.length,0);

@@ -3,7 +3,7 @@ const vm = require('node:vm');
 const assert = require('node:assert/strict');
 const ctx = vm.createContext({ console, document: { addEventListener() {} }, App: { sessao: { user: { id: 'jogador' } } } });
 for (const file of ['dados', 'ui', 'store', 'mesa']) {
-  vm.runInContext(fs.readFileSync(`js/${file}.js`, 'utf8'), ctx);
+  vm.runInContext(fs.readFileSync(`public/js/${file}.js`, 'utf8'), ctx);
 }
 vm.runInContext('globalThis.S = Store; globalThis.M = Mesa;', ctx);
 const { S, M } = ctx;

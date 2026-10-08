@@ -1,4 +1,4 @@
--- Restaura a divisão do catálogo. Depois, execute catalogo/seed-itens.sql
+-- Restaura a divisão do catálogo. Depois, execute private/catalogo/seed-itens.sql
 -- para carregar as descrições revisadas. Não altera inventários das fichas.
 begin;
 update public.itens_catalogo set grupo = 'Catalisadores'

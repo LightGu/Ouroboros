@@ -2,7 +2,7 @@ const fs = require('node:fs');
 const vm = require('node:vm');
 const assert = require('node:assert/strict');
 const ctx = vm.createContext({});
-vm.runInContext(fs.readFileSync('js/catalogo.js', 'utf8') + '\nglobalThis.api = Catalogo;', ctx);
+vm.runInContext(fs.readFileSync('public/js/catalogo.js', 'utf8') + '\nglobalThis.api = Catalogo;', ctx);
 const catalogo = ctx.api;
 const antigos = [
   {nome:'Amarras elementais', livro:'Livro Básico', grupo:'Equipamento', categoria:1},

@@ -17,15 +17,15 @@ decidido no banco, não na interface.
 
 ```bash
 npm install                    # uma vez: dependências dos testes
-python3 dev-server.py 5599     # http://localhost:5599
+python3 scripts/dev-server.py 5599  # http://localhost:5599
 npm test                       # suíte completa
 ```
 
-**Use o `dev-server.py`, nunca `python -m http.server`.** Ele manda `no-store` e ainda carimba
-`?v=<mtime>` nas tags do `index.html`. Sem isso o Chrome serve `.js` velho sem nem perguntar,
+**Use o `scripts/dev-server.py`, nunca `python -m http.server`.** Ele manda `no-store` e ainda carimba
+`?v=<mtime>` nas tags do `public/index.html`. Sem isso o Chrome serve `.js` velho sem nem perguntar,
 e você depura um código que não está rodando. Aconteceu duas vezes aqui.
 
-**Segurança antes de publicar:** cumpra o checklist de [`SECURITY.md`](SECURITY.md).
+**Segurança antes de publicar:** cumpra o checklist de [`docs/security.md`](docs/security.md).
 
 **Publicar:** o Cloudflare Pages está ligado ao GitHub e publica a cada push (~40s).
 
@@ -42,14 +42,14 @@ Produção: https://ouroboros.gustavo952500.workers.dev
    O SMTP grátis limita a ~2 emails/hora e trava a mesa inteira no primeiro dia.
    Depois que os jogadores se cadastrarem, desmarque também **Allow new users to sign up**.
 3. **URL** — *Authentication → URL Configuration* → Site URL = a URL de produção.
-4. **Chaves** — em [`js/config.js`](js/config.js). Só chave **publicável**. A `service_role`
+4. **Chaves** — em [`public/js/config.js`](public/js/config.js). Só chave **publicável**. A `service_role`
    ignora todo o RLS e este arquivo vai pro navegador de todo mundo.
 
 ---
 
 ## 2. Arquitetura
 
-**Sem build, sem framework, sem npm.** `<script>` clássicos em ordem no `index.html`. Cada
+**Sem build, sem framework.** `<script>` clássicos em ordem no `public/index.html`. Cada
 arquivo declara um objeto global. Não são módulos ES — `import`/`export` quebram, e um `const`
 de topo de arquivo **não** vira propriedade de `window` (só é acessível pelo nome).
 
@@ -65,28 +65,28 @@ config → dados → ui → ajuda → nuvem → store → mesa → catalogo → 
 
 | Arquivo | Responsabilidade |
 |---|---|
-| `js/config.js` | URL e chave publicável do Supabase |
-| `js/dados.js` | Constantes: atributos, 28 perícias, classes, origens, progressão, cores de jogador |
-| `js/ui.js` | `$`/`$$`, `esc`, modal, toast, `get/setPath`, redimensionar imagem |
-| `js/ajuda.js` | Textos de regra das dicas (`AJUDA`, `dica()`) e a tooltip de hover (`Dica`) |
-| `js/nuvem.js` | **Única** camada que fala com o Supabase. Ninguém mais usa `cliente` direto |
-| `js/store.js` | Modelo da ficha, estado em memória, gravação agrupada, permissões, cache offline |
-| `js/mesa.js` | Cards, barras, munição, condições, turnos, personagem rápido, reivindicar, drag |
-| `js/catalogo.js` | Catálogo de itens dos livros: carrega do Supabase, cai no arquivo local no dev |
-| `js/paineis.js` | Organização local dos blocos, cascata, recolher/ocultar e navegação acessível |
-| `js/regras.js` | Regras conferidas, guia, origem, equipamento e estágios de Sobrevivente |
-| `js/ficha.js` | Ficha completa, binding genérico, subir NEX, calcular status, popup do catálogo |
-| `js/criacao.js` | Criação de personagem: escolha guiado/livre e o passo a passo em 9 telas |
-| `js/rolagem.js` | Motor de dados e painel compartilhado |
-| `js/mapa.js` | Mapa de batalha, fog of war, tokens |
-| `js/sons.js` | Acervo de áudio (só do mestre, toca só na máquina dele) |
-| `js/campanha.js` | Caderno com `[[links]]` e grafo. Serve mestre **e** jogadores |
-| `js/interludio.js` | Cena de interlúdio: calcula e aplica recuperação |
-| `js/celular.js` | Mensagens privadas, personas do mestre, aba de interceptação |
-| `js/logs.js` | Aba de logs e pop-up de aviso |
-| `js/contas.js` | Várias contas logadas, alternando sem deslogar |
-| `js/telas.js` | Login, cadastro, escolha de mesa, menu da conta, lista de quem está na mesa |
-| `js/app.js` | Sessão, navegação, assinatura do realtime |
+| `public/js/config.js` | URL e chave publicável do Supabase |
+| `public/js/dados.js` | Constantes: atributos, 28 perícias, classes, origens, progressão, cores de jogador |
+| `public/js/ui.js` | `$`/`$$`, `esc`, modal, toast, `get/setPath`, redimensionar imagem |
+| `public/js/ajuda.js` | Textos de regra das dicas (`AJUDA`, `dica()`) e a tooltip de hover (`Dica`) |
+| `public/js/nuvem.js` | **Única** camada que fala com o Supabase. Ninguém mais usa `cliente` direto |
+| `public/js/store.js` | Modelo da ficha, estado em memória, gravação agrupada, permissões, cache offline |
+| `public/js/mesa.js` | Cards, barras, munição, condições, turnos, personagem rápido, reivindicar, drag |
+| `public/js/catalogo.js` | Catálogo de itens dos livros: carrega do Supabase, cai no arquivo local no dev |
+| `public/js/paineis.js` | Organização local dos blocos, cascata, recolher/ocultar e navegação acessível |
+| `public/js/regras.js` | Regras conferidas, guia, origem, equipamento e estágios de Sobrevivente |
+| `public/js/ficha.js` | Ficha completa, binding genérico, subir NEX, calcular status, popup do catálogo |
+| `public/js/criacao.js` | Criação de personagem: escolha guiado/livre e o passo a passo em 9 telas |
+| `public/js/rolagem.js` | Motor de dados e painel compartilhado |
+| `public/js/mapa.js` | Mapa de batalha, fog of war, tokens |
+| `public/js/sons.js` | Acervo de áudio (só do mestre, toca só na máquina dele) |
+| `public/js/campanha.js` | Caderno com `[[links]]` e grafo. Serve mestre **e** jogadores |
+| `public/js/interludio.js` | Cena de interlúdio: calcula e aplica recuperação |
+| `public/js/celular.js` | Mensagens privadas, personas do mestre, aba de interceptação |
+| `public/js/logs.js` | Aba de logs e pop-up de aviso |
+| `public/js/contas.js` | Várias contas logadas, alternando sem deslogar |
+| `public/js/telas.js` | Login, cadastro, escolha de mesa, menu da conta, lista de quem está na mesa |
+| `public/js/app.js` | Sessão, navegação, assinatura do realtime |
 
 ### Telas
 
@@ -194,12 +194,12 @@ tipicamente "só se ainda não tiver dono" ou "só se você mesmo já tiver esse
 `sql/schema.sql` é a fonte da verdade e roda por cima de si mesmo. Cada mudança também vira um
 arquivo próprio (`v4` em diante) — **cole o arquivo pequeno, não o schema inteiro**: paste cortado
 no editor do Supabase gera erro de sintaxe fantasma difícil de diagnosticar. Para atualizar uma
-instalação que já estava na v24, execute, em ordem, `sql/v25-integridade-mensagens-tokens-storage.sql`,
-`sql/v26-integridade-anotacoes-leituras.sql`, `sql/v27-integridade-rolagens.sql` e
-`sql/v28-hardening-pre-lancamento.sql`. Para habilitar o gerenciamento de dinheiro, execute depois
-`sql/v29-financas.sql`.
+instalação que já estava na v24, execute, em ordem, `sql/migrations/v25-integridade-mensagens-tokens-storage.sql`,
+`sql/migrations/v26-integridade-anotacoes-leituras.sql`, `sql/migrations/v27-integridade-rolagens.sql` e
+`sql/migrations/v28-hardening-pre-lancamento.sql`. Para habilitar o gerenciamento de dinheiro, execute depois
+`sql/migrations/v29-financas.sql`.
 
-- A versão visível fica no `index.html` e no `package.json`; cada fix publicado incrementa a versão.
+- A versão visível fica no `public/index.html` e no `package.json`; cada fix publicado incrementa a versão.
 - `create table if not exists`, `drop policy if exists` antes de `create policy`
 - **`drop function` antes de `create or replace` se a assinatura mudou.** O Postgres recusa
   trocar o tipo de retorno. Já quebrou aqui com `minhas_mesas()`
@@ -329,7 +329,7 @@ de caracteres lendo o alfa dos pixels. Foi assim que o ouroboros foi ajustado.
 
 ## 7. Catálogo de itens
 
-`catalogo/itens.json` (fora do git) tem **178 itens**, 45 armas com dano/crítico/alcance/tipo,
+`private/catalogo/itens.json` (fora do git) tem **178 itens**, 45 armas com dano/crítico/alcance/tipo,
 extraídos dos PDFs com um script de duas passadas: página inteira (tabelas largas, como a de
 armas) e coluna por coluna (tabelas estreitas encostadas em texto corrido).
 
@@ -339,20 +339,20 @@ grupo e por categoria, que escreve nome, categoria e espaços na lista do agente
 ### Da extração até o popup
 
 ```
-catalogo/itens.json          extração crua dos PDFs (178 linhas, com lixo)
-   ↓ sql/gerar-catalogo.py
-catalogo/catalogo-limpo.json 159 itens — fonte no desenvolvimento
-catalogo/seed-itens.sql      os mesmos 159 como INSERT
-   ↓ editor SQL do Supabase (depois de sql/v12-catalogo-itens.sql)
+private/catalogo/itens.json          extração crua dos PDFs (178 linhas, com lixo)
+   ↓ scripts/gerar-catalogo.py
+private/catalogo/catalogo-limpo.json 159 itens — fonte no desenvolvimento
+private/catalogo/seed-itens.sql      os mesmos 159 como INSERT
+   ↓ editor SQL do Supabase (depois de sql/migrations/v12-catalogo-itens.sql)
 public.itens_catalogo        fonte em produção, select só pra `authenticated`
 ```
 
-O `js/catalogo.js` tenta o Supabase e, se a tabela não responde, cai no arquivo local — que o
-`.vercelignore` barra, então essa queda só acontece na máquina de quem está desenvolvendo. Em
+O `public/js/catalogo.js` tenta o Supabase e, se a tabela não responde, cai no arquivo local — que o
+`public/.assetsignore` barra, então essa queda só acontece na máquina de quem está desenvolvendo. Em
 produção, sem a tabela, o popup não inventa: diz qual SQL falta rodar.
 
 **O catálogo não pode virar arquivo público do site** — é conteúdo dos livros. Atrás do login é a
-mesa consultando o material que comprou; como arquivo do Vercel, é distribuição.
+mesa consultando o material que comprou; como arquivo público do deploy, é distribuição.
 
 **O que o `gerar-catalogo.py` conserta** (19 linhas descartadas): tabela de crédito, patente,
 tamanho e alcance que viraram "itens" de 1200 espaços; 5 nomes colados no parágrafo anterior
@@ -376,7 +376,7 @@ na dica de mouse, não atrapalham a escolha).
   (excluir, dano, dado 1 natural, munição zerada, barra de PV). Não troque um pelo outro
 - Animação só com `transform` e `opacity`. Respeite `prefers-reduced-motion`
 - Todo texto de usuário passa por `esc()` antes de entrar em `innerHTML`
-- `.gitignore` barra os PDFs dos livros e o `catalogo/`. **Confira antes de publicar**
+- `.gitignore` barra toda a pasta `private/`. **Confira antes de publicar**
 
 ### `repeat(auto-fill, minmax(400px, 1fr))` estoura tela estreita
 
@@ -414,7 +414,7 @@ simples de quatro colunas. `dados.rituais` é uma lista própria, com os campos
 do bloco impresso no livro: elemento, círculo, custo, execução, alcance, alvo,
 duração, resistência, página e descrição. O vocabulário fechado dessas colunas
 (`ELEMENTOS`, `CIRCULOS`, `EXECUCOES`, `ALCANCES`, `DURACOES`) está em
-`js/dados.js`; `CIRCULOS` também carrega o custo em PE e o NEX mínimo de cada
+`public/js/dados.js`; `CIRCULOS` também carrega o custo em PE e o NEX mínimo de cada
 círculo para Ocultistas (1º→5%, 2º→25%, 3º→55%, 4º→85%), conferidos no básico v1.1, p. 32. O poder paranormal Aprender Ritual tem regras próprias.
 
 Ficha gravada antes dessa mudança não tem a chave `rituais`; `Store.normalizar`
@@ -434,7 +434,7 @@ Blocos novos entram **antes** dela, nunca depois.
 
 `ORIGEM_INFO` contém resumos das 46 origens dos dois livros, com perícias,
 poder e página impressa. As aproximações antigas foram substituídas a partir
-dos PDFs locais. `js/regras.js` reúne cálculos de origem, equipamento,
+dos PDFs locais. `public/js/regras.js` reúne cálculos de origem, equipamento,
 habilidades iniciais, guia de conferência e evolução do Sobrevivente.
 
 O assistente cria personagens iniciais: agentes em NEX 5%; Mundano e
@@ -442,7 +442,7 @@ Sobrevivente em NEX 0%. A evolução posterior fica na ficha. Escolhas avançada
 aparecem no guia e continuam editáveis. Não há validação completa de todos os
 poderes, pré-requisitos e variantes. Veja [a revisão detalhada](docs/revisao-criacao.md).
 
-`js/paineis.js` permite arrastar, mover por botões, recolher, ocultar e restaurar
+`public/js/paineis.js` permite arrastar, mover por botões, recolher, ocultar e restaurar
 os blocos. O modo cascata os apresenta em sequência com recuo no desktop.
 Preferências ficam em `localStorage`, por usuário e personagem, sem alterar
 os dados compartilhados. Os botões também funcionam por teclado e toque.
@@ -481,7 +481,7 @@ errado, já que a caixa é um elemento único reaproveitado.
 ### Idade e Peso da Idade
 
 Regra opcional do livro básico, p. 172, transcrita em `FAIXAS_IDADE` e
-`DESVANTAGENS_IDADE` (`js/dados.js`). O bloco na ficha só aparece quando a
+`DESVANTAGENS_IDADE` (`public/js/dados.js`). O bloco na ficha só aparece quando a
 idade está preenchida **e** a faixa tem efeito — Jovem (17-24) é o padrão do
 sistema e não rende bloco nenhum.
 
@@ -502,7 +502,7 @@ tabela da classe (Combatente VIG 3 sobe +7 PV por NEX, mas com Frágil mostra
 
 ### Privacidade da descrição (v19)
 
-Para instalações que já usam a v13, execute `sql/v19-descricao-privada.sql` antes
+Para instalações que já usam a v13, execute `sql/migrations/v19-descricao-privada.sql` antes
 de publicar o frontend. Instalações novas podem usar `sql/schema.sql`.
 A opção de visibilidade controla **história, personalidade e objetivo** juntos:
 escondidos, somente dono e mestre podem ler; compartilhados, membros que podem
@@ -517,15 +517,15 @@ A DT acompanha NEX e Presença, com ajuste editável para poderes e equipamentos
 O botão **Do catálogo** na seção Rituais oferece busca por nome, elemento,
 círculo e livro. A seleção preenche a ficha com os campos e aprimoramentos.
 
-Execute `sql/v18-catalogo-rituais.sql` e, depois, `catalogo/seed-rituais.sql`.
+Execute `sql/migrations/v18-catalogo-rituais.sql` e, depois, `private/catalogo/seed-rituais.sql`.
 A migração também inclui os quatro conjuntos de componentes ritualísticos na
 aba **Itens paranormais** do catálogo de inventário. O seed é gerado por
-`python3 sql/gerar-rituais.py` a partir do lote local, mantido fora da publicação.
+`python3 scripts/gerar-rituais.py` a partir do lote local, mantido fora da publicação.
 Fontes, cobertura e observações de transcrição: [revisão dos rituais](docs/revisao-rituais.md).
 
 ### Bestiário privado (v14)
 
-Execute `sql/v14-bestiary.sql` no SQL Editor do Supabase antes de publicar esta
+Execute `sql/migrations/v14-bestiary.sql` no SQL Editor do Supabase antes de publicar esta
 versão. Em instalações novas, a migração também está no final de `sql/schema.sql`.
 Ela cria `bestiary` e o bucket **privado** `bestiary-images`. Não torne o bucket
 público. A migração é transacional: um erro nas policies impede a conclusão.
@@ -557,7 +557,7 @@ O teste de interface usa dados simulados e não acessa o Supabase.
 ### Popular o bestiário com os livros locais
 
 O SQL v14 cria a estrutura vazia. O conteúdo dos PDFs é importado separadamente.
-Foi preparado um lote local em `bestiario/lote/` com **174 fichas** (aprox. 189 MB):
+Foi preparado um lote local em `private/bestiario/lote/` com **174 fichas** (aprox. 189 MB):
 
 | Fonte disponível no projeto | Fichas |
 | --- | ---: |
@@ -579,7 +579,7 @@ A cobertura se limita aos PDFs disponíveis nesta pasta, não a livros ausentes.
 Para enviar ao Supabase:
 
 1. Abra o site atualizado e entre como mestre.
-2. Em **Bestiário → Importar lote dos livros**, selecione a pasta `bestiario/lote`.
+2. Em **Bestiário → Importar lote dos livros**, selecione a pasta `private/bestiario/lote`.
 3. Confira a quantidade e clique em **Importar**. Aguarde o progresso terminar.
 
 Nenhum novo SQL é necessário depois do v14. O envio usa sua sessão autenticada e
@@ -594,15 +594,15 @@ imagem vertical. Páginas compartilhadas preservam também as outras fichas da
 página para evitar recortes incompletos. As observações registram o PDF e suas
 páginas (numeração do arquivo, não necessariamente a impressa).
 
-`bestiario/` está fora do Git e do deploy. Guarde uma cópia local dessa pasta:
+`private/bestiario/` está fora do Git e do deploy. Guarde uma cópia local dessa pasta:
 ela contém o índice revisado e o lote. Para regenerar as imagens a partir desse
-índice e dos PDFs, rode `python3 sql/gerar-bestiario.py` (Poppler + Pillow).
+índice e dos PDFs, rode `python3 scripts/gerar-bestiario.py` (Poppler + Pillow).
 Teste da importação: `node tests/bestiario-lote.test.cjs`.
 
 
 ### Descrições de equipamentos e catalisadores (v20)
 
-Execute `sql/v20-catalisadores.sql` e depois `catalogo/seed-itens.sql` para atualizar
+Execute `sql/migrations/v20-catalisadores.sql` e depois `private/catalogo/seed-itens.sql` para atualizar
 as descrições no banco. O catálogo local contém 158 itens com descrição e mantém
 cinco catalisadores em uma aba própria. As células soltas Sangue, Morte,
 Conhecimento, Energia e Medo da extração do suplemento foram removidas do catálogo:
@@ -613,7 +613,7 @@ adicionados à ficha levam a descrição e a fonte; itens antigos consultam a de
 pelo nome quando há uma correspondência única no catálogo. Textos já personalizados
 na ficha são preservados.
 
-`python3 sql/gerar-catalogo.py` aplica `catalogo/descricoes-itens.json` à extração
+`python3 scripts/gerar-catalogo.py` aplica `private/catalogo/descricoes-itens.json` à extração
 original e impede gerar o seed com descrições vazias. Os textos são extrações e
 resumos dos PDFs locais, com referências por página ou seção. Os arquivos de dados
-continuam em `catalogo/`, fora do git e da publicação.
+continuam em `private/catalogo/`, fora do git e da publicação.

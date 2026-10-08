@@ -1,14 +1,14 @@
 #!/usr/bin/env python3
 """Prepara o catálogo de itens para o popup da ficha.
 
-Lê `catalogo/itens.json` (a extração crua dos PDFs, fora do git) e escreve:
+Lê `private/catalogo/itens.json` (a extração crua dos PDFs, fora do git) e escreve:
 
-  catalogo/catalogo-limpo.json  — mesma forma das colunas do Supabase, usado
+  private/catalogo/catalogo-limpo.json — mesma forma das colunas do Supabase, usado
                                   como fonte no desenvolvimento local
-  catalogo/seed-itens.sql       — INSERTs para rodar no editor SQL do Supabase
-                                  DEPOIS de aplicar sql/v12-catalogo-itens.sql
+  private/catalogo/seed-itens.sql — INSERTs para rodar no editor SQL do Supabase
+                                  DEPOIS de aplicar sql/migrations/v12-catalogo-itens.sql
 
-Os dois saem em `catalogo/`, que o .gitignore e o .vercelignore barram: são as
+Os dois saem em `private/catalogo/`, que o .gitignore e o assets ignore barram: são as
 estatísticas dos livros da Jambô e não podem virar arquivo público do site.
 
 A extração errou em três frentes previsíveis, e é isso que este script conserta:
@@ -25,9 +25,9 @@ A extração errou em três frentes previsíveis, e é isso que este script cons
 import json, os, re
 
 RAIZ = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-ENTRADA = os.path.join(RAIZ, 'catalogo', 'itens.json')
-SAIDA_JSON = os.path.join(RAIZ, 'catalogo', 'catalogo-limpo.json')
-SAIDA_SQL = os.path.join(RAIZ, 'catalogo', 'seed-itens.sql')
+ENTRADA = os.path.join(RAIZ, 'private', 'catalogo', 'itens.json')
+SAIDA_JSON = os.path.join(RAIZ, 'private', 'catalogo', 'catalogo-limpo.json')
+SAIDA_SQL = os.path.join(RAIZ, 'private', 'catalogo', 'seed-itens.sql')
 
 # Linhas de tabela de regra que entraram como se fossem item.
 LIXO = {
@@ -149,8 +149,8 @@ def sql(itens):
             txt(i['descricao']), txt(i['livro']), txt(i['pagina']))
         for i in itens)]
     return (
-        '-- Gerado por sql/gerar-catalogo.py — não edite à mão.\n'
-        '-- Rode DEPOIS de sql/v12-catalogo-itens.sql. Pode rodar de novo: o\n'
+        '-- Gerado por scripts/gerar-catalogo.py — não edite à mão.\n'
+        '-- Rode DEPOIS de sql/migrations/v12-catalogo-itens.sql. Pode rodar de novo: o\n'
         '-- on conflict atualiza o que mudou em vez de duplicar.\n'
         '-- Conteúdo dos livros da Jambô: este arquivo não vai pro git nem pro site.\n\n'
         'insert into public.itens_catalogo\n'
@@ -167,7 +167,7 @@ if __name__ == '__main__':
     bruto = json.load(open(ENTRADA, encoding='utf-8'))
     itens = limpar(bruto)
     if any(not i['descricao'].strip() for i in itens):
-        raise ValueError('Há itens sem descrição; revise catalogo/descricoes-itens.json.')
+        raise ValueError('Há itens sem descrição; revise private/catalogo/descricoes-itens.json.')
     json.dump(itens, open(SAIDA_JSON, 'w', encoding='utf-8'), ensure_ascii=False, indent=1)
     open(SAIDA_SQL, 'w', encoding='utf-8').write(sql(itens))
     contagem = {}

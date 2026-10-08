@@ -163,18 +163,18 @@ const App = {
       if (this._avisados.has('bucket')) return;
       this._avisados.add('bucket');
       console.error('bucket ausente:', erro);
-      return toast('Falta criar o bucket de áudio: rode sql/v10-bucket-sons.sql no Supabase.', 'erro');
+      return toast('Falta criar o bucket de áudio: rode sql/migrations/v10-bucket-sons.sql no Supabase.', 'erro');
     }
 
     const arquivos = {
-      contatos_liberados: 'sql/v9-contatos-anotacoes.sql',
-      'anotacoes.autor_id': 'sql/v9-contatos-anotacoes.sql',
-      leituras: 'sql/v8-leituras.sql',
-      personas: 'sql/v6-celular.sql',
-      mensagens: 'sql/v6-celular.sql',
-      saldos_personagens: 'sql/v29-financas.sql',
-      configuracoes_financeiras: 'sql/v29-financas.sql',
-      transacoes_financeiras: 'sql/v29-financas.sql'
+      contatos_liberados: 'sql/migrations/v9-contatos-anotacoes.sql',
+      'anotacoes.autor_id': 'sql/migrations/v9-contatos-anotacoes.sql',
+      leituras: 'sql/migrations/v8-leituras.sql',
+      personas: 'sql/migrations/v6-celular.sql',
+      mensagens: 'sql/migrations/v6-celular.sql',
+      saldos_personagens: 'sql/migrations/v29-financas.sql',
+      configuracoes_financeiras: 'sql/migrations/v29-financas.sql',
+      transacoes_financeiras: 'sql/migrations/v29-financas.sql'
     };
     const arq = arquivos[alvo] || 'sql/schema.sql';
     console.error('falta migração:', alvo, '→', arq, erro);

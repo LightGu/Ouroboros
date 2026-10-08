@@ -4,7 +4,7 @@ const fs = require('node:fs');
 const vm = require('node:vm');
 
 test('falha ao carregar notas privadas não vira conteúdo vazio', async () => {
-  const code = fs.readFileSync('js/nuvem.js', 'utf8') + '\nthis.Nuvem = Nuvem;';
+  const code = fs.readFileSync('public/js/nuvem.js', 'utf8') + '\nthis.Nuvem = Nuvem;';
   const contexto = { window: {}, Store: {}, num: Number };
   vm.runInNewContext(code, contexto);
 
@@ -25,7 +25,7 @@ test('falha ao carregar notas privadas não vira conteúdo vazio', async () => {
 });
 
 test('políticas impedem jogador de criar ficha sem dono ou ocultar ficha', () => {
-  const sql = fs.readFileSync('sql/v24-seguranca-personagens.sql', 'utf8');
+  const sql = fs.readFileSync('sql/migrations/v24-seguranca-personagens.sql', 'utf8');
   assert.match(sql, /public\.eh_membro\(mesa_id\)/);
   assert.match(sql, /dono_id = auth\.uid\(\)/);
   assert.match(sql, /not rapido and not oculto/);
@@ -34,7 +34,7 @@ test('políticas impedem jogador de criar ficha sem dono ou ocultar ficha', () =
 
 
 test('mensagens, tokens e Storage ficam presos à mesa e ao proprietário', () => {
-  const sql = fs.readFileSync('sql/v25-integridade-mensagens-tokens-storage.sql', 'utf8');
+  const sql = fs.readFileSync('sql/migrations/v25-integridade-mensagens-tokens-storage.sql', 'utf8');
   assert.match(sql, /p\.mesa_id = mensagens\.mesa_id/);
   assert.match(sql, /mb\.mesa_id = mensagens\.mesa_id/);
   assert.match(sql, /revoke update on public\.mensagens from authenticated/);
@@ -45,14 +45,14 @@ test('mensagens, tokens e Storage ficam presos à mesa e ao proprietário', () =
 });
 
 test('uploads novos incluem a pasta do usuário', () => {
-  const js = fs.readFileSync('js/nuvem.js', 'utf8');
+  const js = fs.readFileSync('public/js/nuvem.js', 'utf8');
   assert.match(js, /`\$\{mesaId\}\/\$\{dono\}\/\$\{personagemId\}/);
   assert.match(js, /`\$\{mesaId\}\/\$\{dono\}\/mapa-/);
 });
 
 
 test('anotações compartilhadas e leituras continuam limitadas à própria mesa', () => {
-  const sql = fs.readFileSync('sql/v26-integridade-anotacoes-leituras.sql', 'utf8');
+  const sql = fs.readFileSync('sql/migrations/v26-integridade-anotacoes-leituras.sql', 'utf8');
   assert.match(sql, /public\.eh_membro\(mesa_id\)[\s\S]*compartilhada/);
   assert.match(sql, /NEW\.mesa_id is distinct from OLD\.mesa_id/);
   assert.match(sql, /NEW\.autor_id is distinct from OLD\.autor_id/);
@@ -62,7 +62,7 @@ test('anotações compartilhadas e leituras continuam limitadas à própria mesa
 
 
 test('rolagens têm autoria do banco, limites e segredo exclusivo do mestre', () => {
-  const sql = fs.readFileSync('sql/v27-integridade-rolagens.sql', 'utf8');
+  const sql = fs.readFileSync('sql/migrations/v27-integridade-rolagens.sql', 'utf8');
   assert.match(sql, /NEW\.autor_id := auth\.uid\(\)/);
   assert.match(sql, /NEW\.criado_em := now\(\)/);
   assert.match(sql, /NEW\.secreta and not public\.eh_mestre/);
@@ -70,16 +70,16 @@ test('rolagens têm autoria do banco, limites e segredo exclusivo do mestre', ()
   assert.match(sql, /length\(trim\(NEW\.rotulo\)\) not between 1 and 200/);
 });
 
-test('versão publicada é 1.28 em todos os pontos', () => {
-  const html = fs.readFileSync('index.html', 'utf8');
+test('versão publicada é 1.32 em todos os pontos', () => {
+  const html = fs.readFileSync('public/index.html', 'utf8');
   const pacote = JSON.parse(fs.readFileSync('package.json', 'utf8'));
-  assert.match(html, /class="app-versao">v1\.28</);
-  assert.equal(pacote.version, '1.28.0');
+  assert.match(html, /class="app-versao">v1\.32</);
+  assert.equal(pacote.version, '1.32.0');
 });
 
 
 test('pré-lançamento limita convites, abuso de volume e RPCs anônimas', () => {
-  const sql = fs.readFileSync('sql/v28-hardening-pre-lancamento.sql', 'utf8');
+  const sql = fs.readFileSync('sql/migrations/v28-hardening-pre-lancamento.sql', 'utf8');
   assert.match(sql, /1, 12/);
   assert.match(sql, /v_quantidade > 10/);
   assert.match(sql, /interval '1 minute'/);
@@ -90,8 +90,8 @@ test('pré-lançamento limita convites, abuso de volume e RPCs anônimas', () =>
 });
 
 test('produção usa CSP sem JavaScript inline', () => {
-  const headers = fs.readFileSync('_headers', 'utf8');
-  const fontes = fs.readFileSync('index.html', 'utf8') + fs.readFileSync('js/campanha.js', 'utf8');
+  const headers = fs.readFileSync('public/_headers', 'utf8');
+  const fontes = fs.readFileSync('public/index.html', 'utf8') + fs.readFileSync('public/js/campanha.js', 'utf8');
   assert.match(headers, /Content-Security-Policy:/);
   assert.match(headers, /frame-ancestors 'none'/);
   assert.match(headers, /script-src-attr 'none'/);
@@ -101,7 +101,7 @@ test('produção usa CSP sem JavaScript inline', () => {
 
 
 test('perfis e mensagens exigem vínculo atual entre usuários', () => {
-  const sql = fs.readFileSync('sql/v28-hardening-pre-lancamento.sql', 'utf8');
+  const sql = fs.readFileSync('sql/migrations/v28-hardening-pre-lancamento.sql', 'utf8');
   assert.match(sql, /create policy perfis_ler[\s\S]*public\.compartilha_mesa\(id\)/);
   assert.match(sql, /join public\.membros pessoa on pessoa\.mesa_id = eu\.mesa_id/);
   assert.match(sql, /create policy msg_ler[\s\S]*public\.eh_membro\(mesa_id\)/);

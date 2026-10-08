@@ -1,4 +1,4 @@
-/* Dados dos livros vêm do Supabase autenticado; fallback local em catalogo/. */
+/* Dados dos livros vêm do Supabase autenticado; fallback local em private/catalogo/. */
 const CatalogoRituais = {
   itens: null,
   promessa: null,
@@ -15,7 +15,7 @@ const CatalogoRituais = {
       }
     } catch (e) { console.warn('Catálogo de rituais indisponível:', e.message || e); }
     try {
-      const r = await fetch('catalogo/rituais.json');
+      const r = await fetch('private/catalogo/rituais.json');
       if (r.ok) return (this.itens = await r.json());
     } catch (e) { /* O arquivo só existe no desenvolvimento. */ }
     return [];

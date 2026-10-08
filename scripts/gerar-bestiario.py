@@ -2,7 +2,7 @@
 """Gera imagens e manifesto de importação de fichas dos PDFs locais.
 
 Requer pdftoppm (Poppler) e Pillow. Não usa OCR. O índice revisado mora em
-bestiario/indice.json, fora dos arquivos publicados. Execute na raiz do projeto.
+private/bestiario/indice.json, fora dos arquivos publicados. Execute na raiz do projeto.
 """
 import hashlib
 import json
@@ -18,9 +18,9 @@ def gerar():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--only", nargs="+", help="Regenerar apenas estas source_keys; exige lote prévio completo")
     selecionados = set(parser.parse_args().only or [])
-    indice = json.loads((ROOT / 'bestiario/indice.json').read_text())
-    fontes = {p.name: p for p in ROOT.glob('arquivos secretos*') for p in p.rglob('*.pdf')}
-    destino = ROOT / 'bestiario/lote'
+    indice = json.loads((ROOT / 'private/bestiario/indice.json').read_text())
+    fontes = {p.name: p for p in (ROOT / 'private/livros').rglob('*.pdf')}
+    destino = ROOT / 'private/bestiario/lote'
     destino.mkdir(parents=True, exist_ok=True)
     manifesto = []
     with tempfile.TemporaryDirectory(prefix='rpg-fichas-') as tmp:

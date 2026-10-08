@@ -2,7 +2,7 @@ const fs = require('node:fs');
 const vm = require('node:vm');
 const assert = require('node:assert/strict');
 const ctx = vm.createContext({ console, App: { sessao: { user: { id: 'mestre' } } }, crypto: { randomUUID: () => 'imagem' } });
-vm.runInContext(['js/bestiario.js', 'js/nuvem.js'].map(p => fs.readFileSync(p, 'utf8')).join('\n') + '\nglobalThis.api = { Bestiario, Nuvem };', ctx);
+vm.runInContext(['public/js/bestiario.js', 'public/js/nuvem.js'].map(p => fs.readFileSync(p, 'utf8')).join('\n') + '\nglobalThis.api = { Bestiario, Nuvem };', ctx);
 const { Bestiario: B, Nuvem: N } = ctx.api;
 B.lista = [
   { name: 'Criatura Ágil', element: 'Sangue', vd: 0, type: 'Animal', tags: ['floresta'], notes: 'segredo' },

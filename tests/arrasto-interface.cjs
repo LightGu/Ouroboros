@@ -4,8 +4,8 @@ const os=require('node:os');
 const {execFileSync}=require('node:child_process');
 const assert=require('node:assert/strict');
 const root=path.resolve(__dirname,'..');
-let html=fs.readFileSync(root+'/index.html','utf8').replace(/<script[\s\S]*?<\/script>/g,'').replace(/<link[^>]*>/g,'');
-const code=fs.readFileSync(root+'/js/ui.js','utf8');
+let html=fs.readFileSync(root+'/public/index.html','utf8').replace(/<script[\s\S]*?<\/script>/g,'').replace(/<link[^>]*>/g,'');
+const code=fs.readFileSync(root+'/public/js/ui.js','utf8');
 const checks=`
 function check(v,msg){if(!v)throw Error(msg);}
 try {
@@ -39,4 +39,3 @@ try {
  assert.match(output, /<p id="resultado">PASSOU:/);
  console.log('Arrasto: mouse, toque, limiar de movimento, destino e cancelamento passaram.');
 } finally { fs.rmSync(dir,{recursive:true,force:true}); }
-

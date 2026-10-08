@@ -2,7 +2,7 @@ const {readFileSync}=require('node:fs');
 const vm=require('node:vm');
 const assert=require('node:assert/strict');
 const ctx=vm.createContext({console});
-vm.runInContext(['js/dados.js','js/store.js','js/regras.js'].map(p=>readFileSync(p,'utf8')).join('\n')+'\nfunction num(v,d=0){const n=Number(v);return Number.isFinite(n)?n:d;}\nglobalThis.api={Regras,calcularStatus,CLASSE_INFO,ORIGENS,ORIGEM_INFO,Store,ajusteIdade};',ctx);
+vm.runInContext(['public/js/dados.js','public/js/store.js','public/js/regras.js'].map(p=>readFileSync(p,'utf8')).join('\n')+'\nfunction num(v,d=0){const n=Number(v);return Number.isFinite(n)?n:d;}\nglobalThis.api={Regras,calcularStatus,CLASSE_INFO,ORIGENS,ORIGEM_INFO,Store,ajusteIdade};',ctx);
 const {Regras:R,calcularStatus:C,CLASSE_INFO,ORIGENS,ORIGEM_INFO,Store,ajusteIdade}=ctx.api;
 const attrs={AGI:2,FOR:1,INT:2,PRE:2,VIG:2};
 const stat=(cl,nex)=>JSON.parse(JSON.stringify(C(cl,nex,attrs)));

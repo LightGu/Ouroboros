@@ -4,11 +4,11 @@
 
 Aplicar, nesta ordem, no editor SQL do Supabase:
 
-1. `sql/v18-catalogo-rituais.sql`: tabela protegida por RLS e quatro conjuntos de componentes.
-2. `catalogo/seed-rituais.sql`: 107 registros do catálogo.
-3. `sql/v19-descricao-privada.sql`: personalidade e objetivo passam à tabela privada da história. Aplicar antes de publicar o frontend.
+1. `sql/migrations/v18-catalogo-rituais.sql`: tabela protegida por RLS e quatro conjuntos de componentes.
+2. `private/catalogo/seed-rituais.sql`: 107 registros do catálogo.
+3. `sql/migrations/v19-descricao-privada.sql`: personalidade e objetivo passam à tabela privada da história. Aplicar antes de publicar o frontend.
 
-O catálogo e o seed contêm textos dos livros e ficam em `catalogo/`, excluído do git e da publicação. `python3 sql/gerar-rituais.py` valida `catalogo/rituais-revisados.json` e regenera ambos. Não foi realizada uma importação no banco remoto durante esta alteração.
+O catálogo e o seed contêm textos dos livros e ficam em `private/catalogo/`, excluído do git e da publicação. `python3 scripts/gerar-rituais.py` valida `private/catalogo/rituais-revisados.json` e regenera ambos. Não foi realizada uma importação no banco remoto durante esta alteração.
 
 ## Cobertura das fontes locais
 
@@ -47,6 +47,6 @@ O trigger aceita atualizações parciais sem apagar campos privados ausentes do 
 - `node tests/rituais-interface.cjs`: DT, preservação de total antigo, importação, filtros, duplicatas, campos especiais, componentes e consulta privada.
 - `node tests/historias.test.cjs`: permissões, leitura autorizada, cache e salvamento sem sobrescrever dados privados não carregados.
 - `node tests/catalogo-grupos.test.cjs` e `node tests/regras.test.cjs`.
-- `python3 sql/gerar-rituais.py`: campos obrigatórios, círculos, elementos e duplicatas do lote local.
+- `python3 scripts/gerar-rituais.py`: campos obrigatórios, círculos, elementos e duplicatas do lote local.
 
 - `PGLITE_PATH=/caminho/@electric-sql/pglite node tests/migracoes-rituais-historias.cjs`: execução local de migrações e seed, repetição sem duplicatas, atualizações parciais e RLS por papel.

@@ -3,7 +3,7 @@ const vm = require('node:vm');
 const assert = require('node:assert/strict');
 let salvos = 0;
 const ctx = vm.createContext({ Store: { podeEditar: () => true, salvar: () => salvos++ }, $: () => null });
-vm.runInContext(fs.readFileSync('js/ficha.js', 'utf8') + '\nglobalThis.F = Ficha;', ctx);
+vm.runInContext(fs.readFileSync('public/js/ficha.js', 'utf8') + '\nglobalThis.F = Ficha;', ctx);
 const F = ctx.F;
 F.abrir = () => {};
 F.atual = { id:'p', inventario:{ itens:[

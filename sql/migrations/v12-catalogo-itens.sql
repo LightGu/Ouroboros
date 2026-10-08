@@ -3,11 +3,11 @@
 --
 -- A tabela é global: o catálogo é o mesmo para todas as mesas, ninguém
 -- edita pelo site. Quem escreve é o dono do projeto, rodando o
--- catalogo/seed-itens.sql gerado por sql/gerar-catalogo.py.
+-- private/catalogo/seed-itens.sql gerado por scripts/gerar-catalogo.py.
 --
 -- Por que não é um arquivo JSON no site: são as estatísticas dos livros da
 -- Jambô. Atrás do login, é a mesa consultando o material que comprou; como
--- arquivo público do Vercel, é distribuição. Daí o select ser só para
+-- arquivo público do deploy, é distribuição. Daí o select ser só para
 -- `authenticated` e não existir política de insert/update/delete — nem o
 -- mestre escreve aqui pelo navegador.
 -- ============================================================
@@ -38,5 +38,5 @@ drop policy if exists catalogo_ler on public.itens_catalogo;
 create policy catalogo_ler on public.itens_catalogo
   for select to authenticated using (true);
 
--- confere (vai dar 0 até rodar o catalogo/seed-itens.sql)
+-- confere (vai dar 0 até rodar o private/catalogo/seed-itens.sql)
 select count(*) as itens_no_catalogo from public.itens_catalogo;

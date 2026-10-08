@@ -14,7 +14,8 @@ Faz duas coisas além de servir arquivos:
 import http.server, socketserver, sys, os, re, io
 
 PORTA = int(sys.argv[1]) if len(sys.argv) > 1 else 5599
-RAIZ = os.path.dirname(os.path.abspath(__file__))
+RAIZ = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+PUBLICO = os.path.join(RAIZ, 'public')
 ALVO = re.compile(r'(<(?:script|link)[^>]*?(?:src|href)=")((?:js|css|img)/[^"?]+)(")')
 
 
@@ -38,7 +39,7 @@ class Dev(http.server.SimpleHTTPRequestHandler):
         return super().send_head()
 
     def _index(self):
-        arquivo = os.path.join(RAIZ, 'index.html')
+        arquivo = os.path.join(PUBLICO, 'index.html')
         try:
             html = io.open(arquivo, encoding='utf-8').read()
         except OSError:
@@ -46,7 +47,7 @@ class Dev(http.server.SimpleHTTPRequestHandler):
             return None
 
         def carimba(m):
-            alvo = os.path.join(RAIZ, m.group(2))
+            alvo = os.path.join(PUBLICO, m.group(2))
             v = int(os.path.getmtime(alvo)) if os.path.exists(alvo) else 0
             return f'{m.group(1)}{m.group(2)}?v={v}{m.group(3)}'
 
@@ -62,6 +63,7 @@ class Dev(http.server.SimpleHTTPRequestHandler):
 
 
 socketserver.TCPServer.allow_reuse_address = True
+os.chdir(PUBLICO)
 with socketserver.TCPServer(('', PORTA), Dev) as s:
     print(f'servindo sem cache em http://localhost:{PORTA}')
     s.serve_forever()

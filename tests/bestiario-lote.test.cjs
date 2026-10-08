@@ -3,7 +3,7 @@ const vm = require('node:vm');
 const assert = require('node:assert/strict');
 const {webcrypto} = require('node:crypto');
 const ctx = vm.createContext({console,crypto:webcrypto,TextEncoder,App:{sessao:{user:{id:'dono-a'}}}});
-vm.runInContext(['js/bestiario.js','js/nuvem.js'].map(p=>fs.readFileSync(p,'utf8')).join('\n')+'\nglobalThis.api={Bestiario,Nuvem};',ctx);
+vm.runInContext(['public/js/bestiario.js','public/js/nuvem.js'].map(p=>fs.readFileSync(p,'utf8')).join('\n')+'\nglobalThis.api={Bestiario,Nuvem};',ctx);
 const {Bestiario:B,Nuvem:N}=ctx.api;
 const registro={source_key:'livro-10',name:'Criatura',element:'Sangue',vd:20,type:'Criatura',tags:['livro'],notes:'Fonte',image_file:'ficha.jpg'};
 const arquivo={name:'ficha.jpg',size:100,type:'image/jpeg'};

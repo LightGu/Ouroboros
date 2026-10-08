@@ -8,10 +8,10 @@ const root=path.resolve(__dirname,'..');
  try {
  const page=await browser.newPage({viewport:{width:1440,height:1000}}); const errors=[];
  page.on('pageerror',e=>errors.push(e.message));
- await page.route('**/*',r=>r.request().url()==='http://rpg.test/'?r.fulfill({contentType:'text/html',body:fs.readFileSync(path.join(root,'index.html'),'utf8').replace(/<script[\s\S]*?<\/script>/g,'').replace(/<link[^>]*>/g,'')}):r.abort());
+ await page.route('**/*',r=>r.request().url()==='http://rpg.test/'?r.fulfill({contentType:'text/html',body:fs.readFileSync(path.join(root,'public/index.html'),'utf8').replace(/<script[\s\S]*?<\/script>/g,'').replace(/<link[^>]*>/g,'')}):r.abort());
  await page.goto('http://rpg.test/');
- await page.addStyleTag({content:fs.readFileSync(path.join(root,'css/style.css'),'utf8')});
- for(const file of ['dados','ui','ajuda','store','mesa','catalogo','regras','paineis','ficha','criacao']) await page.addScriptTag({content:fs.readFileSync(path.join(root,`js/${file}.js`),'utf8')});
+ await page.addStyleTag({content:fs.readFileSync(path.join(root,'public/css/style.css'),'utf8')});
+ for(const file of ['dados','ui','ajuda','store','mesa','catalogo','regras','paineis','ficha','criacao']) await page.addScriptTag({content:fs.readFileSync(path.join(root,`public/js/${file}.js`),'utf8')});
  await page.evaluate(()=>{
   window.App={sessao:{user:{id:'teste'}},mostrar(nome){document.querySelectorAll('main > section').forEach(el=>el.hidden=el.id!==`view-${nome}`);document.querySelector('#view-ficha').hidden=nome!=='ficha';}};
   Mesa.render=()=>{};window.Nuvem={cliente:null};

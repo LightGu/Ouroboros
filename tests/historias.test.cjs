@@ -5,7 +5,7 @@ const cache = new Map();
 const ctx = vm.createContext({ console, App: { sessao: { user: { id: 'dono' } } },
   localStorage: { setItem: (k,v) => cache.set(k,v), getItem: k => cache.get(k) },
   num: v => Number(v) || 0 });
-vm.runInContext(['dados','store','nuvem'].map(f => readFileSync(`js/${f}.js`, 'utf8')).join('\n') + '\nglobalThis.api = {Store,Nuvem};', ctx);
+vm.runInContext(['dados','store','nuvem'].map(f => readFileSync(`public/js/${f}.js`, 'utf8')).join('\n') + '\nglobalThis.api = {Store,Nuvem};', ctx);
 const { Store, Nuvem } = ctx.api;
 const p = Store.normalizar({ id:'p', donoId:'dono', descricao:{historico:'SEGREDO',personalidade:'PERSONALIDADE_PRIVADA',objetivo:'OBJETIVO_PRIVADO'} });
 assert.equal(p.historiaPublica, false);

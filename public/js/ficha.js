@@ -786,7 +786,7 @@ const Ficha = {
     if (!Catalogo.itens.length) {
       return `<p class="dialogo">O catálogo não carregou. Ele vive na tabela
         <b>itens_catalogo</b> do Supabase — se ela ainda não existe, rode
-        <b>sql/v12-catalogo-itens.sql</b> e depois o <b>catalogo/seed-itens.sql</b>.</p>`;
+        <b>sql/migrations/v12-catalogo-itens.sql</b> e depois o <b>private/catalogo/seed-itens.sql</b>.</p>`;
     }
     return `
       <input id="cat-busca" class="busca" placeholder="Buscar item..." value="${esc(this.catalogo.busca)}">

@@ -58,7 +58,7 @@ test('v28 executa e bloqueia brute force e dupla reivindicação', async () => {
       insert into personagens values ('20000000-0000-0000-0000-000000000000',
         '10000000-0000-0000-0000-000000000000',null,'{}');
     `);
-    await db.exec(fs.readFileSync('sql/v28-hardening-pre-lancamento.sql','utf8'));
+    await db.exec(fs.readFileSync('sql/migrations/v28-hardening-pre-lancamento.sql','utf8'));
     const codigo = (await db.query('select codigo from mesas')).rows[0].codigo;
     assert.match(codigo, /^[0-9A-F]{12}$/);
 

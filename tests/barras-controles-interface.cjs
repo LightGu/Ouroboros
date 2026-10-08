@@ -4,9 +4,9 @@ const os=require('node:os');
 const {execFileSync}=require('node:child_process');
 const assert=require('node:assert/strict');
 const root=path.resolve(__dirname,'..');
-let html=fs.readFileSync(root+'/index.html','utf8').replace(/<script[\s\S]*?<\/script>/g,'').replace(/<link[^>]*>/g,'');
-html=html.replace('</head>','<style>'+fs.readFileSync(root+'/css/style.css','utf8')+'</style></head>');
-const code=['ui','mesa'].map(f=>fs.readFileSync(root+'/js/'+f+'.js','utf8')).join('\n');
+let html=fs.readFileSync(root+'/public/index.html','utf8').replace(/<script[\s\S]*?<\/script>/g,'').replace(/<link[^>]*>/g,'');
+html=html.replace('</head>','<style>'+fs.readFileSync(root+'/public/css/style.css','utf8')+'</style></head>');
+const code=['ui','mesa'].map(f=>fs.readFileSync(root+'/public/js/'+f+'.js','utf8')).join('\n');
 const checks=`
 window.Store={podeEditar:()=>true};window.num=v=>Number(v)||0;
 function check(v,msg){if(!v)throw Error(msg);}
@@ -38,4 +38,3 @@ try {
  assert.match(output, /<p id="resultado">PASSOU:/);
  console.log('Barras: botões fixos e clicáveis com 100, 3 e 0 PV passaram.');
 } finally { fs.rmSync(dir,{recursive:true,force:true}); }
-

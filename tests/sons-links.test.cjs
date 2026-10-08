@@ -34,7 +34,7 @@ const contexto = {
   setTimeout
 };
 vm.createContext(contexto);
-const fonte = fs.readFileSync(path.resolve(__dirname, '../js/sons.js'), 'utf8');
+const fonte = fs.readFileSync(path.resolve(__dirname, '../public/js/sons.js'), 'utf8');
 vm.runInContext(`${fonte}\nglobalThis.__Sons = Sons;`, contexto);
 const Sons = contexto.__Sons;
 Sons.render = () => {};

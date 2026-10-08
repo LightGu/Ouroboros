@@ -1,19 +1,9 @@
-# Livros em PDF — conteúdo da Jambô. Publicar isso é distribuir o livro.
-arquivos secretos*/
+# Fontes, extrações, exemplos e prévias exclusivamente locais.
+private/
 *.pdf
-
-# Catálogo extraído dos livros: são as estatísticas dos itens, mesmo problema.
-# Quando a tela de Equipar existir, esses dados devem ir pro Supabase (atrás
-# de login), não virar arquivo público no site.
-catalogo/
 
 # Só para desenvolvimento
 .claude/
-preview-barras.html
-exemplos/
 __pycache__/
-
-# Fichas extraídas dos livros: importação local para o bucket privado.
-bestiario/
 node_modules/
 *.pyc

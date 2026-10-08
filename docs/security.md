@@ -1,4 +1,4 @@
-# Segurança de produção — Ouroboros 1.28
+# Segurança de produção — Ouroboros 1.32
 
 ## Antes de abrir o site
 
@@ -10,7 +10,7 @@
 - Desabilite novos cadastros depois que o grupo estiver criado, se a mesa for fechada.
 - Restrinja Site URL e Redirect URLs aos domínios reais; não deixe curingas amplos.
 - Habilite proteção contra senhas vazadas quando disponível no plano.
-- Nunca coloque `service_role`, secret key ou senha em `js/config.js`; apenas a chave publicável.
+- Nunca coloque `service_role`, secret key ou senha em `public/js/config.js`; apenas a chave publicável.
 - Revise Auth Logs, Postgres Logs e picos de requisições no painel.
 
 ## Controles no repositório

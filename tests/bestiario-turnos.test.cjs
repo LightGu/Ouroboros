@@ -2,7 +2,7 @@ const fs = require('node:fs');
 const vm = require('node:vm');
 const assert = require('node:assert/strict');
 const ctx = vm.createContext({console, App:{sessao:{user:{id:'mestre'}}}, Nuvem:{}});
-vm.runInContext(fs.readFileSync('js/store.js','utf8')+'\nglobalThis.store=Store;',ctx);
+vm.runInContext(fs.readFileSync('public/js/store.js','utf8')+'\nglobalThis.store=Store;',ctx);
 const S=ctx.store;
 S.guardarCache=()=>{};
 S.ehMestre=true; S.mesaId='mesa';

@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""Valida catalogo/rituais-revisados.json e gera JSON local + seed privado.
+"""Valida private/catalogo/rituais-revisados.json e gera JSON local + seed privado.
 
-As fontes e os dados dos livros ficam em catalogo/, fora do git e do site.
-O seed deve ser aplicado depois de sql/v18-catalogo-rituais.sql.
+As fontes e os dados dos livros ficam em private/catalogo/, fora do git e do site.
+O seed deve ser aplicado depois de sql/migrations/v18-catalogo-rituais.sql.
 """
 import json
 from pathlib import Path
@@ -35,17 +35,17 @@ def sql(itens):
         valores += [q(r['desc']), 'array[' + ','.join(q(e) for e in r['elementos']) + ']::text[]']
         linhas.append('  (' + ', '.join(valores) + ')')
     campos = FIELDS + ['descricao', 'elementos']
-    return ('-- Gerado por sql/gerar-rituais.py. Conteúdo privado dos livros.\nbegin;\n'
+    return ('-- Gerado por scripts/gerar-rituais.py. Conteúdo privado dos livros.\nbegin;\n'
             'insert into public.rituais_catalogo (' + ', '.join(campos) + ')\nvalues\n'
             + ',\n'.join(linhas) + '\non conflict (nome, livro) do update set\n'
             + ',\n'.join('  ' + k + ' = excluded.' + k for k in campos if k not in ['nome','livro'])
             + ';\ncommit;\n')
 
 if __name__ == '__main__':
-    itens = validar(json.loads((ROOT / 'catalogo/rituais-revisados.json').read_text()))
+    itens = validar(json.loads((ROOT / 'private/catalogo/rituais-revisados.json').read_text()))
     itens.sort(key=lambda r: (r['nome'].casefold(), r['livro']))
-    (ROOT / 'catalogo/rituais.json').write_text(json.dumps(itens, ensure_ascii=False, indent=2))
-    (ROOT / 'catalogo/seed-rituais.sql').write_text(sql(itens))
+    (ROOT / 'private/catalogo/rituais.json').write_text(json.dumps(itens, ensure_ascii=False, indent=2))
+    (ROOT / 'private/catalogo/seed-rituais.sql').write_text(sql(itens))
     for livro in sorted({r['livro'] for r in itens}):
         print(livro, sum(r['livro'] == livro for r in itens))
     print(f'{len(itens)} rituais validados e gerados.')

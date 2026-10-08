@@ -3,7 +3,7 @@ const CatalogoPoderes = {
   async carregar() {
     if (this.itens) return this.itens;
     try { if (Nuvem.cliente) { const x = await Nuvem.catalogoPoderes(); if (x.length) return (this.itens = x); } } catch (e) { console.warn(e); }
-    try { const r = await fetch('catalogo/poderes.json'); if (r.ok) return (this.itens = await r.json()); } catch {}
+    try { const r = await fetch('private/catalogo/poderes.json'); if (r.ok) return (this.itens = await r.json()); } catch {}
     return (this.itens = []);
   },
   async abrir(p) {

@@ -4,8 +4,8 @@ const os=require('node:os');
 const {execFileSync}=require('node:child_process');
 const assert=require('node:assert/strict');
 const root=path.resolve(__dirname,'..');
-let html=fs.readFileSync(root+'/index.html','utf8').replace(/<script[\s\S]*?<\/script>/g,'').replace(/<link[^>]*>/g,'');
-const code=['dados','ui','bestiario'].map(f=>fs.readFileSync(root+'/js/'+f+'.js','utf8')).join('\n');
+let html=fs.readFileSync(root+'/public/index.html','utf8').replace(/<script[\s\S]*?<\/script>/g,'').replace(/<link[^>]*>/g,'');
+const code=['dados','ui','bestiario'].map(f=>fs.readFileSync(root+'/public/js/'+f+'.js','utf8')).join('\n');
 const checks=`
 window.App={ehMestre:true,sessao:{user:{id:'dono'}}};
 window.Store={mesaId:'mesa',criarDoBestiario:async c=>{window.adicionada=c.id;}};
@@ -61,4 +61,3 @@ try {
  assert.match(output, /<p id="resultado">PASSOU:/);
  console.log('Interface do bestiário: cards, busca, vazio, imagem, zoom, formulário, importação em lote e limpeza passaram.');
 } finally { fs.rmSync(dir,{recursive:true,force:true}); }
-
