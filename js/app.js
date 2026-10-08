@@ -69,6 +69,7 @@ const App = {
 
     try {
       await Store.carregar(mesa.id, this.ehMestre);
+      await Financas.carregar(mesa.id, this.ehMestre);
     } catch (e) {
       toast('Não consegui carregar a mesa: ' + (e.message || e), 'erro');
       return this.mostrar('mesas');
@@ -76,6 +77,7 @@ const App = {
 
     await Nuvem.assinar(mesa.id, {
       aoMudarPersonagem: p => this.mudancaRemota(p),
+      aoMudarSaldo: p => Financas.mudancaRemota(p),
       aoChegarLog: l => Logs.receber(l),
       aoRolar: r => Rolagem.receber(r),
       aoMudarMapa: p => Mapa.mudouMapa(p),
@@ -126,6 +128,7 @@ const App = {
     try {
       this.mesa.combate = await Nuvem.lerCombate(this.mesa.id);
       await Store.carregar(this.mesa.id, this.ehMestre);
+      await Financas.carregar(this.mesa.id, this.ehMestre);
       await Mapa.carregar();
       await Sons.carregar();
       await Campanha.carregar();
@@ -168,7 +171,10 @@ const App = {
       'anotacoes.autor_id': 'sql/v9-contatos-anotacoes.sql',
       leituras: 'sql/v8-leituras.sql',
       personas: 'sql/v6-celular.sql',
-      mensagens: 'sql/v6-celular.sql'
+      mensagens: 'sql/v6-celular.sql',
+      saldos_personagens: 'sql/v29-financas.sql',
+      configuracoes_financeiras: 'sql/v29-financas.sql',
+      transacoes_financeiras: 'sql/v29-financas.sql'
     };
     const arq = arquivos[alvo] || 'sql/schema.sql';
     console.error('falta migração:', alvo, '→', arq, erro);

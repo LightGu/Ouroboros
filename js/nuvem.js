@@ -213,6 +213,55 @@ const Nuvem = {
     if (falha) throw falha.error;
   },
 
+  /* ---------------- finanças ---------------- */
+
+  async carregarFinancas(mesaId, ehMestre) {
+    const saldosReq = this.cliente.from('saldos_personagens')
+      .select('personagem_id, saldo_centavos').eq('mesa_id', mesaId);
+    const configReq = ehMestre
+      ? this.cliente.from('configuracoes_financeiras').select('verba_diaria_centavos').eq('mesa_id', mesaId).maybeSingle()
+      : Promise.resolve({ data: null, error: null });
+    const [saldos, config] = await Promise.all([saldosReq, configReq]);
+    if (saldos.error) throw saldos.error;
+    if (config.error) throw config.error;
+    return { saldos: saldos.data || [], verbaDiariaCentavos: config.data?.verba_diaria_centavos ?? 10000 };
+  },
+
+  async configurarVerbaDiaria(mesaId, valorCentavos) {
+    const { data, error } = await this.cliente.rpc('configurar_verba_diaria',
+      { p_mesa: mesaId, p_valor_centavos: valorCentavos });
+    if (error) throw error;
+    return data;
+  },
+
+  async aplicarVerbaDiaria(mesaId, motivo, operacao) {
+    const { data, error } = await this.cliente.rpc('aplicar_verba_diaria',
+      { p_mesa: mesaId, p_motivo: motivo || null, p_operacao: operacao });
+    if (error) throw error;
+    return data;
+  },
+
+  async descontarTodos(mesaId, valorCentavos, motivo, operacao) {
+    const { data, error } = await this.cliente.rpc('descontar_todos',
+      { p_mesa: mesaId, p_valor_centavos: valorCentavos, p_motivo: motivo || null, p_operacao: operacao });
+    if (error) throw error;
+    return data;
+  },
+
+  async ajustarSaldoPersonagem(personagemId, valorCentavos, motivo, operacao) {
+    const { data, error } = await this.cliente.rpc('ajustar_saldo_personagem',
+      { p_personagem: personagemId, p_valor_centavos: valorCentavos, p_motivo: motivo || null, p_operacao: operacao });
+    if (error) throw error;
+    return data;
+  },
+
+  async historicoFinanceiro(mesaId, limite = 300) {
+    const { data, error } = await this.cliente.from('transacoes_financeiras').select('*')
+      .eq('mesa_id', mesaId).order('criado_em', { ascending: false }).limit(limite);
+    if (error) throw error;
+    return data || [];
+  },
+
   /* ---------------- bestiário privado ---------------- */
 
   async bestiario() {
@@ -597,7 +646,7 @@ const Nuvem = {
      mesmo tópico). Se o novo entrar antes de o antigo sair, o servidor
      ignora o segundo — ele fica 'joined' mas nunca confirma a inscrição no
      Postgres, e nada chega. */
-  async assinar(mesaId, { aoMudarPersonagem, aoChegarLog, aoRolar, aoMudarMapa, aoMudarToken, aoMudarMesa, aoArrastar, aoMudarAnotacao, aoMudarPresenca, aoChegarMensagem, aoLigar, aoCair }) {
+  async assinar(mesaId, { aoMudarPersonagem, aoMudarSaldo, aoChegarLog, aoRolar, aoMudarMapa, aoMudarToken, aoMudarMesa, aoArrastar, aoMudarAnotacao, aoMudarPresenca, aoChegarMensagem, aoLigar, aoCair }) {
     await this.desassinar();
     /* `sons` NÃO entra aqui de propósito.
        O Realtime recusava a inscrição nessa tabela e, como todas as tabelas
@@ -608,6 +657,9 @@ const Nuvem = {
       .on('postgres_changes',
           { event: '*', schema: 'public', table: 'personagens', filter: `mesa_id=eq.${mesaId}` },
           payload => aoMudarPersonagem?.(payload))
+      .on('postgres_changes',
+          { event: '*', schema: 'public', table: 'saldos_personagens', filter: `mesa_id=eq.${mesaId}` },
+          payload => aoMudarSaldo?.(payload))
       .on('postgres_changes',
           { event: 'INSERT', schema: 'public', table: 'logs', filter: `mesa_id=eq.${mesaId}` },
           payload => aoChegarLog?.(payload.new))

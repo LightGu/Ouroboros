@@ -6,6 +6,8 @@ const Mesa = {
     const grid = $('#grid');
     const lista = Store.estado.personagens;
 
+    if (typeof Financas !== 'undefined') Financas.renderPainel();
+
     $('#vazio').hidden = lista.length > 0;
     const anteriores = new Map($$('.card', grid).map(card => [card.dataset.id, $('.retrato-moldura', card)?.dataset.pvAnterior]));
     grid.innerHTML = lista.map((p, i) => this.card(p, i)).join('');
@@ -50,6 +52,11 @@ const Mesa = {
            <span title="Deslocamento"><b>DESL</b> ${esc(p.desl || 0)}m</span>
          </div>`;
 
+    const saldo = typeof Financas !== 'undefined' && !p.rapido && Financas.podeVer(p)
+      ? `<div class="card-saldo"><span><b>SALDO</b> ${Financas.formatar(Financas.saldo(p.id))}</span>
+          ${Store.ehMestre ? `<button class="btn btn-ghost btn-peq" data-financas title="Adicionar ou remover dinheiro">Ajustar</button>` : ''}</div>`
+      : '';
+
     const cor = hexDaCor(p.cor);
     return `
     <article class="card ${naVez ? 'na-vez' : ''} ${morto ? 'abatido' : ''} ${p.rapido ? 'e-rapido' : ''} ${pode ? '' : 'so-leitura'} ${cor ? 'tem-dono' : ''}"
@@ -90,6 +97,7 @@ const Mesa = {
         ${pode ? '' : '<p class="aviso-leitura">Só quem é dono da ficha (ou o mestre) pode mexer.</p>'}
 
         ${barrasExtras}
+        ${saldo}
         ${meta}
       </div>
     </article>`;
@@ -691,6 +699,7 @@ document.addEventListener('click', e => {
   if (e.target.closest('[data-menu]'))        return Mesa.menu(id, e.target);
   if (e.target.closest('[data-addcond]'))     return Mesa.addCondicao(id);
   if (e.target.closest('[data-assumir]'))     return Mesa.assumir(Store.obter(id));
+  if (e.target.closest('[data-financas]') && typeof Financas !== 'undefined') return Financas.ajustar(id);
 
   const bon = e.target.closest('[data-bonus]');
   if (bon) {

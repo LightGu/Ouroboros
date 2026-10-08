@@ -2,7 +2,8 @@
 
 ## Antes de abrir o site
 
-- Execute as migrações v24 até v28, em ordem. A v28 troca todos os códigos antigos de mesa.
+- Execute as migrações v24 até v29, em ordem. A v28 troca todos os códigos antigos de mesa e a v29
+  mantém saldos e operações financeiras protegidos por RLS e RPCs exclusivas do Mestre.
 - No Supabase Auth, habilite CAPTCHA (Cloudflare Turnstile ou hCaptcha) para cadastro e login.
 - Em Auth > Rate Limits, mantenha limites baixos para login, cadastro e recuperação de senha.
 - Configure senha mínima de 10 caracteres no Supabase; o frontend aplica o mesmo limite a novas contas.
