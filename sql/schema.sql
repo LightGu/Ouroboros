@@ -122,7 +122,7 @@ begin
   v_nome := coalesce(nullif(trim(p_nome), ''), 'Minha mesa');
   if length(v_nome) > 80 then raise exception 'Nome da mesa longo demais'; end if;
   loop
-    v_codigo := upper(substr(replace(gen_random_uuid()::text, '-', ''), 1, 12));
+    v_codigo := upper(substr(replace(gen_random_uuid()::text, '-', ''), 1, 6));
     exit when not exists (select 1 from public.mesas where codigo = v_codigo);
   end loop;
   insert into public.mesas (nome, mestre_id, codigo)
@@ -145,7 +145,7 @@ begin
     janela = case when tentativas_entrada.janela < v_agora - interval '1 minute'
                   then v_agora else tentativas_entrada.janela end
   returning quantidade into v_quantidade;
-  if v_quantidade > 10 or p_codigo is null or length(trim(p_codigo)) <> 12 then return null; end if;
+  if v_quantidade > 10 or p_codigo is null or length(trim(p_codigo)) <> 6 then return null; end if;
   select id into v_mesa from public.mesas where codigo = upper(trim(p_codigo));
   if v_mesa is null then return null; end if;
   insert into public.membros (mesa_id, user_id, papel)
@@ -1255,10 +1255,10 @@ delete from public.itens_catalogo where livro = 'Sobrevivendo ao Horror'
 commit;
 
 -- Atualizações do schema também promovem convites antigos para o formato forte.
-update public.mesas set codigo = upper(substr(replace(gen_random_uuid()::text, '-', ''), 1, 12))
-where codigo !~ '^[0-9A-F]{12}$';
+update public.mesas set codigo = upper(substr(replace(gen_random_uuid()::text, '-', ''), 1, 6))
+where codigo !~ '^[0-9A-F]{6}$';
 alter table public.mesas drop constraint if exists mesas_codigo_formato;
-alter table public.mesas add constraint mesas_codigo_formato check (codigo ~ '^[0-9A-F]{12}$');
+alter table public.mesas add constraint mesas_codigo_formato check (codigo ~ '^[0-9A-F]{6}$');
 
 -- Limites de tamanho contra abuso de armazenamento por chamadas diretas à API.
 alter table public.perfis drop constraint if exists perfis_nome_tamanho;

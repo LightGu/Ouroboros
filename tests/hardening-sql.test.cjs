@@ -3,7 +3,7 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const { PGlite } = require('@electric-sql/pglite');
 
-test('v28 executa e bloqueia brute force e dupla reivindicação', async () => {
+test('v28 e v30 executam e bloqueiam brute force e dupla reivindicação', async () => {
   const db = new PGlite();
   try {
     await db.exec(`
@@ -59,12 +59,13 @@ test('v28 executa e bloqueia brute force e dupla reivindicação', async () => {
         '10000000-0000-0000-0000-000000000000',null,'{}');
     `);
     await db.exec(fs.readFileSync('sql/migrations/v28-hardening-pre-lancamento.sql','utf8'));
+    await db.exec(fs.readFileSync('sql/migrations/v30-codigos-mesa-6-caracteres.sql','utf8'));
     const codigo = (await db.query('select codigo from mesas')).rows[0].codigo;
-    assert.match(codigo, /^[0-9A-F]{12}$/);
+    assert.match(codigo, /^[0-9A-F]{6}$/);
 
     await db.exec(`set role authenticated; set app.uid='00000000-0000-0000-0000-000000000002';`);
     for (let i=0;i<11;i++) {
-      const r = await db.query("select public.entrar_na_mesa('000000000000') id");
+      const r = await db.query("select public.entrar_na_mesa('000000') id");
       assert.equal(r.rows[0].id, null);
     }
     await db.exec('reset role;');
