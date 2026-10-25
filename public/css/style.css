@@ -91,9 +91,10 @@ textarea { resize: vertical; }
 }
 
 .brand { display: flex; align-items: center; gap: 12px; }
-.brand-botao { padding: 0; border: 0; background: none; color: inherit; text-align: left; cursor: pointer; font: inherit; }
+.brand-botao { display: block; width: 27px; height: 27px; flex: 0 0 27px; padding: 0; border: 0; background: none; color: inherit; cursor: pointer; }
+.brand-botao .brand-mark { width: 100%; height: 100%; }
 .brand-botao:focus-visible { outline: 2px solid var(--roxo-cl); outline-offset: 5px; border-radius: 5px; }
-.mesas-marca { display: block; margin: -4px auto 10px; padding: 7px; border: 0; border-radius: 50%; background: transparent; cursor: pointer; }
+.mesas-marca { display: block; width: 42px; height: 42px; margin: -4px auto 10px; padding: 0; border: 0; border-radius: 50%; background: transparent; cursor: pointer; }
 .mesas-marca .brand-mark { width: 42px; height: 42px; }
 .mesas-marca:hover { background: color-mix(in srgb, var(--roxo) 12%, transparent); }
 .mesas-marca:focus-visible { outline: 2px solid var(--roxo-cl); outline-offset: 2px; }

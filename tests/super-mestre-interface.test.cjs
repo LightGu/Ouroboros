@@ -13,6 +13,7 @@ test('Ouroboros autentica e separa mesas próprias das demais', { timeout: 15000
     const html = fs.readFileSync(path.join(root, 'public/index.html'), 'utf8')
       .replace(/<script[\s\S]*?<\/script>/g, '').replace(/<link[^>]*>/g, '');
     await page.setContent(html);
+    await page.addStyleTag({ content: fs.readFileSync(path.join(root, 'public/css/style.css'), 'utf8') });
     for (const file of ['dados', 'ui', 'admin-mestre'])
       await page.addScriptTag({ content: fs.readFileSync(path.join(root, `public/js/${file}.js`), 'utf8') });
     await page.evaluate(() => {
@@ -34,6 +35,8 @@ test('Ouroboros autentica e separa mesas próprias das demais', { timeout: 15000
       document.querySelector('#btn-super-mestre-mesas').addEventListener('click', () => AdminMestre.abrir());
     });
     await page.locator('#view-mesas').evaluate(el => { el.hidden = false; });
+    assert.deepEqual(await page.locator('#btn-super-mestre').evaluate(b => { const x=b.getBoundingClientRect(), y=b.querySelector('svg').getBoundingClientRect(); return {botao:[x.width,x.height],logo:[y.width,y.height]}; }), { botao:[27,27], logo:[27,27] });
+    assert.deepEqual(await page.locator('#btn-super-mestre-mesas').evaluate(b => { const x=b.getBoundingClientRect(), y=b.querySelector('svg').getBoundingClientRect(); return {botao:[x.width,x.height],logo:[y.width,y.height]}; }), { botao:[42,42], logo:[42,42] });
     await page.locator('#btn-super-mestre-mesas').click();
     await page.locator('#super-senha').fill('correta123');
     await page.locator('[data-modal-ok]').click();
