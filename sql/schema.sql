@@ -763,8 +763,9 @@ create policy personas_ler   on public.personas for select to authenticated usin
 create policy personas_mexer on public.personas for all    to authenticated
   using (public.eh_mestre(mesa_id)) with check (public.eh_mestre(mesa_id));
 
--- O mestre lê tudo da própria mesa — inclusive conversa entre dois jogadores.
--- A interface informa aos participantes que há moderação administrativa.
+-- Cada membro lê as próprias conversas. O mestre também precisa ler mensagens
+-- das personas que controla, mas não enxerga conversa privada entre jogadores.
+-- A visão completa existe somente no RPC protegido do Mestre Principal.
 drop policy if exists msg_ler    on public.mensagens;
 drop policy if exists msg_criar  on public.mensagens;
 drop policy if exists msg_marcar on public.mensagens;
@@ -772,7 +773,11 @@ drop policy if exists msg_marcar on public.mensagens;
 create policy msg_ler on public.mensagens for select to authenticated
   using (
     public.eh_membro(mesa_id)
-    and (public.eh_mestre(mesa_id) or de_user = auth.uid() or para_user = auth.uid())
+    and (
+      de_user = auth.uid()
+      or para_user = auth.uid()
+      or (public.eh_mestre(mesa_id) and (de_persona is not null or para_persona is not null))
+    )
   );
 
 -- Jogador só manda como ele mesmo. Só o mestre pode falar como persona.

@@ -73,7 +73,9 @@ const App = {
     $('#aba-interludio').hidden = !this.ehMestre || !ordem;
     $('#aba-bestiario').hidden = !this.ehMestre || !ordem;
     $('#aba-homebrew').hidden = !this.ehMestre || !ordem;
-    $('#aba-mensagens').hidden = !this.ehMestre;
+    /* A moderação global pertence somente ao Mestre Principal e fica no
+       painel secreto da logo. Mestres comuns não recebem uma aba de espionagem. */
+    $('#aba-mensagens').hidden = true;
     $('#celular').hidden = false;
     $('#btn-novo').hidden = false;
     $('#btn-rapido').hidden = !this.ehMestre;   /* NPC é coisa de mestre */
@@ -256,6 +258,7 @@ const App = {
 
   mostrar(tela, bestiarioId) {
     if (tela === 'bestiario' && !this.ehMestre) return;
+    if (tela === 'mensagens') return;
     if (tela !== 'bestiario') Bestiario.limpar();
     this.telaAtual = tela;
     ['auth', 'mesas', 'mesa', 'ficha', 'mapa', 'sons', 'campanha', 'interludio', 'bestiario', 'homebrew', 'mensagens', 'super-mestre', 'logs'].forEach(t => {

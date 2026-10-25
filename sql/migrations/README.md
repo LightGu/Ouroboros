@@ -13,3 +13,5 @@ Ordem Paranormal. Por fim, aplique `v32-super-mestre.sql` para instalar o painel
 de moderação autorizado e auditado.
 Depois, aplique `v33-observacao-mesas.sql` para habilitar a lista de mesas de outros
 mestres e sua visualização administrativa estritamente somente leitura.
+Por fim, aplique `v34-privacidade-mensagens-mestres.sql` para remover dos mestres
+comuns o acesso a conversas privadas trocadas exclusivamente entre jogadores.

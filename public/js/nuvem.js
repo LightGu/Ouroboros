@@ -597,8 +597,9 @@ const Nuvem = {
     if (error) throw error;
   },
 
-  /* O RLS decide o que volta: jogador recebe só o que mandou ou recebeu,
-     mestre recebe a mesa inteira. A consulta é a mesma para os dois. */
+  /* O RLS decide o que volta: cada pessoa recebe o que mandou ou recebeu.
+     O mestre também recebe conversas que envolvem suas personas, mas nunca
+     conversas privadas entre dois jogadores. */
   async mensagens(mesaId, limite = 500) {
     const { data, error } = await this.cliente.from('mensagens').select('*')
       .eq('mesa_id', mesaId).order('criado_em').limit(limite);
