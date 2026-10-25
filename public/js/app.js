@@ -226,7 +226,7 @@ const App = {
     if (tela === 'bestiario' && !this.ehMestre) return;
     if (tela !== 'bestiario') Bestiario.limpar();
     this.telaAtual = tela;
-    ['auth', 'mesas', 'mesa', 'ficha', 'mapa', 'sons', 'campanha', 'interludio', 'bestiario', 'homebrew', 'mensagens', 'logs'].forEach(t => {
+    ['auth', 'mesas', 'mesa', 'ficha', 'mapa', 'sons', 'campanha', 'interludio', 'bestiario', 'homebrew', 'mensagens', 'super-mestre', 'logs'].forEach(t => {
       $('#view-' + t).hidden = t !== tela;
     });
     $('#topbar').hidden = tela === 'auth' || tela === 'mesas';
@@ -269,6 +269,8 @@ const App = {
   ligarTopbar() {
     $$('.aba').forEach(b => b.addEventListener('click', () => this.mostrar(b.dataset.aba)));
     $('#btn-conta').addEventListener('click', e => { e.stopPropagation(); Telas.menuConta($('#btn-conta')); });
+    $('#btn-super-mestre').addEventListener('click', () => AdminMestre.abrir());
+    $('#btn-super-voltar').addEventListener('click', () => this.mostrar(this.mesa ? 'mesa' : 'mesas'));
 
     $('#btn-novo').addEventListener('click', () => Criacao.inicio());
     $('#btn-vazio-novo').addEventListener('click', () => Criacao.inicio());

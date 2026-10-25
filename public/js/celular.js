@@ -158,6 +158,7 @@ const Celular = {
         <span class="cel-titulo">Mensagens</span>
         ${App.ehMestre ? '<button class="cel-acao" data-nova-persona title="Criar outro número">+ número</button>' : ''}
       </header>
+      <p class="cel-privacidade">Conversas podem ser revisadas pelo mestre da mesa e pela administração para moderação.</p>
       ${App.ehMestre ? `
         <div class="cel-como">
           <span>meu número</span>
@@ -597,10 +598,7 @@ const Celular = {
   }
 };
 
-/* ============================================================
-   Aba do mestre: toda conversa da mesa, inclusive entre jogadores.
-   Eles não têm como saber que isto existe.
-   ============================================================ */
+/* Aba de moderação do mestre: toda conversa da própria mesa. */
 
 const Mensagens = {
   render() {
@@ -624,8 +622,7 @@ const Mensagens = {
     if (!pares.size) {
       alvo.innerHTML = `<div class="vazio"><div class="vazio-mark">✉</div>
         <h2>Nenhuma mensagem ainda</h2>
-        <p>Tudo que for trocado no celular aparece aqui — inclusive conversa entre dois jogadores.
-           Eles não são avisados de que você lê.</p></div>`;
+        <p>Tudo que for trocado no celular aparece aqui — inclusive conversa entre dois jogadores.</p></div>`;
       return;
     }
 
@@ -633,8 +630,8 @@ const Mensagens = {
       .sort((x, y) => Date.parse(y[y.length - 1].criado_em) - Date.parse(x[x.length - 1].criado_em));
 
     alvo.innerHTML = `
-      <p class="dialogo fraco espia-aviso">🔒 Só você enxerga esta aba. Abrir uma conversa aqui
-         não marca nada como lido — o jogador não percebe.</p>
+      <p class="dialogo fraco espia-aviso">🔒 Área de moderação do mestre. Abrir uma conversa aqui
+         não altera o estado de leitura dos participantes.</p>
       <div class="espia-grade">
         ${grupos.map(g => {
           const p = g[0];

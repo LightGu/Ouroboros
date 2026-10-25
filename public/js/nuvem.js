@@ -59,6 +59,27 @@ const Nuvem = {
     if (error) throw error;
   },
 
+  async confirmarSenha(senha) {
+    const email = App.sessao?.user?.email;
+    if (!email) throw new Error('Sessão sem email.');
+    const { data, error } = await this.cliente.auth.signInWithPassword({ email, password: senha });
+    if (error) throw error;
+    if (data.session) App.sessao = data.session;
+    return data;
+  },
+
+  async ehSuperMestre() {
+    const { data, error } = await this.cliente.rpc('sou_super_mestre');
+    if (error) throw error;
+    return data === true;
+  },
+
+  async mensagensGlobais() {
+    const { data, error } = await this.cliente.rpc('painel_super_mestre_mensagens');
+    if (error) throw error;
+    return data || [];
+  },
+
   /* ---------------- mesas ---------------- */
 
   async mesas() {

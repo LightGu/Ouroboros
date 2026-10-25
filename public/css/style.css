@@ -91,6 +91,8 @@ textarea { resize: vertical; }
 }
 
 .brand { display: flex; align-items: center; gap: 12px; }
+.brand-botao { padding: 0; border: 0; background: none; color: inherit; text-align: left; cursor: pointer; font: inherit; }
+.brand-botao:focus-visible { outline: 2px solid var(--roxo-cl); outline-offset: 5px; border-radius: 5px; }
 
 .brand-titulo { display: flex; align-items: baseline; gap: 6px; }
 .brand h1 { font-size: 19px; font-weight: 700; }
@@ -99,6 +101,26 @@ textarea { resize: vertical; }
 
 .topbar-actions { margin-left: auto; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 .sep { width: 1px; height: 24px; background: var(--linha); margin: 0 4px; }
+
+.super-topo { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 18px; }
+.super-topo .titulo-tela { margin: 8px 0 0; }
+.super-filtros { display: grid; grid-template-columns: minmax(220px, 1fr) minmax(180px, 280px); gap: 10px; margin-bottom: 16px; }
+.super-mesa { margin-bottom: 16px; }
+.super-mesa > header { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
+.super-mesa > header h3 { margin: 0; font-size: 17px; }
+.super-mesa-dono { color: var(--texto-3); font-size: 12px; }
+.super-conversa { padding: 12px; background: var(--bg-2); border: 1px solid var(--linha); border-radius: 10px; margin-top: 8px; }
+.super-conversa summary { cursor: pointer; font-weight: 600; }
+.super-linhas { display: flex; flex-direction: column; gap: 7px; margin-top: 12px; }
+.super-msg { display: grid; grid-template-columns: minmax(110px, .3fr) minmax(180px, 1fr) auto; gap: 10px; padding: 8px; border-radius: 7px; background: var(--painel); }
+.super-msg time { color: var(--texto-3); font-size: 11px; white-space: nowrap; }
+.cel-privacidade { margin: 0; padding: 6px 10px; color: var(--texto-3); background: var(--bg-2); font-size: 9px; line-height: 1.35; text-align: center; }
+
+@media (max-width: 600px) {
+  .super-filtros { grid-template-columns: 1fr; }
+  .super-msg { grid-template-columns: 1fr; }
+  .super-msg time { white-space: normal; }
+}
 
 /* ---------------- botões ---------------- */
 
