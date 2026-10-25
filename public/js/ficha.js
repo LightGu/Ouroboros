@@ -21,6 +21,9 @@ const Ficha = {
     const pvAnterior = mesma ? $('.retrato-ficha', $('#view-ficha'))?.dataset.pvAnterior : undefined;
     this.atual = Store.obter(id);
     if (!this.atual) return;
+    if (this.atual.sistema === 'dnd5e' && typeof FichaDnd !== 'undefined') {
+      return FichaDnd.abrir(this.atual, { mesma, y, foco, pos });
+    }
     if (!mesma) { this.filtroItem = ''; this.ordenacao = {}; }
     App.mostrar('ficha');
     this.aplicarCor($('#view-ficha'), this.atual.cor);

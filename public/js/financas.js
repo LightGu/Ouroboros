@@ -135,6 +135,45 @@ const Financas = {
     el.innerHTML = `Confirma o desconto de <b>${this.formatar(valor)}</b> de <b>${ativos.length} personagem(ns)</b>?`;
   },
 
+  descontarPessoa() {
+    if (!Store.ehMestre) return;
+    const ativos = this.ativos();
+    if (!ativos.length) return toast('Não há personagens para descontar.', 'erro');
+    const opcoes = ativos.map(p =>
+      `<option value="${esc(p.id)}">${esc(p.nome || 'Sem nome')} — ${this.formatar(this.saldo(p.id))}</option>`
+    ).join('');
+    const operacao = crypto.randomUUID(); let enviando = false;
+    Modal.abrir({
+      titulo: 'Descontar de uma Pessoa',
+      corpo: `<p class="dialogo">Escolha a pessoa e informe exatamente quanto deseja retirar do saldo dela.</p>
+        <label class="campo"><span>Personagem</span><select id="fin-personagem">${opcoes}</select></label>
+        <label class="campo"><span>Valor a retirar</span><input id="fin-valor" type="number" min="0.01" max="1000000000" step="0.01" placeholder="25,00" required></label>
+        <label class="campo"><span>Motivo (opcional)</span><input id="fin-motivo" maxlength="500" placeholder="Ex.: compra de equipamento"></label>
+        <p id="fin-erro" class="auth-erro" role="alert"></p>`,
+      confirmar: 'Retirar valor', perigo: true,
+      onConfirmar: async () => {
+        if (enviando) return false;
+        const personagemId = $('#fin-personagem').value;
+        const personagem = ativos.find(p => p.id === personagemId);
+        const valor = this.centavosDoCampo('#fin-valor');
+        if (!personagem) { $('#fin-erro').textContent = 'Escolha um personagem.'; return false; }
+        if (!Number.isSafeInteger(valor) || valor <= 0) { $('#fin-erro').textContent = 'Informe um valor maior que zero.'; return false; }
+        if (this.saldo(personagemId) < valor) {
+          $('#fin-erro').textContent = `Saldo insuficiente. Disponível: ${this.formatar(this.saldo(personagemId))}.`;
+          return false;
+        }
+        enviando = true; const botao = $('[data-modal-ok]'); botao.disabled = true;
+        try {
+          const r = await Nuvem.ajustarSaldoPersonagem(personagemId, -valor, $('#fin-motivo').value.trim(), operacao);
+          this.saldos.set(personagemId, Number(r.saldo_centavos));
+          Mesa.render();
+          toast(`${this.formatar(valor)} retirado de ${personagem.nome || 'personagem'}.`);
+        } catch (e) { $('#fin-erro').textContent = 'Não consegui retirar: ' + (e.message || e); return false; }
+        finally { enviando = false; botao.disabled = false; }
+      }
+    });
+  },
+
   ajustar(personagemId) {
     if (!Store.ehMestre) return;
     const p = Store.obter(personagemId);
@@ -186,6 +225,7 @@ const Financas = {
 document.addEventListener('click', e => {
   if (e.target.closest('#btn-verba-diaria')) return Financas.adicionarVerba();
   if (e.target.closest('#btn-descontar-todos')) return Financas.descontarTodos();
+  if (e.target.closest('#btn-descontar-pessoa')) return Financas.descontarPessoa();
   if (e.target.closest('#btn-configurar-verba')) return Financas.configurar();
   if (e.target.closest('#btn-historico-financeiro')) return Financas.historico();
 });

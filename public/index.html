@@ -107,6 +107,12 @@
         <h3>Criar uma mesa</h3>
         <p>Você vira o mestre e recebe um código pra passar pros jogadores.</p>
         <label class="campo"><span>Nome da mesa</span><input id="nova-mesa" maxlength="80" placeholder="Ex.: Mesa de Segunda"></label>
+        <label class="campo"><span>Sistema de RPG</span>
+          <select id="novo-sistema">
+            <option value="ouroboros">Ordem Paranormal</option>
+            <option value="dnd5e">Dungeons &amp; Dragons 5e</option>
+          </select>
+        </label>
         <button class="btn btn-primary btn-largo" id="btn-criar-mesa" type="submit">Criar mesa</button>
       </form>
       <form class="caixa-acao" id="form-entrar-mesa">
@@ -154,6 +160,7 @@
     <div class="financas-acoes">
       <button class="btn btn-primary" id="btn-verba-diaria">Adicionar Verba Diária</button>
       <button class="btn" id="btn-descontar-todos">Descontar de Todos</button>
+      <button class="btn" id="btn-descontar-pessoa">Descontar de uma Pessoa</button>
       <button class="btn btn-ghost" id="btn-configurar-verba">Configurar verba</button>
       <button class="btn btn-ghost" id="btn-historico-financeiro">Histórico</button>
     </div>
@@ -291,6 +298,7 @@
 <script src="js/paineis.js"></script>
 <script src="js/regras.js"></script>
 <script src="js/ficha.js"></script>
+<script src="js/ficha-dnd.js"></script>
 <script src="js/criacao.js"></script>
 <script src="js/rolagem.js"></script>
 <script src="js/mapa.js"></script>

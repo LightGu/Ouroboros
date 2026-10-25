@@ -1,6 +1,15 @@
-# Fontes, extrações, exemplos e prévias exclusivamente locais.
+# Fontes, extrações, exemplos, livros e arquivos secretos exclusivamente locais.
 private/
 *.pdf
+*.epub
+*.mobi
+
+# Materiais e mídias usados localmente nas sessões.
+Coisas RPG/
+*.mp3
+*.m4a
+*.wav
+*.flac
 
 # Só para desenvolvimento
 .claude/

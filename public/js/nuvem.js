@@ -67,8 +67,8 @@ const Nuvem = {
     return data || [];
   },
 
-  async criarMesa(nome) {
-    const { data, error } = await this.cliente.rpc('criar_mesa', { p_nome: nome });
+  async criarMesa(nome, sistema = 'ouroboros') {
+    const { data, error } = await this.cliente.rpc('criar_mesa', { p_nome: nome, p_sistema: sistema });
     if (error) throw error;
     return data;
   },

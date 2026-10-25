@@ -53,16 +53,23 @@ const App = {
 
   async entrarNaMesa(mesa) {
     this.mesa = mesa;
+    this.mesa.sistema = mesa.sistema || 'ouroboros';
     this.ehMestre = mesa.papel === 'mestre';
     $('#mesa-nome').textContent = mesa.nome;
+    $('#mesa-nome').title = this.mesa.sistema === 'dnd5e' ? 'Dungeons & Dragons 5e' : 'Ordem Paranormal';
+    $('#vazio h2').textContent = this.mesa.sistema === 'dnd5e' ? 'Nenhum personagem na mesa' : 'Nenhum agente na mesa';
+    $('#vazio p').textContent = this.mesa.sistema === 'dnd5e'
+      ? 'Crie um personagem com a ficha completa de D&D 5e, ou um personagem rápido para NPCs e inimigos.'
+      : 'Crie um personagem completo com a ficha de agente, ou um personagem rápido pra usar como NPC / inimigo nos turnos.';
     $('#aba-logs').hidden = !this.ehMestre;
     $('#aba-sons').hidden = !this.ehMestre;
     /* jogador também tem caderno — o dele chama Anotações */
     $('#aba-campanha').hidden = false;
     $('#aba-campanha').textContent = this.ehMestre ? 'Campanha' : 'Anotações';
-    $('#aba-interludio').hidden = !this.ehMestre;
-    $('#aba-bestiario').hidden = !this.ehMestre;
-    $('#aba-homebrew').hidden = !this.ehMestre;
+    const ordem = this.mesa.sistema !== 'dnd5e';
+    $('#aba-interludio').hidden = !this.ehMestre || !ordem;
+    $('#aba-bestiario').hidden = !this.ehMestre || !ordem;
+    $('#aba-homebrew').hidden = !this.ehMestre || !ordem;
     $('#aba-mensagens').hidden = !this.ehMestre;
     $('#celular').hidden = false;
     $('#btn-rapido').hidden = !this.ehMestre;   /* NPC é coisa de mestre */
@@ -174,7 +181,8 @@ const App = {
       mensagens: 'sql/migrations/v6-celular.sql',
       saldos_personagens: 'sql/migrations/v29-financas.sql',
       configuracoes_financeiras: 'sql/migrations/v29-financas.sql',
-      transacoes_financeiras: 'sql/migrations/v29-financas.sql'
+      transacoes_financeiras: 'sql/migrations/v29-financas.sql',
+      'mesas.sistema': 'sql/migrations/v31-sistemas-dnd.sql'
     };
     const arq = arquivos[alvo] || 'sql/schema.sql';
     console.error('falta migração:', alvo, '→', arq, erro);

@@ -18,7 +18,12 @@ const Criacao = {
 
   /* ---------------- porta de entrada ---------------- */
 
-  inicio() {
+  async inicio() {
+    if (App.mesa?.sistema === 'dnd5e') {
+      try { Ficha.abrir((await Store.criar(false)).id); }
+      catch (e) { toast('Não consegui criar: ' + (e.message || e), 'erro'); }
+      return;
+    }
     Modal.abrir({
       titulo: 'Novo personagem',
       corpo: `

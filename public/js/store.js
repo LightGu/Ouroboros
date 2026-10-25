@@ -212,8 +212,10 @@ const Store = {
   /* ---------------- modelo ---------------- */
 
   fichaVazia() {
-    return {
+    const sistema = (typeof App !== 'undefined' && App.mesa?.sistema) || 'ouroboros';
+    const ficha = {
       id: null,
+      sistema,
       rapido: false,
       oculto: false,
       fichaPrivada: true,
@@ -257,11 +259,15 @@ const Store = {
       notas: '',
       condicoes: []
     };
+    if (sistema === 'dnd5e' && typeof fichaDndVazia === 'function') ficha.dnd = fichaDndVazia();
+    return ficha;
   },
 
   normalizar(p) {
     const base = this.fichaVazia();
     const out = Object.assign(base, p || {});
+    out.sistema = p?.sistema || (typeof App !== 'undefined' && App.mesa?.sistema) || 'ouroboros';
+    if (out.sistema === 'dnd5e' && typeof normalizarDnd === 'function') out.dnd = normalizarDnd(p?.dnd);
     out.atributos  = Object.assign(base.atributos, p?.atributos);
     // Converte o total antigo em ajuste, preservando a DT já configurada.
     if (p?.dtRituaisBonus === undefined && String(p?.dtRituais ?? '').trim() && Number.isFinite(Number(p.dtRituais))) {
@@ -269,6 +275,10 @@ const Store = {
       out.dtRituaisBonus = Number(p.dtRituais) - (10 + nivel + Number(out.atributos.PRE || 0));
     }
     out.pv         = Object.assign({ atual: 0, max: 0 }, p?.pv);
+    if (out.sistema === 'dnd5e' && out.dnd?.hp) {
+      out.pv.atual = num(out.dnd.hp.atual);
+      out.pv.max = num(out.dnd.hp.max);
+    }
     out.pe         = Object.assign({ atual: 0, max: 0 }, p?.pe);
     out.san        = Object.assign({ atual: 0, max: 0 }, p?.san);
     out.defesa     = Object.assign({ equip: 0, outros: 0 }, p?.defesa);

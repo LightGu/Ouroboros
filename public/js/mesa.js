@@ -24,6 +24,7 @@ const Mesa = {
   /* ---------------- card ---------------- */
 
   card(p, i) {
+    const dnd = p.sistema === 'dnd5e' ? p.dnd : null;
     if (p.rapido && !Store.ehMestre) return this.cardRapidoPublico(p, i);
     const c = Store.estado.combate;
     const pode = Store.podeEditar(p);
@@ -35,21 +36,23 @@ const Mesa = {
       ? `<img src="${esc(imagem)}" alt="">`
       : `<div class="retrato-vazio" style="--h:${corDoNome(p.nome)}">${esc(iniciais(p.nome))}</div>`;
 
-    const classeTrilha = [p.classe, p.trilha].filter(Boolean).join('/');
+    const classeTrilha = dnd
+      ? [dnd.classe, dnd.subclasse, dnd.nivel ? 'nível ' + dnd.nivel : ''].filter(Boolean).join(' · ')
+      : [p.classe, p.trilha].filter(Boolean).join('/');
     const sub = p.rapido
       ? `<span class="tag tag-rapido">Rápido</span>${classeTrilha ? ' ' + esc(classeTrilha) : ''}`
-      : [classeTrilha, p.origem].filter(Boolean).map(esc).join(' • ') || '<span class="fraco">sem classe</span>';
+      : [classeTrilha, dnd?.raca || p.origem].filter(Boolean).map(esc).join(' • ') || '<span class="fraco">sem classe</span>';
 
-    const barrasExtras = p.rapido ? '' : `
+    const barrasExtras = p.rapido || dnd ? '' : `
       ${this.barra(p, 'pe',  'PE')}
       ${this.barra(p, 'san', 'SAN')}`;
 
     const meta = p.rapido
       ? (p.notas ? `<p class="card-notas">${esc(p.notas)}</p>` : '')
       : `<div class="card-meta">
-           <span title="Defesa"><b>DEF</b> ${defesaTotal(p)}</span>
-           <span title="NEX"><b>NEX</b> ${esc(p.nex || 0)}%</span>
-           <span title="Deslocamento"><b>DESL</b> ${esc(p.desl || 0)}m</span>
+           <span title="${dnd ? 'Classe de Armadura' : 'Defesa'}"><b>${dnd ? 'CA' : 'DEF'}</b> ${dnd ? num(dnd.ca) : defesaTotal(p)}</span>
+           <span title="${dnd ? 'Nível' : 'NEX'}"><b>${dnd ? 'NÍVEL' : 'NEX'}</b> ${esc(dnd?.nivel || p.nex || 0)}${dnd ? '' : '%'}</span>
+           <span title="Deslocamento"><b>DESL</b> ${esc(dnd?.deslocamento || p.desl || 0)}${dnd ? '' : 'm'}</span>
          </div>`;
 
     const saldo = typeof Financas !== 'undefined' && !p.rapido && Financas.podeVer(p)
@@ -176,6 +179,10 @@ const Mesa = {
      Personagem rápido não tem ficha, então não mostra. */
   atributos(p) {
     if (p.rapido) return '';
+    if (p.sistema === 'dnd5e') return `<div class="atrib-card">${DND_ATRIBUTOS.map(a => {
+      const v = num(p.dnd?.atributos?.[a.key], 10);
+      return `<span class="atrib" title="${esc(a.nome)}"><b>${v}</b><i>${a.sigla}</i></span>`;
+    }).join('')}</div>`;
     return `<div class="atrib-card">
       ${ATRIBUTOS.map(a => {
         const v = num(p.atributos[a.key]);
@@ -210,7 +217,7 @@ const Mesa = {
      Linha sem nome e sem dano é linha que o jogador começou e não preencheu;
      essa não conta. */
   ataques(p) {
-    const lista = (p.ataques || []).filter(a => (a.nome || '').trim() || (a.dano || '').trim());
+    const lista = ((p.sistema === 'dnd5e' ? p.dnd?.ataques : p.ataques) || []).filter(a => (a.nome || '').trim() || (a.dano || '').trim());
     if (!lista.length) return '';
     const resto = lista.length - 3;
 
@@ -265,6 +272,7 @@ const Mesa = {
     let novo = num(p.pv.atual) + sinal * q;
     if (max > 0) novo = Math.min(max, novo);
     p.pv.atual = Math.max(0, novo);
+    if (p.sistema === 'dnd5e' && p.dnd?.hp) p.dnd.hp.atual = p.pv.atual;
     Store.salvar(p);
     this.render();
   },
@@ -278,6 +286,7 @@ const Mesa = {
     let novo = num(p[chave].atual) + delta;
     if (max > 0) novo = Math.min(max, novo);
     p[chave].atual = Math.max(0, novo);
+    if (p.sistema === 'dnd5e' && chave === 'pv' && p.dnd?.hp) p.dnd.hp.atual = p.pv.atual;
     Store.salvar(p);
     this.render();
   },
@@ -326,6 +335,7 @@ const Mesa = {
       if (op === 'topo')      { const l = Store.estado.personagens; const i = l.findIndex(x => x.id === p.id);
                                 l.unshift(l.splice(i, 1)[0]); Store.salvarOrdem(); Mesa.render(); }
       if (op === 'cheio')     { ['pv', 'pe', 'san'].forEach(k => p[k].atual = num(p[k].max));
+                                if (p.sistema === 'dnd5e' && p.dnd?.hp) p.dnd.hp.atual = p.pv.atual;
                                 Store.salvar(p); Mesa.render(); toast(`${p.nome || 'Agente'} restaurado.`); }
       if (op === 'remover')   Mesa.confirmarRemocao(p);
     });
@@ -643,6 +653,11 @@ const Mesa = {
     if (!lista.length) return toast('Adicione alguém à mesa primeiro.', 'erro');
 
     const rolagens = lista.map(p => {
+      if (p.sistema === 'dnd5e' && !p.rapido) {
+        const bonus = modificadorDnd(p.dnd?.atributos?.DES) + num(p.dnd?.iniciativaBonus);
+        const dado = d20();
+        return { p, total: dado + bonus, dado, bonus };
+      }
       const b = p.rapido
         ? { dados: 1, bonus: 0 }
         : bonusPericia(p, 'iniciativa');
@@ -763,8 +778,8 @@ document.addEventListener('change', e => {
   if (!p) return;
   const stat = e.target.dataset.stat, statMax = e.target.dataset.statmax;
   if (!Store.podeEditar(p)) { Mesa.render(); return toast('Essa ficha não é sua.', 'erro'); }
-  if (stat)    { p[stat].atual = Math.max(0, num(e.target.value)); Mesa.editando = null; Store.salvar(p); Mesa.render(); }
-  if (statMax) { p[statMax].max = Math.max(0, num(e.target.value)); Mesa.editando = null; Store.salvar(p); Mesa.render(); }
+  if (stat)    { p[stat].atual = Math.max(0, num(e.target.value)); if (p.sistema === 'dnd5e' && stat === 'pv') p.dnd.hp.atual = p.pv.atual; Mesa.editando = null; Store.salvar(p); Mesa.render(); }
+  if (statMax) { p[statMax].max = Math.max(0, num(e.target.value)); if (p.sistema === 'dnd5e' && statMax === 'pv') p.dnd.hp.max = p.pv.max; Mesa.editando = null; Store.salvar(p); Mesa.render(); }
 });
 
 /* fecha o campo de digitar valor ao clicar fora ou apertar Esc */

@@ -82,6 +82,7 @@ const Telas = {
     alvo.innerHTML = mesas.map(m => `
       <button class="mesa-item" data-mesa="${esc(m.id)}">
         <span class="mesa-item-nome">${esc(m.nome)}</span>
+        <span class="tag">${m.sistema === 'dnd5e' ? 'D&D 5e' : 'Ordem Paranormal'}</span>
         <span class="tag ${m.papel === 'mestre' ? 'tag-mestre' : 'tag-jogador'}">${m.papel}</span>
         ${m.papel === 'mestre' ? `<span class="mesa-codigo" title="Código pros jogadores">${esc(m.codigo)}</span>` : ''}
         <span class="mesa-seta">›</span>
@@ -97,11 +98,12 @@ const Telas = {
     $('#form-criar-mesa').addEventListener('submit', async e => {
       e.preventDefault();
       const nome = $('#nova-mesa').value.trim();
+      const sistema = $('#novo-sistema').value;
       if (!nome) return toast('Dá um nome pra mesa.', 'erro');
       const btn = $('#btn-criar-mesa');
       btn.disabled = true;
       try {
-        await Nuvem.criarMesa(nome);
+        await Nuvem.criarMesa(nome, sistema);
         $('#nova-mesa').value = '';
         await this.renderMesas();
         toast('Mesa criada!');
