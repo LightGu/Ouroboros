@@ -139,6 +139,7 @@ const Telas = {
       ${App.ehMestre ? `<button data-op="codigo">Código da mesa: <b>${esc(App.mesa.codigo)}</b></button>` : ''}
       <button data-op="jogadores">Quem está na mesa</button>
       <button data-op="trocar">Trocar de mesa</button>
+      <button data-op="criar-mesa">＋ Criar outra mesa</button>
       <button data-op="nome">Mudar meu nome</button>
       <button data-op="outra">Entrar com outra conta</button>
       ${Contas.html()}
@@ -157,6 +158,7 @@ const Telas = {
       }
       if (op === 'jogadores') this.modalJogadores();
       if (op === 'trocar') App.trocarMesa();
+      if (op === 'criar-mesa') await App.trocarMesa(true);
       if (op === 'nome')   this.modalNome();
       if (op === 'outra')  Contas.novaConta();
       if (op === 'sair')   App.sair();

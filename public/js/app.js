@@ -243,13 +243,18 @@ const App = {
     if (tela !== 'campanha') $('#painel-nota').hidden = true;
   },
 
-  async trocarMesa() {
+  async trocarMesa(focarCriacao = false) {
     await Nuvem.desassinar();
     this.mesa = null;
     Ficha.atual = null;
     Store.estado.personagens = [];
     await Telas.renderMesas();
     this.mostrar('mesas');
+    if (focarCriacao) {
+      const form = $('#form-criar-mesa');
+      form.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      $('#nova-mesa').focus({ preventScroll: true });
+    }
   },
 
   async sair() {
