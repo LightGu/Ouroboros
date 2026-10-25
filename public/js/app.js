@@ -5,6 +5,7 @@ const App = {
   perfil: null,
   mesa: null,
   ehMestre: false,
+  modoObservador: false,
   telaAtual: 'auth',
 
   /* ---------------- boot ---------------- */
@@ -52,9 +53,11 @@ const App = {
   },
 
   async entrarNaMesa(mesa) {
+    this.modoObservador = false;
     this.mesa = mesa;
     this.mesa.sistema = mesa.sistema || 'ouroboros';
     this.ehMestre = mesa.papel === 'mestre';
+    $('#observador-aviso').hidden = true;
     $('#mesa-nome').textContent = mesa.nome;
     $('#mesa-nome').title = this.mesa.sistema === 'dnd5e' ? 'Dungeons & Dragons 5e' : 'Ordem Paranormal';
     $('#vazio h2').textContent = this.mesa.sistema === 'dnd5e' ? 'Nenhum personagem na mesa' : 'Nenhum agente na mesa';
@@ -72,7 +75,10 @@ const App = {
     $('#aba-homebrew').hidden = !this.ehMestre || !ordem;
     $('#aba-mensagens').hidden = !this.ehMestre;
     $('#celular').hidden = false;
+    $('#btn-novo').hidden = false;
     $('#btn-rapido').hidden = !this.ehMestre;   /* NPC é coisa de mestre */
+    $('#btn-vazio-novo').hidden = false;
+    $('#btn-vazio-rapido').hidden = !this.ehMestre;
 
     try {
       await Store.carregar(mesa.id, this.ehMestre);
@@ -112,6 +118,32 @@ const App = {
     Catalogo.carregar().then(() => {
       if (this.telaAtual === 'mesa') Mesa.render();
     }).catch(() => {});
+  },
+
+  async observarMesa(resumo) {
+    try {
+      await Nuvem.desassinar();
+      const pacote = await Nuvem.observarMesa(resumo.id);
+      this.modoObservador = true;
+      this.mesa = Object.assign({}, pacote.mesa, { papel: 'observador' });
+      this.ehMestre = true;
+      Store.mesaId = this.mesa.id;
+      Store.ehMestre = true;
+      Store.estado.personagens = (pacote.personagens || []).map(l => Nuvem.paraApp(l, l.notas || '', l.historia || {}));
+      Store.estado.combate = this.mesa.combate || { ativo: false, indice: 0, rodada: 1 };
+      Financas.saldos = new Map();
+      $('#mesa-nome').textContent = this.mesa.nome + ' · observação';
+      $('#observador-aviso').hidden = false;
+      $$('.aba').forEach(a => { a.hidden = a.dataset.aba !== 'mesa'; });
+      $('#celular').hidden = true;
+      $('#btn-novo').hidden = true;
+      $('#btn-rapido').hidden = true;
+      $('#btn-vazio-novo').hidden = true;
+      $('#btn-vazio-rapido').hidden = true;
+      Mesa.render();
+      this.mostrar('mesa');
+      toast('Modo de observação: nenhuma alteração é permitida.');
+    } catch (e) { toast('Não consegui abrir a mesa: ' + (e.message || e), 'erro'); }
   },
 
   /* O mestre mexeu nos turnos: todo mundo acompanha. */
@@ -246,6 +278,7 @@ const App = {
   async trocarMesa(focarCriacao = false) {
     await Nuvem.desassinar();
     this.mesa = null;
+    this.modoObservador = false;
     Ficha.atual = null;
     Store.estado.personagens = [];
     await Telas.renderMesas();
@@ -270,6 +303,7 @@ const App = {
     $$('.aba').forEach(b => b.addEventListener('click', () => this.mostrar(b.dataset.aba)));
     $('#btn-conta').addEventListener('click', e => { e.stopPropagation(); Telas.menuConta($('#btn-conta')); });
     $('#btn-super-mestre').addEventListener('click', () => AdminMestre.abrir());
+    $('#btn-super-mestre-mesas').addEventListener('click', () => AdminMestre.abrir());
     $('#btn-super-voltar').addEventListener('click', () => this.mostrar(this.mesa ? 'mesa' : 'mesas'));
 
     $('#btn-novo').addEventListener('click', () => Criacao.inicio());

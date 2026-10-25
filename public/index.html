@@ -99,10 +99,18 @@
 <!-- ============ ESCOLHA DE MESA ============ -->
 <main id="view-mesas" class="view view-centro" hidden>
   <div class="cartao-auth cartao-largo">
+    <button class="mesas-marca" id="btn-super-mestre-mesas" type="button" title="Ouroboros" aria-label="Abrir acesso do Mestre Principal">
+      <svg class="brand-mark" aria-hidden="true"><use href="#ouroboros"/></svg>
+    </button>
     <h2 class="titulo-tela">Suas mesas</h2>
+    <div class="alternador" id="mesas-abas" hidden>
+      <button class="alt ativa" type="button" data-lista-mesas="minhas">Minhas mesas</button>
+      <button class="alt" type="button" data-lista-mesas="outras">Mesas dos outros</button>
+    </div>
     <div id="lista-mesas" class="lista-mesas"></div>
+    <div id="lista-mesas-outras" class="lista-mesas" hidden></div>
 
-    <div class="grade-2 espaco-topo">
+    <div class="grade-2 espaco-topo" id="acoes-mesas">
       <form class="caixa-acao" id="form-criar-mesa">
         <h3>Criar uma mesa</h3>
         <p>Você vira o mestre e recebe um código pra passar pros jogadores.</p>
@@ -129,6 +137,8 @@
 
 <!-- ============ MESA ============ -->
 <main id="view-mesa" class="view" hidden>
+
+  <div class="observador-aviso" id="observador-aviso" hidden>VISUALIZAÇÃO ADMINISTRATIVA · SOMENTE LEITURA</div>
 
   <section class="turnbar" id="turnbar">
     <div class="turnbar-left">

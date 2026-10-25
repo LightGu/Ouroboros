@@ -16,7 +16,7 @@ const Financas = {
   },
 
   saldo(personagemId) { return Number(this.saldos.get(personagemId) || 0); },
-  podeVer(p) { return Store.ehMestre || p.donoId === App.sessao?.user?.id; },
+  podeVer(p) { return !App.modoObservador && (Store.ehMestre || p.donoId === App.sessao?.user?.id); },
   ativos() { return Store.estado.personagens.filter(p => !p.rapido); },
 
   async carregar(mesaId = Store.mesaId, ehMestre = Store.ehMestre) {
@@ -36,7 +36,7 @@ const Financas = {
   renderPainel() {
     const painel = $('#financas-painel');
     if (!painel) return;
-    painel.hidden = !Store.ehMestre;
+    painel.hidden = !Store.ehMestre || App.modoObservador;
     $('#financas-verba-atual').textContent = `Verba diária: ${this.formatar(this.verbaDiariaCentavos)}`;
   },
 

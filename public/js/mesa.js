@@ -65,11 +65,10 @@ const Mesa = {
     <article class="card ${naVez ? 'na-vez' : ''} ${morto ? 'abatido' : ''} ${p.rapido ? 'e-rapido' : ''} ${pode ? '' : 'so-leitura'} ${cor ? 'tem-dono' : ''}"
              data-id="${p.id}" data-i="${i}" ${cor ? `style="--dono:${cor}"` : ''}>
       <div class="card-barra-topo">
-        <span class="alca" title="Arraste para mudar a ordem" data-alca role="button" tabindex="-1">⠿</span>
+        ${App.modoObservador ? '' : '<span class="alca" title="Arraste para mudar a ordem" data-alca role="button" tabindex="-1">⠿</span>'}
         <span class="pos">${i + 1}</span>
         <div class="cresce"></div>
-        <button class="btn-mini" data-mover="-1" title="Mover para trás">‹</button>
-        <button class="btn-mini" data-mover="1" title="Mover para frente">›</button>
+        ${App.modoObservador ? '' : '<button class="btn-mini" data-mover="-1" title="Mover para trás">‹</button><button class="btn-mini" data-mover="1" title="Mover para frente">›</button>'}
         <button class="btn-mini" data-menu title="Opções">⋯</button>
       </div>
 
@@ -292,6 +291,7 @@ const Mesa = {
   },
 
   mover(id, direcao) {
+    if (App.modoObservador) return;
     const lista = Store.estado.personagens;
     const i = lista.findIndex(p => p.id === id);
     const j = i + direcao;
@@ -308,14 +308,14 @@ const Mesa = {
     const pop = document.createElement('div');
     pop.className = 'popover';
     pop.innerHTML = `
-      <button data-op="abrir">${p.rapido ? 'Editar rápido' : 'Abrir ficha'}</button>
+      <button data-op="abrir">${p.rapido ? (App.modoObservador ? 'Ver rápido' : 'Editar rápido') : 'Abrir ficha'}</button>
       ${pode ? '<button data-op="imagem">Trocar imagem</button>' : ''}
       ${pode ? '<button data-op="cheio">Restaurar PV/PE/SAN</button>' : ''}
-      <button data-op="topo">Mandar pro topo</button>
-      ${Store.ehMestre ? `<button data-op="oculto">${p.oculto ? 'Mostrar pros jogadores' : 'Esconder dos jogadores'}</button>` : ''}
-      ${Store.ehMestre ? '<button data-op="dono">Definir dono</button>' : ''}
+      ${App.modoObservador ? '' : '<button data-op="topo">Mandar pro topo</button>'}
+      ${Store.ehMestre && !App.modoObservador ? `<button data-op="oculto">${p.oculto ? 'Mostrar pros jogadores' : 'Esconder dos jogadores'}</button>` : ''}
+      ${Store.ehMestre && !App.modoObservador ? '<button data-op="dono">Definir dono</button>' : ''}
       ${pode && !p.rapido ? '<button data-op="cor">Minha cor</button>' : ''}
-      ${Store.ehMestre && !p.rapido && p.donoId ? '<button data-op="liberar">Liberar pros jogadores</button>' : ''}
+      ${Store.ehMestre && !App.modoObservador && !p.rapido && p.donoId ? '<button data-op="liberar">Liberar pros jogadores</button>' : ''}
       ${pode ? '<button data-op="duplicar">Duplicar</button>' : ''}
       ${pode ? '<button data-op="remover" class="perigo">Remover da mesa</button>' : ''}`;
     botao.closest('.card').appendChild(pop);
@@ -593,6 +593,12 @@ const Mesa = {
       }
     });
 
+    if (App.modoObservador) {
+      $$('input, textarea', $('#modal-body')).forEach(el => el.disabled = true);
+      $('#modal-foot').innerHTML = '<button class="btn btn-primary" data-modal-cancelar>Fechar</button>';
+      return;
+    }
+
     $('#r-img').addEventListener('change', async e => {
       try {
         const dados = await lerImagem(e.target.files[0]);
@@ -612,9 +618,10 @@ const Mesa = {
     const c = Store.estado.combate;
     const lista = Store.estado.personagens;
     /* quem não é mestre acompanha, não dirige */
-    $('.turnbar-left').hidden = !Store.ehMestre;
-    ['#btn-anterior', '#btn-proximo', '#btn-parar'].forEach(sel => { $(sel).hidden = !Store.ehMestre; });
-    $('#btn-turnos').hidden = c.ativo || !Store.ehMestre;
+    const controla = Store.ehMestre && !App.modoObservador;
+    $('.turnbar-left').hidden = !controla;
+    ['#btn-anterior', '#btn-proximo', '#btn-parar'].forEach(sel => { $(sel).hidden = !controla; });
+    $('#btn-turnos').hidden = c.ativo || !controla;
     $('#turno-info').hidden = !c.ativo;
     $('#btn-turnos').textContent = '▶ Iniciar turnos';
     if (c.ativo) {
@@ -624,20 +631,21 @@ const Mesa = {
   },
 
   iniciarTurnos() {
-    if (!Store.ehMestre) return;
+    if (!Store.ehMestre || App.modoObservador) return;
     if (!Store.estado.personagens.length) return toast('Adicione alguém à mesa primeiro.', 'erro');
     Store.estado.combate = { ativo: true, indice: 0, rodada: 1 };
     Store.salvarCombate(); this.render();
   },
 
   pararTurnos() {
+    if (App.modoObservador) return;
     Store.estado.combate.ativo = false;
     $('#log-iniciativa').hidden = true;
     Store.salvarCombate(); this.render();
   },
 
   passarTurno(direcao) {
-    if (!Store.ehMestre) return;
+    if (!Store.ehMestre || App.modoObservador) return;
     const c = Store.estado.combate;
     const n = Store.estado.personagens.length;
     if (!n) return;
@@ -648,7 +656,7 @@ const Mesa = {
   },
 
   rolarIniciativa() {
-    if (!Store.ehMestre) return;
+    if (!Store.ehMestre || App.modoObservador) return;
     const lista = Store.estado.personagens;
     if (!lista.length) return toast('Adicione alguém à mesa primeiro.', 'erro');
 

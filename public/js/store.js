@@ -148,14 +148,17 @@ const Store = {
   /* ---------------- permissão ---------------- */
 
   podeEditar(p) {
+    if (typeof App !== 'undefined' && App.modoObservador) return false;
     return this.ehMestre || p.donoId === App.sessao?.user?.id;
   },
 
   podeVerHistoria(p) {
+    if (typeof App !== 'undefined' && App.modoObservador) return true;
     return this.podeEditar(p) || p.historiaPublica === true;
   },
 
   podeVerFicha(p) {
+    if (typeof App !== 'undefined' && App.modoObservador) return true;
     return this.podeEditar(p) || p.fichaPrivada !== true;
   },
 

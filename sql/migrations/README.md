@@ -11,3 +11,5 @@ com 6 caracteres. Em seguida, aplique `v31-sistemas-dnd.sql` para adicionar a es
 sistema por mesa e habilitar Dungeons & Dragons 5e. Mesas existentes permanecem como
 Ordem Paranormal. Por fim, aplique `v32-super-mestre.sql` para instalar o painel global
 de moderação autorizado e auditado.
+Depois, aplique `v33-observacao-mesas.sql` para habilitar a lista de mesas de outros
+mestres e sua visualização administrativa estritamente somente leitura.

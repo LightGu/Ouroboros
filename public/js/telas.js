@@ -68,6 +68,11 @@ const Telas = {
   /* ---------------- mesas ---------------- */
 
   async renderMesas() {
+    $('.titulo-tela', $('#view-mesas')).textContent = 'Suas mesas';
+    $$('[data-lista-mesas]').forEach(b => b.classList.toggle('ativa', b.dataset.listaMesas === 'minhas'));
+    $('#lista-mesas').hidden = false;
+    $('#lista-mesas-outras').hidden = true;
+    $('#acoes-mesas').hidden = false;
     const alvo = $('#lista-mesas');
     alvo.innerHTML = '<p class="vazio-linha">Carregando...</p>';
     let mesas = [];
@@ -76,10 +81,7 @@ const Telas = {
 
     if (!mesas.length) {
       alvo.innerHTML = '<p class="vazio-linha">Você ainda não está em nenhuma mesa. Crie uma abaixo, ou entre com um código.</p>';
-      return;
-    }
-
-    alvo.innerHTML = mesas.map(m => `
+    } else alvo.innerHTML = mesas.map(m => `
       <button class="mesa-item" data-mesa="${esc(m.id)}">
         <span class="mesa-item-nome">${esc(m.nome)}</span>
         <span class="tag">${m.sistema === 'dnd5e' ? 'D&D 5e' : 'Ordem Paranormal'}</span>
@@ -92,9 +94,41 @@ const Telas = {
       const m = mesas.find(x => x.id === b.dataset.mesa);
       App.entrarNaMesa(m);
     }));
+
+    try {
+      const superMestre = await Nuvem.ehSuperMestre();
+      $('#mesas-abas').hidden = !superMestre;
+      if (superMestre) await this.renderMesasObservacao();
+    } catch { $('#mesas-abas').hidden = true; }
+  },
+
+  async renderMesasObservacao() {
+    const alvo = $('#lista-mesas-outras');
+    alvo.innerHTML = '<p class="vazio-linha">Carregando mesas…</p>';
+    const mesas = await Nuvem.mesasParaObservar();
+    alvo.innerHTML = mesas.length ? mesas.map(m => `
+      <button class="mesa-item" data-observar="${esc(m.id)}">
+        <span class="mesa-item-nome">${esc(m.nome)}</span>
+        <span class="tag">${m.sistema === 'dnd5e' ? 'D&D 5e' : 'Ordem Paranormal'}</span>
+        <span class="tag">SOMENTE LEITURA</span>
+        <span class="mesa-codigo">Mestre: ${esc(m.mestre_nome || '—')}</span>
+        <span class="mesa-seta">›</span>
+      </button>`).join('') : '<p class="vazio-linha">Nenhuma mesa de outro mestre.</p>';
+    $$('[data-observar]', alvo).forEach(b => b.addEventListener('click', () => {
+      const mesa = mesas.find(m => m.id === b.dataset.observar);
+      if (mesa) App.observarMesa(mesa);
+    }));
   },
 
   ligarMesas() {
+    $$('[data-lista-mesas]').forEach(b => b.addEventListener('click', () => {
+      const outras = b.dataset.listaMesas === 'outras';
+      $$('[data-lista-mesas]').forEach(x => x.classList.toggle('ativa', x === b));
+      $('#lista-mesas').hidden = outras;
+      $('#lista-mesas-outras').hidden = !outras;
+      $('#acoes-mesas').hidden = outras;
+      $('.titulo-tela', $('#view-mesas')).textContent = outras ? 'Mesas dos outros' : 'Suas mesas';
+    }));
     $('#form-criar-mesa').addEventListener('submit', async e => {
       e.preventDefault();
       const nome = $('#nova-mesa').value.trim();
@@ -135,7 +169,9 @@ const Telas = {
     document.querySelectorAll('.popover').forEach(el => el.remove());
     const pop = document.createElement('div');
     pop.className = 'popover popover-conta';
-    pop.innerHTML = `
+    pop.innerHTML = App.modoObservador ? `
+      <button data-op="trocar">Voltar às minhas mesas</button>
+      <button data-op="sair" class="perigo">Sair da conta</button>` : `
       ${App.ehMestre ? `<button data-op="codigo">Código da mesa: <b>${esc(App.mesa.codigo)}</b></button>` : ''}
       <button data-op="jogadores">Quem está na mesa</button>
       <button data-op="trocar">Trocar de mesa</button>

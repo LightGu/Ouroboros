@@ -80,6 +80,18 @@ const Nuvem = {
     return data || [];
   },
 
+  async mesasParaObservar() {
+    const { data, error } = await this.cliente.rpc('listar_mesas_observacao');
+    if (error) throw error;
+    return data || [];
+  },
+
+  async observarMesa(mesaId) {
+    const { data, error } = await this.cliente.rpc('observar_mesa', { p_mesa: mesaId });
+    if (error) throw error;
+    return data;
+  },
+
   /* ---------------- mesas ---------------- */
 
   async mesas() {

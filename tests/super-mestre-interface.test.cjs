@@ -31,8 +31,10 @@ test('Ouroboros autentica e separa mesas próprias das demais', { timeout: 15000
       document.querySelector('#carregando').hidden = true;
       document.querySelector('#topbar').hidden = false;
       document.querySelector('#btn-super-mestre').addEventListener('click', () => AdminMestre.abrir());
+      document.querySelector('#btn-super-mestre-mesas').addEventListener('click', () => AdminMestre.abrir());
     });
-    await page.locator('#btn-super-mestre').click();
+    await page.locator('#view-mesas').evaluate(el => { el.hidden = false; });
+    await page.locator('#btn-super-mestre-mesas').click();
     await page.locator('#super-senha').fill('correta123');
     await page.locator('[data-modal-ok]').click();
     await page.waitForSelector('#view-super-mestre:not([hidden])');
