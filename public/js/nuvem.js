@@ -634,10 +634,18 @@ const Nuvem = {
   /* ---------------- caderno de campanha ---------------- */
 
   async anotacoes(mesaId) {
-    const { data, error } = await this.cliente.from('anotacoes').select('*')
+    let r = await this.cliente.from('anotacoes')
+      .select('*, anotacao_compartilhamentos(user_id)')
       .eq('mesa_id', mesaId).order('atualizado_em', { ascending: false });
-    if (error) throw error;
-    return data || [];
+    if (r.error && /anotacao_compartilhamentos|relationship|schema cache/i.test(r.error.message || '')) {
+      App.faltaMigracao(r.error);
+      r = await this.cliente.from('anotacoes').select('*')
+        .eq('mesa_id', mesaId).order('atualizado_em', { ascending: false });
+    }
+    if (r.error) throw r.error;
+    return (r.data || []).map(n => Object.assign(n, {
+      compartilhados_com: (n.anotacao_compartilhamentos || []).map(c => c.user_id)
+    }));
   },
 
   async criarAnotacao(a) {
@@ -658,6 +666,22 @@ const Nuvem = {
   async salvarAnotacao(id, campos) {
     const { error } = await this.cliente.from('anotacoes').update(campos).eq('id', id);
     if (error) throw error;
+  },
+
+  async compartilharAnotacao(id, usuarios) {
+    const { data, error } = await this.cliente.rpc('definir_compartilhamento_anotacao', {
+      p_anotacao: id, p_usuarios: usuarios || []
+    });
+    if (error) throw error;
+    return data || [];
+  },
+
+  async renomearAnotacao(id, titulo) {
+    const { data, error } = await this.cliente.rpc('renomear_anotacao', {
+      p_anotacao: id, p_novo_titulo: titulo
+    });
+    if (error) throw error;
+    return data;
   },
 
   async apagarAnotacao(id) {

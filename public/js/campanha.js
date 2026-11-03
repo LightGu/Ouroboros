@@ -20,15 +20,25 @@ const Campanha = {
   async carregar() {
     try { this.lista = await Nuvem.anotacoes(App.mesa.id); }
     catch (e) { this.lista = []; App.faltaMigracao(e); }
+    if (!(Celular.membros || []).length) {
+      try { Celular.membros = await Nuvem.membros(App.mesa.id); }
+      catch (e) { console.error('Não consegui carregar os destinatários das anotações:', e); }
+    }
     this.render();
   },
 
   /* ---------------- links ---------------- */
 
   /* [[Assim]] — mesmo formato do Obsidian */
+  alvoDoLink(link) {
+    const bruto = String(link || '');
+    const cortes = [bruto.indexOf('|'), bruto.indexOf('#')].filter(i => i >= 0);
+    return bruto.slice(0, cortes.length ? Math.min(...cortes) : bruto.length).trim();
+  },
+
   linksDe(nota) {
     const achados = String(nota.texto || '').match(/\[\[([^\]\n]+)\]\]/g) || [];
-    return [...new Set(achados.map(x => x.slice(2, -2).trim()).filter(Boolean))];
+    return [...new Set(achados.map(x => this.alvoDoLink(x.slice(2, -2))).filter(Boolean))];
   },
 
   porTitulo(t) {
@@ -44,6 +54,60 @@ const Campanha = {
 
   nomeAutor(n) {
     return (Celular.membros || []).find(m => m.id === n.autor_id)?.nome || 'alguém';
+  },
+
+  elegiveis() {
+    const eu = App.sessao?.user?.id;
+    return (Celular.membros || []).filter(m => m.id !== eu)
+      .sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR'));
+  },
+
+  nomesCompartilhados(n) {
+    const ids = new Set(n.compartilhados_com || []);
+    return this.elegiveis().filter(m => ids.has(m.id)).map(m => m.nome);
+  },
+
+  resumoCompartilhamento(n) {
+    const nomes = this.nomesCompartilhados(n);
+    return nomes.length ? `Visível para: ${nomes.join(', ')}` : 'Privada — somente você';
+  },
+
+  partilhaMarkup(prefixo, selecionados = []) {
+    const marcados = new Set(selecionados || []), membros = this.elegiveis();
+    return `<fieldset class="nota-partilha" data-partilha="${prefixo}">
+      <legend>Quem pode ver esta anotação?</legend>
+      ${membros.length ? `<div class="nota-partilha-acoes"><button class="btn btn-ghost btn-peq" type="button" data-marcar-todos>Marcar todos</button></div>
+        <div class="nota-partilha-lista">${membros.map(m => `<label>
+          <input type="checkbox" value="${esc(m.id)}" ${marcados.has(m.id) ? 'checked' : ''}>
+          <span>${esc(m.nome)}</span><small>${m.papel === 'mestre' ? 'mestre' : 'jogador'}</small>
+        </label>`).join('')}</div>` : '<p class="dialogo fraco">Nenhum outro membro elegível nesta mesa.</p>'}
+      <p class="nota-partilha-resumo"></p>
+    </fieldset>`;
+  },
+
+  selecionados(prefixo) {
+    return $$(`[data-partilha="${prefixo}"] input[type="checkbox"]:checked`).map(c => c.value);
+  },
+
+  ligarPartilha(prefixo, aoMudar) {
+    const caixa = $(`[data-partilha="${prefixo}"]`);
+    if (!caixa) return;
+    const atualizar = () => {
+      const ids = new Set(this.selecionados(prefixo));
+      const nomes = this.elegiveis().filter(m => ids.has(m.id)).map(m => m.nome);
+      $('.nota-partilha-resumo', caixa).textContent = nomes.length
+        ? `Selecionados: ${nomes.join(', ')}` : 'Nenhum selecionado: a nota ficará privada.';
+    };
+    $$('input[type="checkbox"]', caixa).forEach(c => c.addEventListener('change', () => {
+      atualizar(); aoMudar?.(this.selecionados(prefixo));
+    }));
+    $('[data-marcar-todos]', caixa)?.addEventListener('click', () => {
+      const checks = $$('input[type="checkbox"]', caixa);
+      const marcar = checks.some(c => !c.checked);
+      checks.forEach(c => { c.checked = marcar; });
+      atualizar(); aoMudar?.(this.selecionados(prefixo));
+    });
+    atualizar();
   },
 
   corDoTipo(tipo) {
@@ -77,7 +141,7 @@ const Campanha = {
            data-tipo="${esc(t)}" style="--h:${this.corDoTipo(t)}">${esc(t)}</button>`).join('')}
       </div>
       <div class="cresce"></div>
-      <span class="dica-som">${this.lista.length} anotações · só você vê</span>`;
+      <span class="dica-som">${this.lista.length} anotações · privadas ou compartilhadas por pessoa</span>`;
 
     $('#btn-nova-nota').addEventListener('click', () => this.nova());
     $('#btn-so-minhas')?.addEventListener('click', () => { this.soMinhas = !this.soMinhas; this.render(); });
@@ -128,7 +192,7 @@ const Campanha = {
       <article class="nota" data-nota="${n.id}" style="--h:${this.corDoTipo(n.tipo)}">
         <header class="nota-cab">
           <span class="nota-tipo">${esc(n.tipo)}</span>
-          ${n.compartilhada ? '<span class="nota-selo" title="Todo mundo da mesa vê">compartilhada</span>' : ''}
+          ${(n.compartilhados_com || []).length ? `<span class="nota-selo" title="${esc(this.minhaEh(n) ? this.resumoCompartilhamento(n) : 'Compartilhada com você')}">compartilhada</span>` : ''}
           ${!this.minhaEh(n) ? `<span class="nota-autor">de ${esc(this.nomeAutor(n))}</span>` : ''}
           ${n.fixada ? '<span class="nota-fixada" title="Fixada">★</span>' : ''}
         </header>
@@ -159,23 +223,28 @@ const Campanha = {
             <select id="nn-tipo">${TIPOS.map(t => `<option>${t.nome}</option>`).join('')}</select></label>
         </div>
         <label class="campo"><span>Etiquetas (separadas por vírgula)</span>
-          <input id="nn-tags" placeholder="hospital, suspeito"></label>`,
+          <input id="nn-tags" placeholder="hospital, suspeito"></label>
+        ${this.partilhaMarkup('nova')}`,
       confirmar: 'Criar',
       onConfirmar: async () => {
         const t = $('#nn-titulo').value.trim();
         if (!t) { toast('Precisa de um título.', 'erro'); return false; }
-        if (this.porTitulo(t)) { toast('Já existe uma anotação com esse título.', 'erro'); return false; }
+        if (this.lista.some(x => this.minhaEh(x) && x.titulo.trim().toLowerCase() === t.toLowerCase())) {
+          toast('Já existe uma anotação com esse título.', 'erro'); return false;
+        }
         try {
           const n = await Nuvem.criarAnotacao({
             mesa_id: App.mesa.id, titulo: t, tipo: $('#nn-tipo').value,
             etiquetas: $('#nn-tags').value.split(',').map(x => x.trim()).filter(Boolean), texto: ''
           });
+          n.compartilhados_com = await Nuvem.compartilharAnotacao(n.id, this.selecionados('nova'));
           this.lista.unshift(n);
           this.render();
           this.abrir(n.id);
         } catch (e) { toast('Erro: ' + (e.message || e), 'erro'); return false; }
       }
     });
+    this.ligarPartilha('nova');
   },
 
   abrir(id) {
@@ -210,10 +279,9 @@ const Campanha = {
           <select id="an-tipo">${TIPOS.map(t => `<option ${t.nome === n.tipo ? 'selected' : ''}>${t.nome}</option>`).join('')}</select>
           <input id="an-tags" value="${esc((n.etiquetas || []).join(', '))}" placeholder="etiquetas, separadas, por vírgula">
           <button class="btn-mini ${n.fixada ? 'ativo' : ''}" id="an-fixar" title="Fixar">★</button>
-          <button class="btn-mini ${n.compartilhada ? 'ativo' : ''}" id="an-partilhar"
-                  title="${n.compartilhada ? 'Todo mundo da mesa vê' : 'Só você vê'}">${n.compartilhada ? '👁' : '🔒'}</button>
           <button class="btn-mini perigo" id="an-apagar" title="Apagar">✕</button>
         </div>
+        ${this.minhaEh(n) ? this.partilhaMarkup('editar', n.compartilhados_com) : '<p class="nota-partilha-leitura">Compartilhada com você · somente leitura</p>'}
         <textarea id="an-texto" class="nota-texto" placeholder="Escreva aqui.&#10;&#10;Use [[Nome de outra anotação]] pra ligar as duas — digite [[ que eu sugiro os títulos.">${esc(n.texto || '')}</textarea>
         <div id="an-sugestoes" class="sugestoes" hidden></div>
 
@@ -231,21 +299,17 @@ const Campanha = {
     $('#an-fixar').addEventListener('click', () => {
       n.fixada = !n.fixada; this.gravar(n, { fixada: n.fixada }); this.renderNota(); this.render();
     });
-    $('#an-partilhar').addEventListener('click', () => {
-      n.compartilhada = !n.compartilhada;
-      this.gravar(n, { compartilhada: n.compartilhada });
-      toast(n.compartilhada ? 'Agora todo mundo da mesa vê.' : 'Voltou a ser só sua.');
-      this.renderNota(); this.render();
-    });
+    if (this.minhaEh(n)) this.ligarPartilha('editar', ids => this.agendarCompartilhamento(n, ids));
 
     /* anotação de outra pessoa: dá pra ler, não pra mexer */
     if (!this.minhaEh(n)) {
       $$('#painel-nota input, #painel-nota textarea, #painel-nota select').forEach(el => el.disabled = true);
-      $$('#an-fixar, #an-partilhar, #an-apagar').forEach(el => el.remove());
+      $$('#an-fixar, #an-apagar').forEach(el => el.remove());
       $('#nota-salvo').textContent = 'de ' + this.nomeAutor(n) + ' — somente leitura';
     }
 
-    const campos = { titulo: '#an-titulo', tipo: '#an-tipo', texto: '#an-texto' };
+    $('#an-titulo').addEventListener('change', e => this.renomear(n, e.target.value));
+    const campos = { tipo: '#an-tipo', texto: '#an-texto' };
     Object.entries(campos).forEach(([chave, sel]) => {
       $(sel).addEventListener('input', e => {
         n[chave] = e.target.value;
@@ -264,6 +328,46 @@ const Campanha = {
     }));
     $$('[data-abrir-id]', $('#painel-nota')).forEach(b =>
       b.addEventListener('click', () => this.abrir(b.dataset.abrirId)));
+  },
+
+  async alterarCompartilhamento(n, ids) {
+    try {
+      n.compartilhados_com = await Nuvem.compartilharAnotacao(n.id, ids);
+      toast(n.compartilhados_com.length ? 'Compartilhamento atualizado.' : 'A anotação voltou a ser privada.');
+      this.renderLista();
+    } catch (e) {
+      toast('Não consegui compartilhar: ' + (e.message || e), 'erro');
+      this.renderNota();
+    }
+  },
+
+  agendarCompartilhamento(n, ids) {
+    clearTimeout(this._partilhaT);
+    this._partilhaT = setTimeout(() => this.alterarCompartilhamento(n, ids), 180);
+  },
+
+  async renomear(n, novoTitulo) {
+    const antigo = n.titulo, novo = String(novoTitulo || '').trim();
+    if (!novo) { $('#an-titulo').value = antigo; return toast('Precisa de um título.', 'erro'); }
+    if (novo === antigo) return;
+    if (this.lista.some(x => x.id !== n.id && x.autor_id === n.autor_id && x.titulo.trim().toLowerCase() === novo.toLowerCase())) {
+      $('#an-titulo').value = antigo;
+      return toast('Já existe uma anotação com esse título.', 'erro');
+    }
+    const ind = $('#nota-salvo');
+    if (ind) { ind.textContent = 'renomeando e atualizando links...'; ind.classList.add('salvando'); }
+    try {
+      await Nuvem.renomearAnotacao(n.id, novo);
+      this.lista = await Nuvem.anotacoes(App.mesa.id);
+      this.aberta = this.lista.find(x => x.id === n.id) || null;
+      if (this.aberta) this.renderNota();
+      this.render();
+      toast(`Anotação renomeada; links para [[${antigo}]] foram atualizados.`);
+    } catch (e) {
+      n.titulo = antigo;
+      if ($('#an-titulo')) $('#an-titulo').value = antigo;
+      toast('Não consegui renomear: ' + (e.message || e), 'erro');
+    }
   },
 
   /* sugere títulos existentes quando você digita [[ */

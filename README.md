@@ -198,7 +198,9 @@ instalação que já estava na v24, execute, em ordem, `sql/migrations/v25-integ
 `sql/migrations/v26-integridade-anotacoes-leituras.sql`, `sql/migrations/v27-integridade-rolagens.sql` e
 `sql/migrations/v28-hardening-pre-lancamento.sql`. Para habilitar o gerenciamento de dinheiro, execute depois
 `sql/migrations/v29-financas.sql`, `sql/migrations/v30-codigos-mesa-6-caracteres.sql` e
-`sql/migrations/v31-sistemas-dnd.sql`.
+`sql/migrations/v31-sistemas-dnd.sql`. Em seguida, aplique `v32-super-mestre.sql`,
+`v33-observacao-mesas.sql`, `v34-privacidade-mensagens-mestres.sql` e
+`v35-mensagens-e-compartilhamento-notas.sql`, nesta ordem.
 
 - A versão visível fica no `public/index.html` e no `package.json`; cada fix publicado incrementa a versão.
 - `create table if not exists`, `drop policy if exists` antes de `create policy`

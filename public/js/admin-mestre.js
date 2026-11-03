@@ -6,7 +6,7 @@ const AdminMestre = {
   erro(e) {
     const msg = String(e?.message || e || 'Erro desconhecido');
     return /sou_super_mestre|painel_super_mestre|schema cache/i.test(msg)
-      ? 'Falta executar sql/migrations/v32-super-mestre.sql no Supabase.' : msg;
+      ? 'Falta executar as migrações v32 e v35 no Supabase.' : msg;
   },
   liberado() {
     try { return localStorage.getItem('ouroboros_super_mestre_' + App.sessao?.user?.id) === '1'; }
@@ -76,7 +76,12 @@ const AdminMestre = {
       alvo.innerHTML = '<div class="vazio"><h2>Nenhuma mensagem encontrada</h2><p>Ajuste a busca ou o filtro de mesas.</p></div>';
       return;
     }
-    alvo.innerHTML = [...mesas.values()].map(lista => {
+    const conversasTotal = [...mesas.values()].reduce((total, lista) => {
+      const pares = new Set(lista.map(m => [m.remetente, m.destinatario].sort().join('|')));
+      return total + pares.size;
+    }, 0);
+    alvo.innerHTML = `<div class="super-resumo"><b>${itens.length}</b> mensagens privadas ·
+      <b>${conversasTotal}</b> conversas · <b>${mesas.size}</b> mesas</div>` + [...mesas.values()].map(lista => {
       const primeira = lista[0], conversas = new Map();
       lista.forEach(m => {
         const k = [m.remetente, m.destinatario].sort().join('|');
@@ -87,7 +92,7 @@ const AdminMestre = {
         <header><h3>${esc(primeira.mesa_nome)}</h3>
           <span class="tag ${primeira.mesa_propria ? 'tag-mestre' : ''}">${primeira.mesa_propria ? 'CRIADA POR MIM' : 'OUTRO MESTRE'}</span>
           <span class="super-mesa-dono">Mestre: ${esc(primeira.mestre_nome || '—')}</span></header>
-        ${[...conversas.values()].map(g => `<details class="super-conversa">
+        ${[...conversas.values()].map(g => `<details class="super-conversa" open>
           <summary>${esc(g[0].remetente)} ↔ ${esc(g[0].destinatario)} · ${g.length} mensagem(ns)</summary>
           <div class="super-linhas">${g.slice().reverse().map(m => `<div class="super-msg"><b>${esc(m.remetente)}</b><span>${esc(m.texto)}</span><time>${new Date(m.criado_em).toLocaleString('pt-BR')}</time></div>`).join('')}</div>
         </details>`).join('')}

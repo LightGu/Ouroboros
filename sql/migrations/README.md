@@ -15,3 +15,6 @@ Depois, aplique `v33-observacao-mesas.sql` para habilitar a lista de mesas de ou
 mestres e sua visualização administrativa estritamente somente leitura.
 Por fim, aplique `v34-privacidade-mensagens-mestres.sql` para remover dos mestres
 comuns o acesso a conversas privadas trocadas exclusivamente entre jogadores.
+Depois, aplique `v35-mensagens-e-compartilhamento-notas.sql`: ela garante que o
+painel do Mestre Principal continue lendo todas as mensagens, adiciona destinatários
+específicos às anotações e renomeia notas com atualização transacional dos wikilinks.

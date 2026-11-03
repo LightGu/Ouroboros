@@ -42,6 +42,9 @@ test('Ouroboros autentica e separa mesas próprias das demais', { timeout: 15000
     await page.locator('[data-modal-ok]').click();
     await page.waitForSelector('#view-super-mestre:not([hidden])');
     assert.equal(await page.locator('.super-mesa').count(), 2);
+    assert.match(await page.locator('.super-resumo').textContent(), /2 mensagens privadas/);
+    assert.equal(await page.locator('.super-conversa[open]').count(), 2);
+    assert.match(await page.locator('.super-msg').first().textContent(), /olá|teste/);
     assert.match(await page.locator('#super-mensagens').textContent(), /CRIADA POR MIM/);
     assert.match(await page.locator('#super-mensagens').textContent(), /OUTRO MESTRE/);
     await page.locator('#super-escopo').selectOption('outras');
