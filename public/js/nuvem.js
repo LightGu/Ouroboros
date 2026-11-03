@@ -80,6 +80,12 @@ const Nuvem = {
     return data || [];
   },
 
+  async mensagensDaMesaPrincipal(mesaId) {
+    const { data, error } = await this.cliente.rpc('painel_super_mestre_mensagens_mesa', { p_mesa: mesaId });
+    if (error) throw error;
+    return data || [];
+  },
+
   async mesasParaObservar() {
     const { data, error } = await this.cliente.rpc('listar_mesas_observacao');
     if (error) throw error;

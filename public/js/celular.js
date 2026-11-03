@@ -38,7 +38,6 @@ const Celular = {
           .forEach(r => App.faltaMigracao(r.reason));
 
     this.render();
-    Mensagens.render();
   },
 
   eu() { return App.sessao.user.id; },
@@ -598,11 +597,31 @@ const Celular = {
   }
 };
 
-/* Aba de moderação do mestre: toda conversa da própria mesa. */
+/* Aba local de moderação: somente o Mestre Principal que também é mestre
+   da mesa. A lista completa vem de RPC protegido, nunca do cache do celular. */
 
 const Mensagens = {
+  msgs: [],
+
+  async carregar() {
+    if (!App.podeModerarMensagens || !App.ehMestre || !App.mesa?.id) return;
+    const alvo = $('#mensagens-corpo');
+    if (!alvo) return;
+    alvo.innerHTML = '<p class="vazio-linha">Carregando mensagens desta mesa…</p>';
+    try {
+      this.msgs = await Nuvem.mensagensDaMesaPrincipal(App.mesa.id);
+      this.render();
+    } catch (e) {
+      const msg = /painel_super_mestre_mensagens_mesa|schema cache/i.test(String(e?.message || e))
+        ? 'Falta executar sql/migrations/v36-mensagens-locais-mestre-principal.sql no Supabase.'
+        : String(e?.message || e);
+      alvo.innerHTML = `<p class="vazio-linha">${esc(msg)}</p>`;
+      App.faltaMigracao(e);
+    }
+  },
+
   render() {
-    if (!App.ehMestre) return;
+    if (!App.podeModerarMensagens || !App.ehMestre) return;
     const alvo = $('#mensagens-corpo');
     if (!alvo) return;
 
@@ -611,7 +630,7 @@ const Mensagens = {
 
     /* agrupa por par de conversa, sem olhar quem começou */
     const pares = new Map();
-    Celular.msgs.forEach(m => {
+    this.msgs.forEach(m => {
       const a = m.de_persona   ? 'p:' + m.de_persona   : 'u:' + m.de_user;
       const b = m.para_persona ? 'p:' + m.para_persona : 'u:' + m.para_user;
       const k = [a, b].sort().join('|');
@@ -630,7 +649,7 @@ const Mensagens = {
       .sort((x, y) => Date.parse(y[y.length - 1].criado_em) - Date.parse(x[x.length - 1].criado_em));
 
     alvo.innerHTML = `
-      <p class="dialogo fraco espia-aviso">🔒 Área de moderação do mestre. Abrir uma conversa aqui
+      <p class="dialogo fraco espia-aviso">🔒 Área local do Mestre Principal. Abrir uma conversa aqui
          não altera o estado de leitura dos participantes.</p>
       <div class="espia-grade">
         ${grupos.map(g => {

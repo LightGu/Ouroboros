@@ -2,10 +2,11 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 
-test('mestre comum não recebe aba nem rota de moderação', () => {
+test('aba local exige Mestre Principal validado e mestre da mesa', () => {
   const app = fs.readFileSync('public/js/app.js', 'utf8');
-  assert.match(app, /\$\('#aba-mensagens'\)\.hidden = true/);
-  assert.match(app, /if \(tela === 'mensagens'\) return/);
+  assert.match(app, /this\.podeModerarMensagens = await Nuvem\.ehSuperMestre\(\)/);
+  assert.match(app, /\$\('#aba-mensagens'\)\.hidden = !this\.podeModerarMensagens/);
+  assert.match(app, /if \(tela === 'mensagens' && !this\.podeModerarMensagens\) return/);
   assert.doesNotMatch(app, /\$\('#aba-mensagens'\)\.hidden = !this\.ehMestre/);
 });
 

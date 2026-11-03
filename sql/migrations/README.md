@@ -18,3 +18,5 @@ comuns o acesso a conversas privadas trocadas exclusivamente entre jogadores.
 Depois, aplique `v35-mensagens-e-compartilhamento-notas.sql`: ela garante que o
 painel do Mestre Principal continue lendo todas as mensagens, adiciona destinatários
 específicos às anotações e renomeia notas com atualização transacional dos wikilinks.
+Depois, aplique `v36-mensagens-locais-mestre-principal.sql` para devolver a aba
+local de mensagens exclusivamente ao Mestre Principal quando ele for o mestre da mesa.

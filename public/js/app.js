@@ -5,6 +5,7 @@ const App = {
   perfil: null,
   mesa: null,
   ehMestre: false,
+  podeModerarMensagens: false,
   modoObservador: false,
   telaAtual: 'auth',
 
@@ -57,6 +58,11 @@ const App = {
     this.mesa = mesa;
     this.mesa.sistema = mesa.sistema || 'ouroboros';
     this.ehMestre = mesa.papel === 'mestre';
+    this.podeModerarMensagens = false;
+    if (this.ehMestre) {
+      try { this.podeModerarMensagens = await Nuvem.ehSuperMestre(); }
+      catch (e) { console.error('Não consegui validar o Mestre Principal:', e); }
+    }
     $('#observador-aviso').hidden = true;
     $('#mesa-nome').textContent = mesa.nome;
     $('#mesa-nome').title = this.mesa.sistema === 'dnd5e' ? 'Dungeons & Dragons 5e' : 'Ordem Paranormal';
@@ -73,9 +79,9 @@ const App = {
     $('#aba-interludio').hidden = !this.ehMestre || !ordem;
     $('#aba-bestiario').hidden = !this.ehMestre || !ordem;
     $('#aba-homebrew').hidden = !this.ehMestre || !ordem;
-    /* A moderação global pertence somente ao Mestre Principal e fica no
-       painel secreto da logo. Mestres comuns não recebem uma aba de espionagem. */
-    $('#aba-mensagens').hidden = true;
+    /* A aba local existe apenas quando a mesma conta é Mestre Principal E
+       mestre desta mesa. O painel secreto global continua separado. */
+    $('#aba-mensagens').hidden = !this.podeModerarMensagens;
     $('#celular').hidden = false;
     $('#btn-novo').hidden = false;
     $('#btn-rapido').hidden = !this.ehMestre;   /* NPC é coisa de mestre */
@@ -127,6 +133,7 @@ const App = {
       await Nuvem.desassinar();
       const pacote = await Nuvem.observarMesa(resumo.id);
       this.modoObservador = true;
+      this.podeModerarMensagens = false;
       this.mesa = Object.assign({}, pacote.mesa, { papel: 'observador' });
       this.ehMestre = true;
       Store.mesaId = this.mesa.id;
@@ -258,7 +265,7 @@ const App = {
 
   mostrar(tela, bestiarioId) {
     if (tela === 'bestiario' && !this.ehMestre) return;
-    if (tela === 'mensagens') return;
+    if (tela === 'mensagens' && !this.podeModerarMensagens) return;
     if (tela !== 'bestiario') Bestiario.limpar();
     this.telaAtual = tela;
     ['auth', 'mesas', 'mesa', 'ficha', 'mapa', 'sons', 'campanha', 'interludio', 'bestiario', 'homebrew', 'mensagens', 'super-mestre', 'logs'].forEach(t => {
@@ -274,7 +281,7 @@ const App = {
     if (tela === 'interludio') Interludio.render();
     if (tela === 'bestiario') Bestiario.carregar(bestiarioId);
     if (tela === 'homebrew') Homebrew.render();
-    if (tela === 'mensagens') Mensagens.render();
+    if (tela === 'mensagens') Mensagens.carregar();
     if (tela !== 'campanha') $('#painel-nota').hidden = true;
   },
 
@@ -282,6 +289,7 @@ const App = {
     await Nuvem.desassinar();
     this.mesa = null;
     this.modoObservador = false;
+    this.podeModerarMensagens = false;
     Ficha.atual = null;
     Store.estado.personagens = [];
     await Telas.renderMesas();
