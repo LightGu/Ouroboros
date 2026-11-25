@@ -33,7 +33,7 @@ e você depura um código que não está rodando. Aconteceu duas vezes aqui.
 git add -A && git commit -m "o que mudou" && git push
 ```
 
-Produção: https://ouroboros.gustavo952500.workers.dev
+Produção: https://ouroboros.fantasiaa.workers.dev
 
 ### Configuração (uma vez)
 

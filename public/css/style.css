@@ -1049,12 +1049,15 @@ textarea { resize: vertical; }
 }
 .alt.ativa { background: var(--painel-2); color: var(--texto); box-shadow: 0 1px 4px rgba(0,0,0,.3); }
 
-#form-auth { display: flex; flex-direction: column; gap: 13px; }
+#form-auth, #form-nova-senha { display: flex; flex-direction: column; gap: 13px; }
 .btn-largo { width: 100%; padding: 11px; }
 .auth-erro {
   margin: 0; padding: 9px 12px; border-radius: var(--raio);
   background: rgba(192,57,43,.13); border: 1px solid #6d2a22; color: #ff9c8c;
   font-size: 13px; line-height: 1.45;
+}
+.auth-erro.auth-sucesso {
+  background: rgba(46, 160, 90, .13); border-color: #276b43; color: #8ee0ae;
 }
 
 .titulo-tela { font-size: 19px; letter-spacing: .1em; text-transform: uppercase; color: var(--texto-2); }

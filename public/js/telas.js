@@ -16,6 +16,7 @@ const Telas = {
       senha.minLength = this.modo === 'entrar' ? 6 : 10;
       senha.placeholder = this.modo === 'entrar' ? 'sua senha' : 'mínimo 10 caracteres';
       $('#btn-auth').textContent = this.modo === 'entrar' ? 'Entrar' : 'Criar conta';
+      $('#auth-erro').classList.remove('auth-sucesso');
       $('#auth-erro').hidden = true;
     }));
 
@@ -27,6 +28,7 @@ const Telas = {
       const btn = $('#btn-auth');
       const erro = $('#auth-erro');
 
+      erro.classList.remove('auth-sucesso');
       erro.hidden = true;
       btn.disabled = true;
       btn.textContent = 'Aguarde...';
@@ -51,6 +53,66 @@ const Telas = {
       } finally {
         btn.disabled = false;
         btn.textContent = this.modo === 'entrar' ? 'Entrar' : 'Criar conta';
+      }
+    });
+
+    $('#btn-esqueci-senha').addEventListener('click', async () => {
+      const email = $('#auth-email').value.trim();
+      const erro = $('#auth-erro');
+      if (!email) {
+        erro.textContent = 'Digite o email da conta para receber o link de recuperação.';
+        erro.hidden = false;
+        $('#auth-email').focus();
+        return;
+      }
+
+      const btn = $('#btn-esqueci-senha');
+      erro.hidden = true;
+      btn.disabled = true;
+      btn.textContent = 'Enviando...';
+      try {
+        await Nuvem.enviarRecuperacao(email);
+        erro.textContent = 'Link enviado. Confira também a pasta de spam.';
+        erro.classList.add('auth-sucesso');
+        erro.hidden = false;
+      } catch (err) {
+        erro.classList.remove('auth-sucesso');
+        erro.textContent = this.traduzir(err.message || String(err));
+        erro.hidden = false;
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Esqueci minha senha';
+      }
+    });
+
+    $('#form-nova-senha').addEventListener('submit', async e => {
+      e.preventDefault();
+      const senha = $('#nova-senha').value;
+      const confirmar = $('#confirmar-nova-senha').value;
+      const erro = $('#recuperar-erro');
+      const btn = $('#btn-salvar-senha');
+      erro.hidden = true;
+
+      if (senha !== confirmar) {
+        erro.textContent = 'As senhas não conferem.';
+        erro.hidden = false;
+        return;
+      }
+
+      btn.disabled = true;
+      btn.textContent = 'Salvando...';
+      try {
+        await Nuvem.atualizarSenha(senha);
+        history.replaceState(null, '', location.pathname + location.search.replace(/([?&])type=recovery(&|$)/, '$1').replace(/[?&]$/, ''));
+        Nuvem.retornoRecuperacao = false;
+        toast('Senha alterada com sucesso.');
+        await App.aposLogin();
+      } catch (err) {
+        erro.textContent = this.traduzir(err.message || String(err));
+        erro.hidden = false;
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Salvar nova senha';
       }
     });
   },

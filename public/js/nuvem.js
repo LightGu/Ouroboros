@@ -10,6 +10,8 @@ const Nuvem = {
 
   iniciar() {
     if (!this.configurado()) return false;
+    this.retornoRecuperacao = new URLSearchParams(location.hash.slice(1)).get('type') === 'recovery'
+      || new URLSearchParams(location.search).get('type') === 'recovery';
     this.cliente = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
       auth: { persistSession: true, autoRefreshToken: true }
     });
@@ -33,6 +35,17 @@ const Nuvem = {
 
   async entrar(email, senha) {
     const { data, error } = await this.cliente.auth.signInWithPassword({ email, password: senha });
+    if (error) throw error;
+    return data;
+  },
+
+  async enviarRecuperacao(email) {
+    const { error } = await this.cliente.auth.resetPasswordForEmail(email);
+    if (error) throw error;
+  },
+
+  async atualizarSenha(senha) {
+    const { data, error } = await this.cliente.auth.updateUser({ password: senha });
     if (error) throw error;
     return data;
   },

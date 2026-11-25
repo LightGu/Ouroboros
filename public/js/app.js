@@ -21,7 +21,8 @@ const App = {
     this.ligarTopbar();
 
     const sessao = await Nuvem.sessao();
-    if (sessao) await this.aposLogin();
+    if (Nuvem.retornoRecuperacao && sessao) this.mostrar('recuperar');
+    else if (sessao) await this.aposLogin();
     else this.mostrar('auth');
 
     $('#carregando').hidden = true;
@@ -268,10 +269,10 @@ const App = {
     if (tela === 'mensagens' && !this.podeModerarMensagens) return;
     if (tela !== 'bestiario') Bestiario.limpar();
     this.telaAtual = tela;
-    ['auth', 'mesas', 'mesa', 'ficha', 'mapa', 'sons', 'campanha', 'interludio', 'bestiario', 'homebrew', 'mensagens', 'super-mestre', 'logs'].forEach(t => {
+    ['auth', 'recuperar', 'mesas', 'mesa', 'ficha', 'mapa', 'sons', 'campanha', 'interludio', 'bestiario', 'homebrew', 'mensagens', 'super-mestre', 'logs'].forEach(t => {
       $('#view-' + t).hidden = t !== tela;
     });
-    $('#topbar').hidden = tela === 'auth' || tela === 'mesas';
+    $('#topbar').hidden = tela === 'auth' || tela === 'recuperar' || tela === 'mesas';
     $$('.aba').forEach(a => a.classList.toggle('ativa', a.dataset.aba === tela));
     if (tela === 'mesa') Mesa.render();
     if (tela === 'logs') { Logs.limparBadge(); Logs.render(); }

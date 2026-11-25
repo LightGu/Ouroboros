@@ -93,7 +93,24 @@
       <label class="campo"><span>Senha</span>
         <input id="auth-senha" type="password" autocomplete="current-password" required minlength="6" maxlength="128" placeholder="sua senha"></label>
       <button class="btn btn-primary btn-largo" id="btn-auth" type="submit">Entrar</button>
+      <button class="btn btn-ghost btn-largo" id="btn-esqueci-senha" type="button">Esqueci minha senha</button>
       <p class="auth-erro" id="auth-erro" hidden></p>
+    </form>
+  </div>
+</main>
+
+<!-- ============ RECUPERAÇÃO DE SENHA ============ -->
+<main id="view-recuperar" class="view view-centro" hidden>
+  <div class="cartao-auth">
+    <div class="auth-marca"><svg class="brand-mark" aria-hidden="true"><use href="#ouroboros"/></svg><h1>NOVA SENHA</h1></div>
+    <p class="dialogo">Digite uma senha nova para esta conta.</p>
+    <form id="form-nova-senha" autocomplete="on">
+      <label class="campo"><span>Nova senha</span>
+        <input id="nova-senha" type="password" autocomplete="new-password" required minlength="10" maxlength="128" placeholder="mínimo 10 caracteres"></label>
+      <label class="campo"><span>Confirme a nova senha</span>
+        <input id="confirmar-nova-senha" type="password" autocomplete="new-password" required minlength="10" maxlength="128"></label>
+      <button class="btn btn-primary btn-largo" id="btn-salvar-senha" type="submit">Salvar nova senha</button>
+      <p class="auth-erro" id="recuperar-erro" hidden></p>
     </form>
   </div>
 </main>
